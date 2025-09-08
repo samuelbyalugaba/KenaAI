@@ -1,3 +1,9 @@
+import { ChatLayout } from "@/components/dashboard/chat-layout";
+
 export default function Home() {
-  return <></>;
+  return (
+    <main>
+      <ChatLayout />
+    </main>
+  );
 }
