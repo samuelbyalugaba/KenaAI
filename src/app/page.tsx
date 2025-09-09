@@ -11,7 +11,7 @@ import type { Agent, UserProfile } from "@/types";
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard";
 
-const adminUser: UserProfile = {
+const mockAdminUser: UserProfile = {
   name: "Samuel Byalugaba",
   role: "admin",
   avatar: "https://picsum.photos/id/1/100/100",
@@ -19,11 +19,20 @@ const adminUser: UserProfile = {
 
 export default function Home() {
   const [activeView, setActiveView] = React.useState<View>("Chat");
+  const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
+
+  const handleLogin = () => {
+    setCurrentUser(mockAdminUser);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+  };
 
   const renderView = () => {
     switch (activeView) {
       case "Chat":
-        return <ChatLayout user={adminUser} />;
+        return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} />;
       case "Contacts":
         return <ContactsView />;
       case "Agents":
@@ -31,13 +40,13 @@ export default function Home() {
       case "Dashboard":
         return <DashboardView />;
       default:
-        return <ChatLayout user={adminUser} />;
+        return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} />;
     }
   };
 
   return (
     <main className="flex">
-      <VerticalNav activeView={activeView} setActiveView={setActiveView} userRole={adminUser.role} />
+      <VerticalNav activeView={activeView} setActiveView={setActiveView} userRole={currentUser?.role} />
       <div className="flex-1 md:pl-[70px]">
         {renderView()}
       </div>

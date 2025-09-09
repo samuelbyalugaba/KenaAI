@@ -44,7 +44,7 @@ const bottomNavItems = [
 type VerticalNavProps = {
     activeView: View;
     setActiveView: (view: View) => void;
-    userRole: AgentRole;
+    userRole?: AgentRole;
 };
 
 export function VerticalNav({ activeView, setActiveView, userRole }: VerticalNavProps) {

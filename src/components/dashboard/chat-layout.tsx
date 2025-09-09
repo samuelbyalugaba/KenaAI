@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Clock,
   Info,
+  LogOut,
   MessageSquare,
   Paperclip,
   Phone,
@@ -62,6 +63,13 @@ import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { KenaAILogo } from "@/components/ui/kena-ai-logo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 
 // MOCK DATA
 const mockChats: Chat[] = [
@@ -401,7 +409,13 @@ const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string;
     );
 };
 
-export function ChatLayout({ user }: { user: UserProfile }) {
+type ChatLayoutProps = {
+  user: UserProfile | null;
+  onLogin: () => void;
+  onLogout: () => void;
+};
+
+export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
   // This state would normally be fetched, but we'll add it here for the dialog
@@ -479,7 +493,7 @@ export function ChatLayout({ user }: { user: UserProfile }) {
       {/* Sidebar */}
       <div className="hidden md:flex flex-col w-80 lg:w-96 border-r bg-card">
         <div className="flex items-center justify-between p-4 border-b">
-          <KenaAILogo className="h-6" />
+          <KenaAILogo className="h-10" />
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5 text-muted-foreground" />
@@ -515,7 +529,8 @@ export function ChatLayout({ user }: { user: UserProfile }) {
               <SelectContent>
                 <SelectItem value="all-agents">All Agents</SelectItem>
                 <SelectItem value="Samuel">Samuel Byalugaba</SelectItem>
-                <SelectItem value="sylvester">sylvester Kelvin Malisa</SelectItem>
+                <SelectItem value="Kelvin">Kelvin Malisa</SelectItem>
+                <SelectItem value="Sylvester">Sylvester Mayaya</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -526,19 +541,33 @@ export function ChatLayout({ user }: { user: UserProfile }) {
         <ChatList chats={chats} selectedChat={selectedChat} onSelectChat={setSelectedChat} />
 
         <div className="p-4 border-t mt-auto">
-            <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                    <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                    <p className="font-semibold">{user.name}</p>
-                    <p className="text-sm text-muted-foreground capitalize">{user.role}</p>
-                </div>
-                <Button variant="ghost" size="icon">
-                    <Settings className="h-5 w-5 text-muted-foreground"/>
-                </Button>
-            </div>
+            {user ? (
+              <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
+                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                      <p className="font-semibold">{user.name}</p>
+                      <p className="text-sm text-muted-foreground capitalize">{user.role}</p>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                          <Settings className="h-5 w-5 text-muted-foreground"/>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={onLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+              </div>
+            ) : (
+              <Button onClick={onLogin} className="w-full">Login</Button>
+            )}
         </div>
       </div>
 
