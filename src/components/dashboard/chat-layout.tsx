@@ -113,11 +113,16 @@ const mockChats: Chat[] = [
 
 const KenaAILogo: React.FC = () => {
   return (
-    <div className="flex items-center font-headline text-2xl font-bold tracking-tighter text-accent">
-      KenaAI
-    </div>
+    <Image
+      src="https://picsum.photos/120/40"
+      width={120}
+      height={40}
+      alt="KenaAI Logo"
+      data-ai-hint="logo abstract"
+    />
   );
 };
+
 
 // SUB-COMPONENTS
 const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], selectedChat: Chat | null, onSelectChat: (chat: Chat) => void }) => (
@@ -158,16 +163,18 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
   </ScrollArea>
 );
 
+const priorityMap = {
+  urgent: "destructive",
+  high: "default",
+  normal: "secondary",
+  low: "outline",
+} as const;
+
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
-  const variant: "destructive" | "default" | "secondary" | "outline" = {
-    urgent: "destructive",
-    high: "default",
-    normal: "secondary",
-    low: "outline",
-  }[priority];
-  
+  const variant = priorityMap[priority];
+
   return <Badge variant={variant} className="capitalize h-5">{priority}</Badge>;
-}
+};
 
 const Stats = () => {
     const stats = [
