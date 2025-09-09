@@ -1,5 +1,7 @@
+
 "use client";
 
+import * as React from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -30,6 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import type { Agent, AgentRole } from "@/types";
 
 const agentFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -43,7 +47,12 @@ const agentFormSchema = z.object({
 
 type AgentFormValues = z.infer<typeof agentFormSchema>;
 
-export function AddAgentDialog() {
+type AddAgentDialogProps = {
+    onAgentAdd: (agent: Agent) => void;
+};
+
+export function AddAgentDialog({ onAgentAdd }: AddAgentDialogProps) {
+  const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const form = useForm<AgentFormValues>({
     resolver: zodResolver(agentFormSchema),
@@ -57,16 +66,25 @@ export function AddAgentDialog() {
   });
 
   function onSubmit(data: AgentFormValues) {
-    console.log(data);
+    const newAgent: Agent = {
+        id: new Date().toISOString(),
+        ...data,
+        avatar: `https://picsum.photos/seed/${data.name}/100/100`,
+        role: data.role as AgentRole,
+    };
+    onAgentAdd(newAgent);
+
     toast({
       title: "Agent Created",
       description: `New agent "${data.name}" has been added successfully.`,
     });
-    // Here you would typically handle the form submission, e.g., API call
+    
+    form.reset();
+    setOpen(false);
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button>Add New Agent</Button>
       </DialogTrigger>
@@ -161,6 +179,9 @@ export function AddAgentDialog() {
               )}
             />
             <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DialogClose>
               <Button type="submit">Create Agent</Button>
             </DialogFooter>
           </form>

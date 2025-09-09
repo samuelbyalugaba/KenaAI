@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -22,7 +23,7 @@ import {
   Video,
 } from "lucide-react";
 
-import type { Chat, Message, Priority } from "@/types";
+import type { Chat, Message, Priority, UserProfile, Agent } from "@/types";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +66,7 @@ import { Label } from "@/components/ui/label";
 const mockChats: Chat[] = [
   {
     id: "1",
-    user: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true },
+    user: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true, email: "kelvin@example.com", phone: "+1-555-0101" },
     lastMessage: "Absolutely 🎨 We provide ful...",
     timestamp: "10:41 AM",
     unreadCount: 0,
@@ -75,12 +76,12 @@ const mockChats: Chat[] = [
       { id: "m1", sender: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "Hello 👋 What services do you offer?", timestamp: "10:38 AM" },
       { id: "m2", sender: "me", text: "Hi Kelvin! 🚀 We offer web app development, mobile app solutions, and AI-powered chatbots.", timestamp: "10:39 AM" },
       { id: "m3", sender: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "Nice! Do you also handle design?", timestamp: "10:40 AM" },
-      { id: "m2", sender: "me", text: "Absolutely 🎨 We provide full-stack design: UI/UX, branding, and even responsive front-end with React.", timestamp: "10:41 AM" },
+      { id: "m4", sender: "me", text: "Absolutely 🎨 We provide full-stack design: UI/UX, branding, and even responsive front-end with React.", timestamp: "10:41 AM" },
     ],
   },
   {
     id: "2",
-    user: { name: "Sylvester", avatar: "https://picsum.photos/id/1025/100/100", online: false },
+    user: { name: "Sylvester", avatar: "https://picsum.photos/id/1025/100/100", online: false, email: "sylvester@example.com", phone: "+1-555-0102" },
     lastMessage: "Sure thing! 💡 I’ll schedule...",
     timestamp: "9:20 AM",
     unreadCount: 0,
@@ -97,7 +98,7 @@ const mockChats: Chat[] = [
   },
   {
     id: "3",
-    user: { name: "Linaliz", avatar: "https://picsum.photos/id/1027/100/100", online: true },
+    user: { name: "Linaliz", avatar: "https://picsum.photos/id/1027/100/100", online: true, email: "linaliz@example.com", phone: "+1-555-0103" },
     lastMessage: "Anytime, Linaliz! Let me k...",
     timestamp: "Yesterday",
     unreadCount: 0,
@@ -114,7 +115,7 @@ const mockChats: Chat[] = [
   },
   {
     id: "4",
-    user: { name: "Glory", avatar: "https://picsum.photos/id/103/100/100", online: false },
+    user: { name: "Glory", avatar: "https://picsum.photos/id/103/100/100", online: false, email: "glory@example.com", phone: "+1-555-0104" },
     lastMessage: "My order hasn't arri...",
     timestamp: "Yesterday",
     unreadCount: 0,
@@ -125,14 +126,11 @@ const mockChats: Chat[] = [
       { id: "m2", sender: "me", text: "Hello Glory! 🤖 I’m checking your order details. Please provide your order number.", timestamp: "02:16 PM" },
       { id: "m3", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Sure, it’s #ORD4582", timestamp: "02:17 PM" },
       { id: "m4", sender: "me", text: "Thanks! 🔍 This looks like it may need special assistance. Transferring you to a human support agent...", timestamp: "02:18 PM" },
-
-      // Conversation now continues with human agent
       { id: "m5", sender: "me", text: "Hi Glory, this is Alex from support 👋 I’ll personally look into your order.", timestamp: "02:19 PM" },
       { id: "m6", sender: "me", text: "I see your package was delayed at the courier’s end 🚚. I’ll escalate this and request priority shipping.", timestamp: "02:20 PM" },
       { id: "m7", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Okay, I really hope it arrives soon. I’ve been waiting a long time.", timestamp: "02:21 PM" },
       { id: "m8", sender: "me", text: "I totally understand 💙 I’ll also email you the latest tracking update today and apply a 10% discount voucher for the delay.", timestamp: "02:22 PM" },
       { id: "m9", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Thanks, that’s really helpful 🙏", timestamp: "02:23 PM" }
-      
     ]
   },
 ];
@@ -140,14 +138,12 @@ const mockChats: Chat[] = [
 const KenaAILogo: React.FC = () => {
     return (
       <div className="flex items-center gap-2">
-        <Image src="https://picsum.photos/40/40" alt="KenaAI Logo" width={40} height={40} className="rounded-md" data-ai-hint="logo" />
+         <Image src="https://picsum.photos/seed/kena-logo/40/40" width={40} height={40} alt="KenaAI Logo" className="rounded-md" data-ai-hint="logo" />
         <span className="font-headline text-2xl font-bold tracking-tighter text-accent">KenaAI</span>
       </div>
     );
   };
 
-
-// SUB-COMPONENTS
 const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], selectedChat: Chat | null, onSelectChat: (chat: Chat) => void }) => (
   <ScrollArea className="flex-grow">
     <div className="flex flex-col gap-2 p-4 pt-0">
@@ -195,7 +191,6 @@ const priorityMap = {
 
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
   const variant = priorityMap[priority];
-
   return <Badge variant={variant} className="capitalize h-5">{priority}</Badge>;
 };
 
@@ -225,7 +220,7 @@ const Stats = () => {
   );
 };
 
-const ChatArea = ({ chat, onChatbotToggle }: { chat: Chat | null; onChatbotToggle: (chatId: string, isActive: boolean) => void }) => {
+const ChatArea = ({ chat, onChatbotToggle, onSendMessage }: { chat: Chat | null; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; }) => {
     if (!chat) {
         return (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
@@ -244,13 +239,17 @@ const ChatArea = ({ chat, onChatbotToggle }: { chat: Chat | null; onChatbotToggl
             <Separator />
             <ScrollArea className="flex-grow">
                 <div className="p-4 space-y-4">
-                    {chat.messages.map((message, index) => (
-                        <ChatMessage key={index} message={message} />
+                    {chat.messages.map((message) => (
+                        <ChatMessage key={message.id} message={message} />
                     ))}
                 </div>
             </ScrollArea>
             <Separator />
-            <ChatInput isChatbotActive={chat.isChatbotActive} />
+            <ChatInput 
+              chatId={chat.id} 
+              isChatbotActive={chat.isChatbotActive}
+              onSendMessage={onSendMessage}
+            />
         </div>
     );
 };
@@ -361,55 +360,80 @@ const ChatMessage = ({ message }: { message: Message }) => {
     )
 }
 
-const ChatInput = ({ isChatbotActive }: { isChatbotActive: boolean }) => (
-    <div className="p-4 bg-background/80 backdrop-blur-sm">
-        <form className="relative">
-            <Textarea
-                placeholder={isChatbotActive ? "Chatbot is active. Turn off to send a message." : "Type a message..."}
-                className="pr-24 min-h-[48px] resize-none"
-                disabled={isChatbotActive}
-            />
-            <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive}><Paperclip className="h-5 w-5" /></Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Attach file</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive}><Smile className="h-5 w-5" /></Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Add emoji</TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-                <Button type="submit" size="icon" disabled={isChatbotActive}><Send className="h-5 w-5" /></Button>
-            </div>
-        </form>
-    </div>
-);
+const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string; isChatbotActive: boolean; onSendMessage: (chatId: string, message: string) => void; }) => {
+    const [message, setMessage] = React.useState("");
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (message.trim()) {
+            onSendMessage(chatId, message.trim());
+            setMessage("");
+        }
+    }
 
-// MAIN LAYOUT
-export function ChatLayout() {
+    return (
+        <div className="p-4 bg-background/80 backdrop-blur-sm">
+            <form className="relative" onSubmit={handleSubmit}>
+                <Textarea
+                    placeholder={isChatbotActive ? "Chatbot is active. Turn off to send a message." : "Type a message..."}
+                    className="pr-24 min-h-[48px] resize-none"
+                    disabled={isChatbotActive}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSubmit(e);
+                        }
+                    }}
+                />
+                <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1">
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button type="button" variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive}><Paperclip className="h-5 w-5" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Attach file</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button type="button" variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive}><Smile className="h-5 w-5" /></Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Add emoji</TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <Button type="submit" size="icon" disabled={isChatbotActive}><Send className="h-5 w-5" /></Button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+export function ChatLayout({ user }: { user: UserProfile }) {
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
+  // This state would normally be fetched, but we'll add it here for the dialog
+  const [agents, setAgents] = React.useState<Agent[]>([]);
 
   React.useEffect(() => {
-    // Simulate fetching chats and getting their priority
     const prioritizeChats = async () => {
         const prioritized = await Promise.all(mockChats.map(async chat => {
             try {
                 const result = await chatPrioritization({ chatText: chat.lastMessage });
                 return { ...chat, priority: result.priority };
             } catch {
-                return chat; // Fallback to original priority
+                return chat;
             }
         }));
-        setChats(prioritized);
-        if (prioritized.length > 0) {
-            setSelectedChat(prioritized[0]);
+        
+        const sortedChats = prioritized.sort((a, b) => {
+            const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+            return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+
+        setChats(sortedChats);
+        if (sortedChats.length > 0) {
+            setSelectedChat(sortedChats[0]);
         }
     }
     prioritizeChats();
@@ -424,6 +448,39 @@ export function ChatLayout() {
         setSelectedChat(prev => prev ? { ...prev, isChatbotActive: isActive } : null);
     }
   };
+
+  const handleSendMessage = (chatId: string, text: string) => {
+    const newMessage: Message = {
+      id: new Date().toISOString(),
+      sender: 'me',
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    const updatedChats = chats.map(chat => {
+      if (chat.id === chatId) {
+        return {
+          ...chat,
+          messages: [...chat.messages, newMessage],
+          lastMessage: text,
+        };
+      }
+      return chat;
+    });
+
+    setChats(updatedChats);
+    if (selectedChat?.id === chatId) {
+      setSelectedChat(prev => prev ? { 
+        ...prev, 
+        messages: [...prev.messages, newMessage],
+        lastMessage: text 
+      } : null);
+    }
+  };
+
+  const handleAgentAdd = (newAgent: Agent) => {
+    setAgents(prev => [...prev, newAgent]);
+  }
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
@@ -466,7 +523,7 @@ export function ChatLayout() {
               <SelectContent>
                 <SelectItem value="all-agents">All Agents</SelectItem>
                 <SelectItem value="Samuel">Samuel Byalugaba</SelectItem>
-                <SelectItem value="sylvester">sylvester Smith</SelectItem>
+                <SelectItem value="sylvester">sylvester Kelvin Malisa</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -479,12 +536,12 @@ export function ChatLayout() {
         <div className="p-4 border-t mt-auto">
             <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src="https://picsum.photos/id/1/100/100" alt="Samuel Byalugaba" data-ai-hint="person glasses"/>
-                    <AvatarFallback>AT</AvatarFallback>
+                    <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
+                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                    <p className="font-semibold">Samuel Byalugaba</p>
-                    <p className="text-sm text-muted-foreground">Admin</p>
+                    <p className="font-semibold">{user.name}</p>
+                    <p className="text-sm text-muted-foreground capitalize">{user.role}</p>
                 </div>
                 <Button variant="ghost" size="icon">
                     <Settings className="h-5 w-5 text-muted-foreground"/>
@@ -498,12 +555,16 @@ export function ChatLayout() {
         <header className="flex items-center justify-between p-4 border-b">
             <h1 className="text-2xl font-bold">Chats</h1>
             <div className="flex items-center gap-4">
-                <AddAgentDialog />
+                <AddAgentDialog onAgentAdd={handleAgentAdd} />
             </div>
         </header>
         <Stats />
         <Separator />
-        <ChatArea chat={selectedChat} onChatbotToggle={handleChatbotToggle} />
+        <ChatArea 
+          chat={selectedChat} 
+          onChatbotToggle={handleChatbotToggle} 
+          onSendMessage={handleSendMessage}
+        />
       </div>
     </div>
   );

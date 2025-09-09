@@ -2,6 +2,8 @@ export type User = {
     name: string;
     avatar: string;
     online: boolean;
+    email?: string;
+    phone?: string;
   };
   
   export type Message = {
@@ -23,4 +25,21 @@ export type User = {
     messages: Message[];
     isChatbotActive: boolean;
   };
+
+  export type AgentRole = "admin" | "agent" | "super_agent";
+
+  export type Agent = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    role: AgentRole;
+    avatar: string;
+  };
+
+  export type UserProfile = {
+    name: string;
+    avatar: string;
+    role: AgentRole;
+  }
   
