@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useState } from "react";
 import Image from "next/image";
 import {
   Bell,
@@ -110,11 +111,13 @@ const mockChats: Chat[] = [
   },
 ];
 
-const KenaAILogo = () => (
-  <div className="font-headline text-2xl font-bold tracking-tighter text-accent">
-    KenaAI
-  </div>
-);
+const KenaAILogo: React.FC = () => {
+  return (
+    <div className="flex items-center font-headline text-2xl font-bold tracking-tighter text-accent">
+      KenaAI
+    </div>
+  );
+};
 
 // SUB-COMPONENTS
 const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], selectedChat: Chat | null, onSelectChat: (chat: Chat) => void }) => (
@@ -405,8 +408,10 @@ export function ChatLayout() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-channels">All Channels</SelectItem>
-                <SelectItem value="email">Email</SelectItem>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="email">WhatsApp</SelectItem>
+                <SelectItem value="whatsapp">Webchat</SelectItem>
+                <SelectItem value="whatsapp">Instagram</SelectItem>
+                <SelectItem value="whatsapp">Facebook</SelectItem>
               </SelectContent>
             </Select>
             <Select defaultValue="all-agents">
