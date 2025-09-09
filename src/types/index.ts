@@ -21,5 +21,6 @@ export type User = {
     unreadCount: number;
     priority: Priority;
     messages: Message[];
+    isChatbotActive: boolean;
   };
   

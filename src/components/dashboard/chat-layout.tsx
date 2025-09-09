@@ -70,6 +70,7 @@ const mockChats: Chat[] = [
     timestamp: "10:41 AM",
     unreadCount: 0,
     priority: "urgent",
+    isChatbotActive: true,
     messages: [
       { id: "m1", sender: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "Hello 👋 What services do you offer?", timestamp: "10:38 AM" },
       { id: "m2", sender: "me", text: "Hi Kelvin! 🚀 We offer web app development, mobile app solutions, and AI-powered chatbots.", timestamp: "10:39 AM" },
@@ -84,6 +85,7 @@ const mockChats: Chat[] = [
     timestamp: "9:20 AM",
     unreadCount: 0,
     priority: "low",
+    isChatbotActive: false,
     messages: [
       { id: "m1", sender: { name: "Sylvester", avatar: "https://picsum.photos/id/1005/100/100", online: true }, text: "Hi there 👋 Can you help me set up an online store?", timestamp: "09:15 AM" },
       { id: "m2", sender: "me", text: "Hello Sylvester! 🌟 Yes, we specialize in e-commerce platforms with secure payments and inventory management.", timestamp: "09:16 AM" },
@@ -100,6 +102,7 @@ const mockChats: Chat[] = [
     timestamp: "Yesterday",
     unreadCount: 0,
     priority: "normal",
+    isChatbotActive: true,
     messages: [
       { id: "m1", sender: { name: "Linaliz", avatar: "https://picsum.photos/id/1012/100/100", online: true }, text: "Hello 👋 Could you tell me your business hours?", timestamp: "Yesterday" },
       { id: "m2", sender: "me", text: "Hi Linaliz! 🌸 Yes, we’re open Monday to Friday, from 9:00 AM to 6:00 PM.", timestamp: "11:06 AM" },
@@ -116,6 +119,7 @@ const mockChats: Chat[] = [
     timestamp: "Yesterday",
     unreadCount: 0,
     priority: "high",
+    isChatbotActive: false,
     messages: [
       { id: "m1", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Hi, I placed an order three weeks ago but it still hasn’t arrived 😟", timestamp: "02:15 PM" },
       { id: "m2", sender: "me", text: "Hello Glory! 🤖 I’m checking your order details. Please provide your order number.", timestamp: "02:16 PM" },
@@ -134,20 +138,13 @@ const mockChats: Chat[] = [
 ];
 
 const KenaAILogo: React.FC = () => {
-  return (
-    <div className="flex items-center gap-2">
-      <Image 
-        src="https://picsum.photos/100/100" 
-        alt="KenaAI Logo" 
-        width={40} 
-        height={40} 
-        className="rounded-md" 
-        data-ai-hint="logo"
-      />
-      <span className="font-headline text-2xl font-bold tracking-tighter text-accent">KenaAI</span>
-    </div>
-  );
-};
+    return (
+      <div className="flex items-center gap-2">
+        <Image src="https://picsum.photos/40/40" alt="KenaAI Logo" width={40} height={40} className="rounded-md" data-ai-hint="logo" />
+        <span className="font-headline text-2xl font-bold tracking-tighter text-accent">KenaAI</span>
+      </div>
+    );
+  };
 
 
 // SUB-COMPONENTS
@@ -228,7 +225,7 @@ const Stats = () => {
   );
 };
 
-const ChatArea = ({ chat, isChatbotActive }: { chat: Chat | null; isChatbotActive: boolean }) => {
+const ChatArea = ({ chat, onChatbotToggle }: { chat: Chat | null; onChatbotToggle: (chatId: string, isActive: boolean) => void }) => {
     if (!chat) {
         return (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
@@ -243,7 +240,7 @@ const ChatArea = ({ chat, isChatbotActive }: { chat: Chat | null; isChatbotActiv
   
     return (
         <div className="flex flex-1 flex-col">
-            <ChatHeader chat={chat} />
+            <ChatHeader chat={chat} onChatbotToggle={onChatbotToggle} />
             <Separator />
             <ScrollArea className="flex-grow">
                 <div className="p-4 space-y-4">
@@ -253,12 +250,12 @@ const ChatArea = ({ chat, isChatbotActive }: { chat: Chat | null; isChatbotActiv
                 </div>
             </ScrollArea>
             <Separator />
-            <ChatInput isChatbotActive={isChatbotActive} />
+            <ChatInput isChatbotActive={chat.isChatbotActive} />
         </div>
     );
 };
 
-const ChatHeader = ({ chat }: { chat: Chat }) => {
+const ChatHeader = ({ chat, onChatbotToggle }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void }) => {
     const [summary, setSummary] = React.useState<string | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const { toast } = useToast();
@@ -296,7 +293,11 @@ const ChatHeader = ({ chat }: { chat: Chat }) => {
                     </p>
                 </div>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                    <Switch id="chatbot-mode" checked={chat.isChatbotActive} onCheckedChange={(isActive) => onChatbotToggle(chat.id, isActive)} />
+                    <Label htmlFor="chatbot-mode">{chat.isChatbotActive ? "Chatbot Active" : "Manual Mode"}</Label>
+                </div>
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -394,7 +395,6 @@ const ChatInput = ({ isChatbotActive }: { isChatbotActive: boolean }) => (
 export function ChatLayout() {
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
-  const [isChatbotActive, setIsChatbotActive] = React.useState(true);
 
   React.useEffect(() => {
     // Simulate fetching chats and getting their priority
@@ -414,6 +414,16 @@ export function ChatLayout() {
     }
     prioritizeChats();
   }, []);
+
+  const handleChatbotToggle = (chatId: string, isActive: boolean) => {
+    const updatedChats = chats.map(c => 
+        c.id === chatId ? { ...c, isChatbotActive: isActive } : c
+    );
+    setChats(updatedChats);
+    if (selectedChat?.id === chatId) {
+        setSelectedChat(prev => prev ? { ...prev, isChatbotActive: isActive } : null);
+    }
+  };
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground">
@@ -488,19 +498,13 @@ export function ChatLayout() {
         <header className="flex items-center justify-between p-4 border-b">
             <h1 className="text-2xl font-bold">Chats</h1>
             <div className="flex items-center gap-4">
-                <div className="flex items-center space-x-2">
-                    <Switch id="chatbot-mode" checked={isChatbotActive} onCheckedChange={setIsChatbotActive} />
-                    <Label htmlFor="chatbot-mode">{isChatbotActive ? "Chatbot Active" : "Manual Mode"}</Label>
-                </div>
                 <AddAgentDialog />
             </div>
         </header>
         <Stats />
         <Separator />
-        <ChatArea chat={selectedChat} isChatbotActive={isChatbotActive} />
+        <ChatArea chat={selectedChat} onChatbotToggle={handleChatbotToggle} />
       </div>
     </div>
   );
 }
-
-    
