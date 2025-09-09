@@ -58,68 +58,94 @@ import { intelligentChatSummary } from "@/ai/flows/intelligent-chat-summary";
 import { chatPrioritization } from "@/ai/flows/chat-prioritization";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 // MOCK DATA
 const mockChats: Chat[] = [
   {
     id: "1",
-    user: { name: "Alice", avatar: "https://picsum.photos/id/1011/100/100", online: true },
-    lastMessage: "I'm having trouble with my subscription. Can you help?",
-    timestamp: "10:40 AM",
-    unreadCount: 2,
+    user: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true },
+    lastMessage: "Absolutely 🎨 We provide ful...",
+    timestamp: "10:41 AM",
+    unreadCount: 0,
     priority: "urgent",
     messages: [
-      { id: "m1", sender: { name: "Alice", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "Hello?", timestamp: "10:38 AM" },
-      { id: "m2", sender: "me", text: "Hi Alice, how can I help you today?", timestamp: "10:39 AM" },
-      { id: "m3", sender: { name: "Alice", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "I'm having trouble with my subscription. Can you help?", timestamp: "10:40 AM" },
+      { id: "m1", sender: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "Hello 👋 What services do you offer?", timestamp: "10:38 AM" },
+      { id: "m2", sender: "me", text: "Hi Kelvin! 🚀 We offer web app development, mobile app solutions, and AI-powered chatbots.", timestamp: "10:39 AM" },
+      { id: "m3", sender: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "Nice! Do you also handle design?", timestamp: "10:40 AM" },
+      { id: "m2", sender: "me", text: "Absolutely 🎨 We provide full-stack design: UI/UX, branding, and even responsive front-end with React.", timestamp: "10:41 AM" },
     ],
   },
   {
     id: "2",
-    user: { name: "Bob", avatar: "https://picsum.photos/id/1025/100/100", online: false },
-    lastMessage: "Thanks for your help! Everything is working now.",
-    timestamp: "9:30 AM",
+    user: { name: "Sylvester", avatar: "https://picsum.photos/id/1025/100/100", online: false },
+    lastMessage: "Sure thing! 💡 I’ll schedule...",
+    timestamp: "9:20 AM",
     unreadCount: 0,
     priority: "low",
     messages: [
-      { id: "m4", sender: { name: "Bob", avatar: "https://picsum.photos/id/1025/100/100", online: false }, text: "I need to reset my password.", timestamp: "9:25 AM" },
-      { id: "m5", sender: "me", text: "Sure, I've sent a reset link to your email.", timestamp: "9:28 AM" },
-      { id: "m6", sender: { name: "Bob", avatar: "https://picsum.photos/id/1025/100/100", online: false }, text: "Thanks for your help! Everything is working now.", timestamp: "9:30 AM" },
+      { id: "m1", sender: { name: "Sylvester", avatar: "https://picsum.photos/id/1005/100/100", online: true }, text: "Hi there 👋 Can you help me set up an online store?", timestamp: "09:15 AM" },
+      { id: "m2", sender: "me", text: "Hello Sylvester! 🌟 Yes, we specialize in e-commerce platforms with secure payments and inventory management.", timestamp: "09:16 AM" },
+      { id: "m3", sender: { name: "Sylvester", avatar: "https://picsum.photos/id/1005/100/100", online: true }, text: "That sounds great! Do you also integrate delivery tracking?", timestamp: "09:17 AM" },
+      { id: "m4", sender: "me", text: "Absolutely 🚚 We can integrate real-time tracking and automated notifications for your customers.", timestamp: "09:18 AM" },
+      { id: "m5", sender: { name: "Sylvester", avatar: "https://picsum.photos/id/1005/100/100", online: true }, text: "Perfect 🙌 I’d love a demo of how it works.", timestamp: "09:19 AM" },
+      { id: "m6", sender: "me", text: "Sure thing! 💡 I’ll schedule a quick demo for you this afternoon.", timestamp: "09:20 AM" }
     ],
   },
   {
     id: "3",
-    user: { name: "Charlie", avatar: "https://picsum.photos/id/1027/100/100", online: true },
-    lastMessage: "What are your business hours?",
+    user: { name: "Linaliz", avatar: "https://picsum.photos/id/1027/100/100", online: true },
+    lastMessage: "Anytime, Linaliz! Let me k...",
     timestamp: "Yesterday",
     unreadCount: 0,
     priority: "normal",
     messages: [
-      { id: "m7", sender: { name: "Charlie", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "What are your business hours?", timestamp: "Yesterday" },
+      { id: "m1", sender: { name: "Linaliz", avatar: "https://picsum.photos/id/1012/100/100", online: true }, text: "Hello 👋 Could you tell me your business hours?", timestamp: "Yesterday" },
+      { id: "m2", sender: "me", text: "Hi Linaliz! 🌸 Yes, we’re open Monday to Friday, from 9:00 AM to 6:00 PM.", timestamp: "11:06 AM" },
+      { id: "m3", sender: { name: "Linaliz", avatar: "https://picsum.photos/id/1012/100/100", online: true }, text: "Great, are you available on weekends too?", timestamp: "Yesterday" },
+      { id: "m4", sender: "me", text: "On Saturdays we’re open from 10:00 AM to 2:00 PM ⏰. Sundays we’re closed, but support is still available online.", timestamp: "Yesterday" },
+      { id: "m5", sender: { name: "Linaliz", avatar: "https://picsum.photos/id/1012/100/100", online: true }, text: "Perfect, thanks for clarifying 🙌", timestamp: "Yesterday" },
+      { id: "m6", sender: "me", text: "Anytime, Linaliz! Let me know if you’d like me to book you a slot during business hours.", timestamp: "Yesterday" }
     ],
   },
   {
     id: "4",
-    user: { name: "Diana", avatar: "https://picsum.photos/id/103/100/100", online: false },
-    lastMessage: "My order hasn't arrived yet, and it's been 3 weeks.",
+    user: { name: "Glory", avatar: "https://picsum.photos/id/103/100/100", online: false },
+    lastMessage: "My order hasn't arri...",
     timestamp: "Yesterday",
-    unreadCount: 1,
+    unreadCount: 0,
     priority: "high",
     messages: [
-        { id: "m8", sender: { name: "Diana", avatar: "https://picsum.photos/id/103/100/100", online: false }, text: "My order hasn't arrived yet, and it's been 3 weeks.", timestamp: "Yesterday" },
+      { id: "m1", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Hi, I placed an order three weeks ago but it still hasn’t arrived 😟", timestamp: "02:15 PM" },
+      { id: "m2", sender: "me", text: "Hello Glory! 🤖 I’m checking your order details. Please provide your order number.", timestamp: "02:16 PM" },
+      { id: "m3", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Sure, it’s #ORD4582", timestamp: "02:17 PM" },
+      { id: "m4", sender: "me", text: "Thanks! 🔍 This looks like it may need special assistance. Transferring you to a human support agent...", timestamp: "02:18 PM" },
+
+      // Conversation now continues with human agent
+      { id: "m5", sender: "me", text: "Hi Glory, this is Alex from support 👋 I’ll personally look into your order.", timestamp: "02:19 PM" },
+      { id: "m6", sender: "me", text: "I see your package was delayed at the courier’s end 🚚. I’ll escalate this and request priority shipping.", timestamp: "02:20 PM" },
+      { id: "m7", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Okay, I really hope it arrives soon. I’ve been waiting a long time.", timestamp: "02:21 PM" },
+      { id: "m8", sender: "me", text: "I totally understand 💙 I’ll also email you the latest tracking update today and apply a 10% discount voucher for the delay.", timestamp: "02:22 PM" },
+      { id: "m9", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Thanks, that’s really helpful 🙏", timestamp: "02:23 PM" }
+      
     ]
   },
 ];
 
 const KenaAILogo: React.FC = () => {
   return (
-    <Image
-      src="https://picsum.photos/120/40"
-      width={120}
-      height={40}
-      alt="KenaAI Logo"
-      data-ai-hint="logo abstract"
-    />
+    <div className="flex items-center gap-2">
+      <Image 
+        src="https://picsum.photos/100/100" 
+        alt="KenaAI Logo" 
+        width={40} 
+        height={40} 
+        className="rounded-md" 
+        data-ai-hint="logo"
+      />
+      <span className="font-headline text-2xl font-bold tracking-tighter text-accent">KenaAI</span>
+    </div>
   );
 };
 
@@ -178,11 +204,11 @@ const PriorityBadge = ({ priority }: { priority: Priority }) => {
 
 const Stats = () => {
     const stats = [
-        { title: "Total Chats", value: "1,254", icon: MessageSquare },
-        { title: "Open", value: "40", icon: Users },
-        { title: "Closed", value: "1,200", icon: CheckCircle },
-        { title: "Pending", value: "14", icon: Clock },
-        { title: "Avg. Response", value: "5m 32s", icon: Clock },
+        { title: "Total Chats", value: "4", icon: MessageSquare },
+        { title: "Open", value: "1", icon: Users },
+        { title: "Closed", value: "3", icon: CheckCircle },
+        { title: "Pending", value: "1", icon: Clock },
+        { title: "Avg. Response", value: "1m 2sc", icon: Clock },
       ];
 
   return (
@@ -202,7 +228,7 @@ const Stats = () => {
   );
 };
 
-const ChatArea = ({ chat }: { chat: Chat | null }) => {
+const ChatArea = ({ chat, isChatbotActive }: { chat: Chat | null; isChatbotActive: boolean }) => {
     if (!chat) {
         return (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
@@ -227,7 +253,7 @@ const ChatArea = ({ chat }: { chat: Chat | null }) => {
                 </div>
             </ScrollArea>
             <Separator />
-            <ChatInput />
+            <ChatInput isChatbotActive={isChatbotActive} />
         </div>
     );
 };
@@ -334,29 +360,30 @@ const ChatMessage = ({ message }: { message: Message }) => {
     )
 }
 
-const ChatInput = () => (
+const ChatInput = ({ isChatbotActive }: { isChatbotActive: boolean }) => (
     <div className="p-4 bg-background/80 backdrop-blur-sm">
         <form className="relative">
             <Textarea
-                placeholder="Type a message..."
+                placeholder={isChatbotActive ? "Chatbot is active. Turn off to send a message." : "Type a message..."}
                 className="pr-24 min-h-[48px] resize-none"
+                disabled={isChatbotActive}
             />
             <div className="absolute top-1/2 -translate-y-1/2 right-3 flex items-center gap-1">
                 <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground"><Paperclip className="h-5 w-5" /></Button>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive}><Paperclip className="h-5 w-5" /></Button>
                         </TooltipTrigger>
                         <TooltipContent>Attach file</TooltipContent>
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground"><Smile className="h-5 w-5" /></Button>
+                            <Button variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive}><Smile className="h-5 w-5" /></Button>
                         </TooltipTrigger>
                         <TooltipContent>Add emoji</TooltipContent>
                     </Tooltip>
                 </TooltipProvider>
-                <Button type="submit" size="icon"><Send className="h-5 w-5" /></Button>
+                <Button type="submit" size="icon" disabled={isChatbotActive}><Send className="h-5 w-5" /></Button>
             </div>
         </form>
     </div>
@@ -367,6 +394,7 @@ const ChatInput = () => (
 export function ChatLayout() {
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
+  const [isChatbotActive, setIsChatbotActive] = React.useState(true);
 
   React.useEffect(() => {
     // Simulate fetching chats and getting their priority
@@ -427,8 +455,8 @@ export function ChatLayout() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-agents">All Agents</SelectItem>
-                <SelectItem value="alex">Alex Turner</SelectItem>
-                <SelectItem value="bob">Bob Smith</SelectItem>
+                <SelectItem value="Samuel">Samuel Byalugaba</SelectItem>
+                <SelectItem value="sylvester">sylvester Smith</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -441,12 +469,12 @@ export function ChatLayout() {
         <div className="p-4 border-t mt-auto">
             <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                    <AvatarImage src="https://picsum.photos/id/1/100/100" alt="Alex Turner" data-ai-hint="person glasses"/>
+                    <AvatarImage src="https://picsum.photos/id/1/100/100" alt="Samuel Byalugaba" data-ai-hint="person glasses"/>
                     <AvatarFallback>AT</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                    <p className="font-semibold">Alex Turner</p>
-                    <p className="text-sm text-muted-foreground">Super Agent</p>
+                    <p className="font-semibold">Samuel Byalugaba</p>
+                    <p className="text-sm text-muted-foreground">Admin</p>
                 </div>
                 <Button variant="ghost" size="icon">
                     <Settings className="h-5 w-5 text-muted-foreground"/>
@@ -459,12 +487,20 @@ export function ChatLayout() {
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between p-4 border-b">
             <h1 className="text-2xl font-bold">Chats</h1>
-            <AddAgentDialog />
+            <div className="flex items-center gap-4">
+                <div className="flex items-center space-x-2">
+                    <Switch id="chatbot-mode" checked={isChatbotActive} onCheckedChange={setIsChatbotActive} />
+                    <Label htmlFor="chatbot-mode">{isChatbotActive ? "Chatbot Active" : "Manual Mode"}</Label>
+                </div>
+                <AddAgentDialog />
+            </div>
         </header>
         <Stats />
         <Separator />
-        <ChatArea chat={selectedChat} />
+        <ChatArea chat={selectedChat} isChatbotActive={isChatbotActive} />
       </div>
     </div>
   );
 }
+
+    
