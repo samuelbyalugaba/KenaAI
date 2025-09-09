@@ -61,6 +61,7 @@ import { AddAgentDialog } from "./add-agent-dialog";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import { KenaAILogo } from "@/components/ui/kena-ai-logo";
 
 // MOCK DATA
 const mockChats: Chat[] = [
@@ -134,15 +135,6 @@ const mockChats: Chat[] = [
     ]
   },
 ];
-
-const KenaAILogo: React.FC = () => {
-    return (
-      <div className="flex items-center gap-2">
-         <Image src="https://picsum.photos/seed/kena-logo/40/40" width={40} height={40} alt="KenaAI Logo" className="rounded-md" data-ai-hint="logo" />
-        <span className="font-headline text-2xl font-bold tracking-tighter text-accent">KenaAI</span>
-      </div>
-    );
-  };
 
 const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], selectedChat: Chat | null, onSelectChat: (chat: Chat) => void }) => (
   <ScrollArea className="flex-grow">
@@ -487,7 +479,7 @@ export function ChatLayout({ user }: { user: UserProfile }) {
       {/* Sidebar */}
       <div className="hidden md:flex flex-col w-80 lg:w-96 border-r bg-card">
         <div className="flex items-center justify-between p-4 border-b">
-          <KenaAILogo />
+          <KenaAILogo className="h-6" />
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5 text-muted-foreground" />
