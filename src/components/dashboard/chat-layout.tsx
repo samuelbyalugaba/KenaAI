@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Clock,
   Info,
+  LogIn,
   LogOut,
   MessageSquare,
   Paperclip,
@@ -220,15 +221,27 @@ const Stats = () => {
   );
 };
 
-const ChatArea = ({ chat, onChatbotToggle, onSendMessage }: { chat: Chat | null; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; }) => {
+const ChatArea = ({ user, chat, onChatbotToggle, onSendMessage }: { user: UserProfile | null; chat: Chat | null; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; }) => {
+    if (!user) {
+        return (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
+                <div className="rounded-full bg-primary/10 p-4">
+                    <LogIn className="h-12 w-12 text-primary"/>
+                </div>
+                <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
+                <p className="text-muted-foreground">Please log in as an agent to view and respond to chats.</p>
+            </div>
+        )
+    }
+
     if (!chat) {
         return (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
                 <div className="rounded-full bg-primary/10 p-4">
                     <MessageSquare className="h-12 w-12 text-primary"/>
                 </div>
-                <h2 className="text-2xl font-bold">Welcome to KenaAI</h2>
-                <p className="text-muted-foreground">Select a chat to start messaging.</p>
+                <h2 className="text-2xl font-bold">No Chat Selected</h2>
+                <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
             </div>
         )
     }
@@ -582,6 +595,7 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
         <Stats />
         <Separator />
         <ChatArea 
+          user={user}
           chat={selectedChat} 
           onChatbotToggle={handleChatbotToggle} 
           onSendMessage={handleSendMessage}
@@ -590,3 +604,5 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
     </div>
   );
 }
+
+    
