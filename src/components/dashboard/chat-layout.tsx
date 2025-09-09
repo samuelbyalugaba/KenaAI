@@ -110,9 +110,9 @@ const mockChats: Chat[] = [
   },
 ];
 
-const CunektLogo = () => (
+const KenaAILogo = () => (
   <div className="font-headline text-2xl font-bold tracking-tighter text-accent">
-    Cunekt
+    KenaAI
   </div>
 );
 
@@ -199,7 +199,7 @@ const ChatArea = ({ chat }: { chat: Chat | null }) => {
                 <div className="rounded-full bg-primary/10 p-4">
                     <MessageSquare className="h-12 w-12 text-primary"/>
                 </div>
-                <h2 className="text-2xl font-bold">Welcome to Cunekt</h2>
+                <h2 className="text-2xl font-bold">Welcome to KenaAI</h2>
                 <p className="text-muted-foreground">Select a chat to start messaging.</p>
             </div>
         )
@@ -382,7 +382,7 @@ export function ChatLayout() {
       {/* Sidebar */}
       <div className="hidden md:flex flex-col w-80 lg:w-96 border-r bg-card">
         <div className="flex items-center justify-between p-4 border-b">
-          <CunektLogo />
+          <KenaAILogo />
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon">
               <Bell className="h-5 w-5 text-muted-foreground" />

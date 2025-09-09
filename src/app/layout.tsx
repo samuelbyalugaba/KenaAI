@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = {
-  title: 'Cunekt Chat Dashboard',
+  title: 'KenaAI Chat Dashboard',
   description: 'A responsive chat dashboard application.',
 };
 

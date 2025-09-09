@@ -1,4 +1,4 @@
-# **App Name**: Cunekt Chat Dashboard
+# **App Name**: KenaAI Chat Dashboard
 
 ## Core Features:
 
