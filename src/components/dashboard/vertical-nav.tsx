@@ -52,7 +52,7 @@ export function VerticalNav({ activeView, setActiveView, userRole }: VerticalNav
   const visibleNavItems = navItems.filter(item => !item.adminOnly || userRole === 'admin');
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-20 flex h-full w-[70px] flex-col items-center justify-between bg-primary py-4">
+    <aside className="fixed inset-y-0 left-0 z-20 hidden h-full w-[70px] flex-col items-center justify-between bg-primary py-4 md:flex">
       <TooltipProvider>
         <nav className="flex flex-col items-center gap-4 px-2">
           {visibleNavItems.map((item) => (
