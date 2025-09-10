@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { PlusCircle, Search, UserCheck, Send } from "lucide-react";
+import { PlusCircle, Search, UserCheck, Send, PanelLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 const mockAdminUser: Agent = { id: '1', name: "Samuel Byalugaba", avatar: "https://picsum.photos/id/1/100/100", email: "samuel.b@example.com", phone: "+1-555-0201", role: "admin" };
 
@@ -70,7 +71,11 @@ const announcementFormSchema = z.object({
 
 type AnnouncementFormValues = z.infer<typeof announcementFormSchema>;
 
-export function AnnouncementsView() {
+type AnnouncementsViewProps = {
+  onMenuClick: () => void;
+};
+
+export function AnnouncementsView({ onMenuClick }: AnnouncementsViewProps) {
   const [announcements, setAnnouncements] = React.useState(mockAnnouncements);
   const [searchTerm, setSearchTerm] = React.useState("");
   const { toast } = useToast();
@@ -114,7 +119,13 @@ export function AnnouncementsView() {
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
       <header className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b">
-        <h1 className="text-2xl font-bold">Announcements</h1>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Open Menu</span>
+            </Button>
+            <h1 className="text-2xl font-bold">Announcements</h1>
+        </div>
         <div className="relative w-full sm:w-auto sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -126,7 +137,7 @@ export function AnnouncementsView() {
         </div>
       </header>
       <main className="flex-1 overflow-hidden grid md:grid-cols-3 gap-4 p-4">
-        <div className="md:col-span-1 flex flex-col h-full">
+        <div className="md:col-span-1 flex flex-col h-full overflow-hidden">
           <Card className="flex-1 flex flex-col">
             <CardHeader>
               <CardTitle>New Announcement</CardTitle>

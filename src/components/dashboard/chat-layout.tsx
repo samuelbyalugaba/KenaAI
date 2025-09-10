@@ -4,16 +4,14 @@
 import * as React from "react";
 import { useState } from "react";
 import {
-  Bell,
+  ArrowLeft,
   CheckCircle,
-  ChevronDown,
   Clock,
   LogIn,
   LogOut,
   MessageSquare,
   PanelLeft,
   Paperclip,
-  Phone,
   PlusCircle,
   Search,
   Send,
@@ -21,7 +19,7 @@ import {
   Smile,
   Sparkles,
   Users,
-  Video,
+  User as UserIcon,
   X,
 } from "lucide-react";
 
@@ -42,7 +40,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -220,7 +217,7 @@ const Stats = () => {
   );
 };
 
-const ChatArea = ({ user, chat, onChatbotToggle, onSendMessage }: { user: UserProfile | null; chat: Chat | null; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; }) => {
+const ChatArea = ({ user, chat, onChatbotToggle, onSendMessage, onBack }: { user: UserProfile | null; chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; onBack: () => void; }) => {
     const scrollRef = React.useRef<HTMLDivElement>(null);
     
     React.useEffect(() => {
@@ -228,34 +225,10 @@ const ChatArea = ({ user, chat, onChatbotToggle, onSendMessage }: { user: UserPr
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [chat?.messages]);
-    
-    if (!user) {
-        return (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                <div className="rounded-full bg-primary/10 p-4">
-                    <LogIn className="h-12 w-12 text-primary"/>
-                </div>
-                <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
-                <p className="text-muted-foreground">Please log in as an agent to view and respond to chats.</p>
-            </div>
-        )
-    }
-
-    if (!chat) {
-        return (
-            <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                <div className="rounded-full bg-primary/10 p-4">
-                    <MessageSquare className="h-12 w-12 text-primary"/>
-                </div>
-                <h2 className="text-2xl font-bold">No Chat Selected</h2>
-                <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
-            </div>
-        )
-    }
   
     return (
         <div className="flex flex-1 flex-col h-full">
-            <ChatHeader chat={chat} onChatbotToggle={onChatbotToggle} />
+            <ChatHeader chat={chat} onChatbotToggle={onChatbotToggle} onBack={onBack}/>
             <Separator />
             <div className="flex-1 overflow-y-auto" ref={scrollRef}>
                 <div className="p-4 space-y-4">
@@ -274,7 +247,7 @@ const ChatArea = ({ user, chat, onChatbotToggle, onSendMessage }: { user: UserPr
     );
 };
 
-const ChatHeader = ({ chat, onChatbotToggle }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void }) => {
+const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onBack: () => void }) => {
     const [summary, setSummary] = React.useState<string | null>(null);
     const [isLoading, setIsLoading] = React.useState(false);
     const { toast } = useToast();
@@ -298,7 +271,11 @@ const ChatHeader = ({ chat, onChatbotToggle }: { chat: Chat; onChatbotToggle: (c
     }
 
     return (
-        <div className="flex items-center p-2 px-4">
+        <div className="flex items-center p-2 px-4 gap-2">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
+                <ArrowLeft className="h-5 w-5" />
+                <span className="sr-only">Back to chats</span>
+            </Button>
             <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
                     <AvatarImage src={chat.user.avatar} alt={chat.user.name} data-ai-hint="person portrait"/>
@@ -312,25 +289,12 @@ const ChatHeader = ({ chat, onChatbotToggle }: { chat: Chat; onChatbotToggle: (c
                     </p>
                 </div>
             </div>
-            <div className="ml-auto flex items-center gap-1 sm:gap-4">
-                <div className="hidden sm:flex items-center space-x-2">
+            <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center space-x-2">
                     <Switch id="chatbot-mode" checked={chat.isChatbotActive} onCheckedChange={(isActive) => onChatbotToggle(chat.id, isActive)} />
-                    <Label htmlFor="chatbot-mode">{chat.isChatbotActive ? "Chatbot Active" : "Manual Mode"}</Label>
+                    <Label htmlFor="chatbot-mode" className="hidden sm:block">{chat.isChatbotActive ? "Chatbot Active" : "Manual Mode"}</Label>
                 </div>
                 <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground"><Phone className="h-5 w-5"/></Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Voice Call</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button variant="ghost" size="icon" className="text-muted-foreground"><Video className="h-5 w-5"/></Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Video Call</TooltipContent>
-                    </Tooltip>
-
                     <Sheet open={!!summary || isLoading} onOpenChange={(isOpen) => !isOpen && setSummary(null)}>
                       <SheetTrigger asChild>
                         <Tooltip>
@@ -353,7 +317,6 @@ const ChatHeader = ({ chat, onChatbotToggle }: { chat: Chat; onChatbotToggle: (c
                         </div>
                       </SheetContent>
                     </Sheet>
-
                 </TooltipProvider>
             </div>
         </div>
@@ -468,9 +431,6 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
 
   const handleSelectChat = (chat: Chat) => {
     setSelectedChat(chat);
-    if(window.innerWidth < 768) { // On mobile, close sidebar after selection
-        setIsSidebarOpen(false);
-    }
   }
 
   const handleChatbotToggle = (chatId: string, isActive: boolean) => {
@@ -520,11 +480,6 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
     <div className="flex flex-col h-full bg-card text-card-foreground">
         <div className="flex items-center justify-between p-4 border-b">
           <KenaAILogo className="h-10" />
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsSidebarOpen(false)}>
-                <X className="h-5 w-5" />
-            </Button>
-          </div>
         </div>
 
         <div className="p-4 space-y-4">
@@ -552,105 +507,106 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
     </div>
   )
 
-  return (
-    <div className="flex h-screen w-full bg-background text-foreground">
-       {/* Mobile Sidebar */}
-      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-          <SheetContent side="left" className="p-0 w-80">
-            <SheetHeader>
-              <SheetTitle className="sr-only">Chat Sidebar</SheetTitle>
-              <SheetDescription className="sr-only">A list of recent chats and filters.</SheetDescription>
-            </SheetHeader>
-            <SidebarContent />
-          </SheetContent>
-      </Sheet>
+  const MainHeader = () => (
+    <header className="flex items-center justify-between p-2 border-b h-[61px]">
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsSidebarOpen(true)}>
+                <PanelLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-bold hidden md:block">Chats</h1>
+        </div>
+        <div className="flex items-center gap-4">
+            <Button variant="ghost" size="sm" className="gap-2">
+                <PlusCircle className="h-5 w-5" /> New Chat
+            </Button>
+             <div className="hidden md:flex">
+                <AddAgentDialog onAgentAdd={handleAgentAdd} />
+             </div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                      {user ? (
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
+                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                      ) : (
+                          <UserIcon className="h-5 w-5 text-muted-foreground" />
+                      )}
+                      <span className="sr-only">User Menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                   {user ? (
+                       <>
+                         <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+                         <DropdownMenuSeparator />
+                         <DropdownMenuItem>
+                           <Settings className="mr-2 h-4 w-4" />
+                           <span>Settings</span>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem onClick={onLogout}>
+                           <LogOut className="mr-2 h-4 w-4" />
+                           <span>Log out</span>
+                         </DropdownMenuItem>
+                       </>
+                   ) : (
+                       <DropdownMenuItem onClick={onLogin}>
+                           <LogIn className="mr-2 h-4 w-4" />
+                           <span>Log in as Agent</span>
+                       </DropdownMenuItem>
+                   )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    </header>
+  )
 
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex md:w-80 lg:w-96 border-r">
+  return (
+    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+      <div className={cn("md:flex md:w-80 lg:w-96 border-r h-full", selectedChat ? "hidden md:flex" : "flex w-full")}>
         <SidebarContent />
       </div>
 
-      {/* Main Content */}
-      <div className="flex flex-1 flex-col h-screen">
-        <header className="flex items-center justify-between p-2 border-b">
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsSidebarOpen(true)}>
-                    <PanelLeft className="h-5 w-5" />
-                </Button>
-                <h1 className="text-xl font-bold hidden md:block">Chats</h1>
-            </div>
-            <div className="flex items-center gap-4">
-                <Button variant="ghost" size="sm" className="gap-2">
-                    <PlusCircle className="h-5 w-5" /> New Chat
-                </Button>
-                 <AddAgentDialog onAgentAdd={handleAgentAdd} />
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                          {user ? (
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                          ) : (
-                              <Settings className="h-5 w-5 text-muted-foreground" />
-                          )}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                       {user ? (
-                           <>
-                             <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
-                             <DropdownMenuSeparator />
-                             <DropdownMenuItem>
-                               <Settings className="mr-2 h-4 w-4" />
-                               <span>Settings</span>
-                             </DropdownMenuItem>
-                             <DropdownMenuItem onClick={onLogout}>
-                               <LogOut className="mr-2 h-4 w-4" />
-                               <span>Log out</span>
-                             </DropdownMenuItem>
-                           </>
-                       ) : (
-                           <DropdownMenuItem onClick={onLogin}>
-                               <LogIn className="mr-2 h-4 w-4" />
-                               <span>Log in</span>
-                           </DropdownMenuItem>
-                       )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </div>
-        </header>
-
+      <div className={cn("flex flex-1 flex-col h-screen", selectedChat ? "flex" : "hidden md:flex")}>
+        <MainHeader />
+        
         <div className="hidden md:block">
             <Stats />
             <Separator />
         </div>
         
         <div className="flex-1 flex flex-col overflow-hidden">
-             <ChatArea 
-                user={user}
-                chat={selectedChat} 
-                onChatbotToggle={handleChatbotToggle} 
-                onSendMessage={handleSendMessage}
-            />
-        </div>
-         {!selectedChat && !user && (
-            <div className="md:hidden flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                 <div className="rounded-full bg-primary/10 p-4">
-                    <LogIn className="h-12 w-12 text-primary"/>
+             { user && selectedChat ? (
+                <ChatArea 
+                    user={user}
+                    chat={selectedChat} 
+                    onChatbotToggle={handleChatbotToggle} 
+                    onSendMessage={handleSendMessage}
+                    onBack={() => setSelectedChat(null)}
+                />
+            ) : (
+                <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
+                    { !user ? (
+                        <>
+                            <div className="rounded-full bg-primary/10 p-4">
+                                <LogIn className="h-12 w-12 text-primary"/>
+                            </div>
+                            <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
+                            <p className="text-muted-foreground">Please log in as an agent to view and respond to chats.</p>
+                        </>
+                    ) : (
+                        <>
+                            <div className="rounded-full bg-primary/10 p-4">
+                                <MessageSquare className="h-12 w-12 text-primary"/>
+                            </div>
+                            <h2 className="text-2xl font-bold">No Chat Selected</h2>
+                            <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
+                        </>
+                    )}
                 </div>
-                <h2 className="text-2xl font-bold">Welcome Back</h2>
-                <p className="text-muted-foreground">Log in to view your chats.</p>
-            </div>
-        )}
-         {!selectedChat && user && (
-            <div className="md:hidden flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                <MessageSquare className="h-12 w-12 text-muted-foreground"/>
-                <h2 className="text-xl font-bold">Select a chat</h2>
-                <p className="text-muted-foreground">Tap the menu icon to see your conversations.</p>
-            </div>
-        )}
+            )}
+        </div>
       </div>
     </div>
   );

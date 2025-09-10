@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { User, Phone, Mail, Search, MessageSquare, ArrowLeft } from "lucide-react";
+import { User, Phone, Mail, Search, MessageSquare, ArrowLeft, PanelLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -151,7 +151,11 @@ const EmptyState = () => (
     </div>
 )
 
-export function ContactsView() {
+type ContactsViewProps = {
+  onMenuClick: () => void;
+};
+
+export function ContactsView({ onMenuClick }: ContactsViewProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
   
@@ -173,8 +177,14 @@ export function ContactsView() {
     <TooltipProvider>
       <div className="flex h-screen w-full flex-col bg-background text-foreground">
         <header className="flex items-center justify-between p-4 border-b">
-          <h1 className="text-2xl font-bold">Contacts</h1>
-          <Button>Add Contact</Button>
+            <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+                    <PanelLeft className="h-5 w-5" />
+                    <span className="sr-only">Open Menu</span>
+                </Button>
+                <h1 className="text-2xl font-bold">Contacts</h1>
+            </div>
+            <Button>Add Contact</Button>
         </header>
         <main className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
             {/* Contact List */}

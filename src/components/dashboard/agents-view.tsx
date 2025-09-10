@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { User, Phone, Mail, Search, ShieldCheck } from "lucide-react";
+import { User, Phone, Mail, Search, ShieldCheck, PanelLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
@@ -33,7 +33,11 @@ const roleVariantMap: Record<AgentRole, "default" | "secondary" | "destructive">
     agent: "secondary"
 }
 
-export function AgentsView() {
+type AgentsViewProps = {
+  onMenuClick: () => void;
+};
+
+export function AgentsView({ onMenuClick }: AgentsViewProps) {
   const [agents, setAgents] = React.useState<Agent[]>(mockAgents);
   const [searchTerm, setSearchTerm] = React.useState("");
   
@@ -50,7 +54,13 @@ export function AgentsView() {
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
       <header className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b">
-        <h1 className="text-2xl font-bold">Agents</h1>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Open Menu</span>
+            </Button>
+            <h1 className="text-2xl font-bold">Agents</h1>
+        </div>
         <div className="flex items-center gap-4 w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

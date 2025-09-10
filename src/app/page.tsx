@@ -20,6 +20,7 @@ const mockAdminUser: UserProfile = {
 
 export default function Home() {
   const [activeView, setActiveView] = React.useState<View>("Chat");
+  const [isNavOpen, setIsNavOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
 
   const handleLogin = () => {
@@ -31,17 +32,18 @@ export default function Home() {
   };
 
   const renderView = () => {
+    const props = { onMenuClick: () => setIsNavOpen(true) };
     switch (activeView) {
       case "Chat":
         return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} />;
       case "Contacts":
-        return <ContactsView />;
+        return <ContactsView {...props} />;
       case "Agents":
-        return <AgentsView />;
+        return <AgentsView {...props} />;
       case "Dashboard":
-        return <DashboardView />;
+        return <DashboardView {...props} />;
       case "Announcements":
-        return <AnnouncementsView />;
+        return <AnnouncementsView {...props} />;
       default:
         return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} />;
     }
@@ -49,7 +51,13 @@ export default function Home() {
 
   return (
     <main className="flex h-screen bg-background">
-      <VerticalNav activeView={activeView} setActiveView={setActiveView} userRole={currentUser?.role} />
+      <VerticalNav 
+        activeView={activeView} 
+        setActiveView={setActiveView} 
+        userRole={currentUser?.role} 
+        isOpen={isNavOpen}
+        setIsOpen={setIsNavOpen}
+      />
       <div className="flex-1 md:pl-[70px] min-w-0">
         {renderView()}
       </div>

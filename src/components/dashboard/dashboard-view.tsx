@@ -4,11 +4,12 @@
 import * as React from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Funnel, FunnelChart, LabelList, PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MessageSquare, Users, Clock, Smile, Frown, Meh, Bot, UserCheck, DollarSign, Award, TrendingUp, TrendingDown, CheckCircle, Target, GitBranch, AlertCircle, Timer } from "lucide-react";
+import { MessageSquare, Users, Clock, Smile, Frown, Meh, Bot, UserCheck, DollarSign, Award, TrendingUp, TrendingDown, CheckCircle, Target, GitBranch, AlertCircle, Timer, PanelLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import type { AgentPerformance } from "@/types";
+import { Button } from "../ui/button";
 
 const chatData = [
   { name: 'Jan', conversations: 4000, resolutionTime: 24 },
@@ -62,11 +63,21 @@ const popularIntentsData = [
   { name: 'Business Hours', count: 190, fill: "hsl(var(--chart-5))" },
 ];
 
-export function DashboardView() {
+type DashboardViewProps = {
+  onMenuClick: () => void;
+};
+
+export function DashboardView({ onMenuClick }: DashboardViewProps) {
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
       <header className="flex items-center justify-between p-4 border-b">
-        <h1 className="text-2xl font-bold">Dashboard & Analytics</h1>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Open Menu</span>
+            </Button>
+            <h1 className="text-2xl font-bold">Dashboard & Analytics</h1>
+        </div>
       </header>
       <main className="flex-1 overflow-auto p-4">
         <Tabs defaultValue="overview" className="space-y-4">
