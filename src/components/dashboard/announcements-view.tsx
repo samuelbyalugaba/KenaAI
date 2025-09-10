@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -88,7 +87,7 @@ export function AnnouncementsView() {
     ann.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     ann.content.toLowerCase().includes(searchTerm.toLowerCase())
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  
+
   function onSubmit(data: AnnouncementFormValues) {
     const newAnnouncement: Announcement = {
       id: new Date().toISOString(),
