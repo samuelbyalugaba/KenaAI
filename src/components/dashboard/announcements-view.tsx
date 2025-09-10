@@ -167,7 +167,7 @@ export function AnnouncementsView() {
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a category" />
-                            </SelectTrigger>
+                            </Trigger>
                           </FormControl>
                           <SelectContent>
                             <SelectItem value="General">General</SelectItem>
