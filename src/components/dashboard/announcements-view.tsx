@@ -95,7 +95,8 @@ export function AnnouncementsView() {
       author: mockAdminUser,
       date: new Date().toISOString().split('T')[0],
       readBy: [],
-      ...data,
+      title: data.title,
+      content: data.content,
       category: data.category as AnnouncementCategory,
     };
     
