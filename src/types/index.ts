@@ -54,7 +54,7 @@ export type User = {
     date: string;
     category: AnnouncementCategory;
     content: string;
-    readBy: Agent[];
+readBy: Agent[];
   };
 
   export type AgentPerformance = {
@@ -64,4 +64,3 @@ export type User = {
     avgResponseTime: string;
     resolutionRate: number;
   };
-
