@@ -257,13 +257,13 @@ const ChatArea = ({ user, chat, onChatbotToggle, onSendMessage }: { user: UserPr
         <div className="flex flex-1 flex-col h-full">
             <ChatHeader chat={chat} onChatbotToggle={onChatbotToggle} />
             <Separator />
-            <ScrollArea className="flex-grow" ref={scrollRef}>
+            <div className="flex-1 overflow-y-auto" ref={scrollRef}>
                 <div className="p-4 space-y-4">
                     {chat.messages.map((message) => (
                         <ChatMessage key={message.id} message={message} />
                     ))}
                 </div>
-            </ScrollArea>
+            </div>
             <Separator />
             <ChatInput 
               chatId={chat.id} 
@@ -557,7 +557,11 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
        {/* Mobile Sidebar */}
       <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <SheetContent side="left" className="p-0 w-80">
-              <SidebarContent />
+            <SheetHeader>
+              <SheetTitle className="sr-only">Chat Sidebar</SheetTitle>
+              <SheetDescription className="sr-only">A list of recent chats and filters.</SheetDescription>
+            </SheetHeader>
+            <SidebarContent />
           </SheetContent>
       </Sheet>
 
@@ -623,7 +627,7 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
             <Separator />
         </div>
         
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden">
              <ChatArea 
                 user={user}
                 chat={selectedChat} 
