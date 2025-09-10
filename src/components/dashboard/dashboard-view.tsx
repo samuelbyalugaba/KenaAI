@@ -2,9 +2,9 @@
 "use client";
 
 import * as React from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Users, Clock, Smile, Frown, Meh } from "lucide-react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Funnel, FunnelChart, LabelList, PieChart, Pie, Cell } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { MessageSquare, Users, Clock, Smile, Frown, Meh, Bot, UserCheck, DollarSign } from "lucide-react";
 
 const chatData = [
   { name: 'Jan', chats: 4000, resolutionTime: 2400 },
@@ -29,6 +29,23 @@ const kpiData = [
     { title: "Active Agents", value: "5", icon: Users, change: "+1" },
 ];
 
+const conversionData = [
+    { name: 'Jan', conversions: 120 },
+    { name: 'Feb', conversions: 150 },
+    { name: 'Mar', conversions: 130 },
+    { name: 'Apr', conversions: 180 },
+    { name: 'May', conversions: 160 },
+    { name: 'Jun', conversions: 210 },
+];
+
+const funnelData = [
+    { value: 1000, name: 'Total Chats', fill: 'hsl(var(--chart-1))' },
+    { value: 750, name: 'Chatbot Engaged', fill: 'hsl(var(--chart-2))' },
+    { value: 350, name: 'Human Agent', fill: 'hsl(var(--chart-3))' },
+    { value: 210, name: 'Conversion', fill: 'hsl(var(--chart-4))' },
+];
+
+
 const sentimentIcons = {
     Positive: <Smile className="h-6 w-6 text-green-500" />,
     Negative: <Frown className="h-6 w-6 text-red-500" />,
@@ -41,7 +58,7 @@ export function DashboardView() {
       <header className="flex items-center justify-between p-4 border-b">
         <h1 className="text-2xl font-bold">Admin Dashboard</h1>
       </header>
-      <main className="flex-1 overflow-auto p-4">
+      <main className="flex-1 overflow-auto p-4 space-y-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             {kpiData.map(kpi => (
                 <Card key={kpi.title}>
@@ -56,7 +73,7 @@ export function DashboardView() {
                 </Card>
             ))}
         </div>
-        <div className="grid gap-4 mt-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="lg:col-span-4">
                 <CardHeader>
                     <CardTitle>Conversation Volume</CardTitle>
@@ -111,7 +128,54 @@ export function DashboardView() {
                 </CardContent>
             </Card>
         </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle>Conversion Tracking</CardTitle>
+                    <CardDescription>Chats that led to a successful action.</CardDescription>
+                </CardHeader>
+                <CardContent className="pl-2">
+                    <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={conversionData}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: "hsl(var(--background))",
+                                    borderColor: "hsl(var(--border))",
+                                }}
+                            />
+                            <Legend />
+                            <Bar dataKey="conversions" fill="hsl(var(--chart-5))" name="Successful Conversions" />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+            <Card className="lg:col-span-4">
+                <CardHeader>
+                    <CardTitle>Engagement Funnel</CardTitle>
+                    <CardDescription>From chatbot interaction to human agent.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ResponsiveContainer width="100%" height={300}>
+                        <FunnelChart>
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: "hsl(var(--background))",
+                                    borderColor: "hsl(var(--border))",
+                                }}
+                            />
+                            <Funnel dataKey="value" data={funnelData} isAnimationActive>
+                                <LabelList position="right" fill="hsl(var(--foreground))" stroke="none" dataKey="name" />
+                            </Funnel>
+                        </FunnelChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+        </div>
       </main>
     </div>
   );
 }
+

@@ -128,7 +128,7 @@ const mockChats: Chat[] = [
     user: { name: "Glory", avatar: "https://picsum.photos/id/103/100/100", online: false, email: "glory@example.com", phone: "+1-555-0104" },
     lastMessage: "My order hasn't arri...",
     timestamp: "Yesterday",
-    unreadCount: 0,
+    unreadCount: 1,
     priority: "high",
     isChatbotActive: false,
     messages: [
@@ -136,11 +136,9 @@ const mockChats: Chat[] = [
       { id: "m2", sender: "me", text: "Hello Glory! 🤖 I’m checking your order details. Please provide your order number.", timestamp: "02:16 PM" },
       { id: "m3", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Sure, it’s #ORD4582", timestamp: "02:17 PM" },
       { id: "m4", sender: "me", text: "Thanks! 🔍 This looks like it may need special assistance. Transferring you to a human support agent...", timestamp: "02:18 PM" },
-      { id: "m5", sender: "me", text: "Hi Glory, this is Alex from support 👋 I’ll personally look into your order.", timestamp: "02:19 PM" },
+      { id: "m5", sender: "me", text: "Hi Glory, this is Sylvester from support 👋 I’ll personally look into your order.", timestamp: "02:19 PM" },
       { id: "m6", sender: "me", text: "I see your package was delayed at the courier’s end 🚚. I’ll escalate this and request priority shipping.", timestamp: "02:20 PM" },
       { id: "m7", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Okay, I really hope it arrives soon. I’ve been waiting a long time.", timestamp: "02:21 PM" },
-      { id: "m8", sender: "me", text: "I totally understand 💙 I’ll also email you the latest tracking update today and apply a 10% discount voucher for the delay.", timestamp: "02:22 PM" },
-      { id: "m9", sender: { name: "Glory", avatar: "https://picsum.photos/id/1027/100/100", online: true }, text: "Thanks, that’s really helpful 🙏", timestamp: "02:23 PM" }
     ]
   },
 ];
