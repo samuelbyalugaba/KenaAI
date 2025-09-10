@@ -43,6 +43,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import {
   Tooltip,
@@ -611,3 +612,5 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
     </div>
   );
 }
+
+    
