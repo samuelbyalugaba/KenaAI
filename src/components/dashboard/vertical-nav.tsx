@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/tooltip";
 import type { View } from "@/app/page";
 import type { AgentRole } from "@/types";
-import { Sheet, SheetContent } from "../ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 
 const navItems = [
   { icon: MessageSquare, label: "Chat" as View },
@@ -112,7 +112,10 @@ export function VerticalNav({ activeView, setActiveView, userRole, isOpen, setIs
         {/* Mobile Nav */}
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetContent side="left" className="p-0 w-[70px] border-none">
-                <NavContent />
+              <SheetHeader>
+                <SheetTitle className="sr-only">Main Menu</SheetTitle>
+              </SheetHeader>
+              <NavContent />
             </SheetContent>
         </Sheet>
         {/* Desktop Nav */}
