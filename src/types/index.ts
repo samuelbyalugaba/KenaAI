@@ -1,4 +1,5 @@
 
+
 export type User = {
     name: string;
     avatar: string;
@@ -55,3 +56,12 @@ export type User = {
     content: string;
     readBy: Agent[];
   };
+
+  export type AgentPerformance = {
+    rank: number;
+    agent: Agent;
+    conversations: number;
+    avgResponseTime: string;
+    resolutionRate: number;
+  };
+
