@@ -1,3 +1,4 @@
+
 export type User = {
     name: string;
     avatar: string;
@@ -41,5 +42,16 @@ export type User = {
     name: string;
     avatar: string;
     role: AgentRole;
-  }
+  };
   
+  export type AnnouncementCategory = "General" | "Urgent" | "Training";
+
+  export type Announcement = {
+    id: string;
+    title: string;
+    author: Agent;
+    date: string;
+    category: AnnouncementCategory;
+    content: string;
+    readBy: Agent[];
+  };

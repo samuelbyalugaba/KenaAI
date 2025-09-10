@@ -8,8 +8,9 @@ import { ContactsView } from "@/components/dashboard/contacts-view";
 import { AgentsView } from "@/components/dashboard/agents-view";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import type { Agent, UserProfile } from "@/types";
+import { AnnouncementsView } from "@/components/dashboard/announcements-view";
 
-export type View = "Chat" | "Contacts" | "Agents" | "Dashboard";
+export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Language" | "Payments" | "Settings" | "System Settings";
 
 const mockAdminUser: UserProfile = {
   name: "Samuel Byalugaba",
@@ -39,6 +40,8 @@ export default function Home() {
         return <AgentsView />;
       case "Dashboard":
         return <DashboardView />;
+      case "Announcements":
+        return <AnnouncementsView />;
       default:
         return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} />;
     }
