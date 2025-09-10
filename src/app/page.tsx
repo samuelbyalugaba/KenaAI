@@ -50,7 +50,7 @@ export default function Home() {
   return (
     <main className="flex">
       <VerticalNav activeView={activeView} setActiveView={setActiveView} userRole={currentUser?.role} />
-      <div className="flex-1 md:pl-[70px] min-w-0">
+      <div className="flex-1 pl-0 md:pl-[70px] min-w-0">
         {renderView()}
       </div>
     </main>

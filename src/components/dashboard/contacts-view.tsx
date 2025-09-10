@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { User, Phone, Mail, Search, MessageSquare } from "lucide-react";
+import { User, Phone, Mail, Search, MessageSquare, ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,7 +27,6 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { Separator } from "../ui/separator";
 
-// Mock data, in a real app this would be fetched
 const mockContacts: ContactUser[] = [
     { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true, email: "kelvin@example.com", phone: "+1-555-0101" },
     { name: "Sylvester", avatar: "https://picsum.photos/id/1025/100/100", online: false, email: "sylvester@example.com", phone: "+1-555-0102" },
@@ -67,10 +66,15 @@ const mockChats: Chat[] = [
 ];
 
 
-const ContactProfile = ({ contact, chatHistory }: { contact: ContactUser, chatHistory: Message[] | undefined }) => {
+const ContactProfile = ({ contact, chatHistory, onBack }: { contact: ContactUser, chatHistory: Message[] | undefined, onBack?: () => void }) => {
     return (
         <Card className="h-full flex flex-col">
             <CardHeader className="flex flex-row items-center gap-4">
+                 {onBack && (
+                     <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
+                         <ArrowLeft className="h-4 w-4" />
+                     </Button>
+                 )}
                  <Avatar className="h-16 w-16">
                     <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
                     <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
@@ -140,7 +144,7 @@ const ContactProfile = ({ contact, chatHistory }: { contact: ContactUser, chatHi
 }
 
 const EmptyState = () => (
-    <div className="flex flex-col items-center justify-center h-full text-center p-8">
+    <div className="hidden md:flex flex-col items-center justify-center h-full text-center p-8">
         <User className="h-16 w-16 text-muted-foreground/50" />
         <h2 className="mt-4 text-xl font-semibold">Select a Contact</h2>
         <p className="mt-1 text-muted-foreground">Choose a contact from the list to view their profile and conversation history.</p>
@@ -149,7 +153,7 @@ const EmptyState = () => (
 
 export function ContactsView() {
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(mockContacts[0]);
+  const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
   
   const filteredContacts = mockContacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -157,6 +161,12 @@ export function ContactsView() {
     contact.phone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  React.useEffect(() => {
+    if (window.innerWidth >= 768) {
+        setSelectedContact(mockContacts[0]);
+    }
+  }, [])
+
   const selectedChatHistory = mockChats.find(chat => chat.user.email === selectedContact?.email)?.messages;
 
   return (
@@ -168,7 +178,7 @@ export function ContactsView() {
         </header>
         <main className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
             {/* Contact List */}
-            <div className="md:col-span-1 lg:col-span-1 border-r flex flex-col">
+            <div className={cn("md:col-span-1 lg:col-span-1 border-r flex-col", selectedContact ? "hidden md:flex" : "flex")}>
                 <div className="p-4">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -185,7 +195,7 @@ export function ContactsView() {
                         <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right hidden sm:table-cell">Actions</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -213,7 +223,7 @@ export function ContactsView() {
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className="text-right hidden sm:table-cell">
                                     <Tooltip>
                                     <TooltipTrigger asChild>
                                         <Button variant="ghost" size="icon">
@@ -232,9 +242,13 @@ export function ContactsView() {
             </div>
             
             {/* Contact Profile */}
-            <div className="md:col-span-2 lg:col-span-3 overflow-auto">
+            <div className={cn("md:col-span-2 lg:col-span-3 overflow-auto", selectedContact ? "block" : "hidden md:block")}>
                 {selectedContact ? (
-                    <ContactProfile contact={selectedContact} chatHistory={selectedChatHistory} />
+                    <ContactProfile 
+                        contact={selectedContact} 
+                        chatHistory={selectedChatHistory} 
+                        onBack={() => setSelectedContact(null)} 
+                    />
                 ) : (
                     <EmptyState />
                 )}
@@ -244,4 +258,3 @@ export function ContactsView() {
     </TooltipProvider>
   );
 }
-

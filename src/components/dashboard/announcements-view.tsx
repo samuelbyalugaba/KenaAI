@@ -113,9 +113,9 @@ export function AnnouncementsView() {
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
-      <header className="flex items-center justify-between p-4 border-b">
+      <header className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b">
         <h1 className="text-2xl font-bold">Announcements</h1>
-        <div className="relative w-full max-w-xs sm:max-w-sm">
+        <div className="relative w-full sm:w-auto sm:max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
                 placeholder="Search announcements..." 
@@ -126,7 +126,7 @@ export function AnnouncementsView() {
         </div>
       </header>
       <main className="flex-1 overflow-hidden grid md:grid-cols-3 gap-4 p-4">
-        <div className="md:col-span-1 flex flex-col">
+        <div className="md:col-span-1 flex flex-col h-full">
           <Card className="flex-1 flex flex-col">
             <CardHeader>
               <CardTitle>New Announcement</CardTitle>

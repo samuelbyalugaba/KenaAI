@@ -70,7 +70,7 @@ export function DashboardView() {
       </header>
       <main className="flex-1 overflow-auto p-4">
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
+          <TabsList className="overflow-x-auto whitespace-nowrap">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="agent-performance">Agent Performance</TabsTrigger>
             <TabsTrigger value="chatbot-analytics">Chatbot Analytics</TabsTrigger>
