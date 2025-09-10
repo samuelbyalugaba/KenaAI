@@ -4,7 +4,7 @@
 import * as React from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Funnel, FunnelChart, LabelList, PieChart, Pie, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { MessageSquare, Users, Clock, Smile, Frown, Meh, Bot, UserCheck, DollarSign, Award, TrendingUp, TrendingDown, CheckCircle } from "lucide-react";
+import { MessageSquare, Users, Clock, Smile, Frown, Meh, Bot, UserCheck, DollarSign, Award, TrendingUp, TrendingDown, CheckCircle, Target, GitBranch, AlertCircle, Timer } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -45,6 +45,21 @@ const funnelData = [
     { value: 980, name: 'Bot Engaged', fill: 'hsl(var(--chart-2))' },
     { value: 450, name: 'Agent Handoff', fill: 'hsl(var(--chart-3))' },
     { value: 210, name: 'Resolved', fill: 'hsl(var(--chart-4))' },
+];
+
+const chatbotKpiData = [
+    { title: "Bot Resolution Rate", value: "78%", icon: Target, change: "+5.2%", changeType: "increase" as const },
+    { title: "Handoff to Agent Rate", value: "22%", icon: GitBranch, change: "-1.5%", changeType: "decrease" as const },
+    { title: "Fallback Rate", value: "8%", icon: AlertCircle, change: "+0.5%", changeType: "increase" as const },
+    { title: "Avg. Bot Response Time", value: "2.1s", icon: Timer, change: "-0.2s", changeType: "decrease" as const },
+];
+
+const popularIntentsData = [
+  { name: 'Track Order', count: 580, fill: "hsl(var(--chart-1))" },
+  { name: 'Payment Issue', count: 420, fill: "hsl(var(--chart-2))" },
+  { name: 'Return Policy', count: 350, fill: "hsl(var(--chart-3))" },
+  { name: 'Product Info', count: 280, fill: "hsl(var(--chart-4))" },
+  { name: 'Business Hours', count: 190, fill: "hsl(var(--chart-5))" },
 ];
 
 export function DashboardView() {
@@ -171,31 +186,71 @@ export function DashboardView() {
              </Card>
           </TabsContent>
           <TabsContent value="chatbot-analytics" className="space-y-4">
-              <Card>
-                <CardHeader>
-                    <CardTitle>Chatbot Engagement Funnel</CardTitle>
-                    <CardDescription>How users interact from initial contact to resolution.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ResponsiveContainer width="100%" height={350}>
-                        <FunnelChart>
-                            <Tooltip
-                                contentStyle={{
-                                    backgroundColor: "hsl(var(--background))",
-                                    borderColor: "hsl(var(--border))",
-                                }}
-                            />
-                            <Funnel dataKey="value" data={funnelData} isAnimationActive>
-                                <LabelList position="right" fill="hsl(var(--foreground))" stroke="none" dataKey="name" />
-                            </Funnel>
-                        </FunnelChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {chatbotKpiData.map(kpi => (
+                    <Card key={kpi.title}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                            <kpi.icon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{kpi.value}</div>
+                            <p className={`text-xs text-muted-foreground flex items-center gap-1 ${kpi.changeType === 'increase' ? 'text-emerald-500' : 'text-red-500'}`}>
+                                {kpi.changeType === 'increase' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                                {kpi.change} from last month
+                            </p>
+                        </CardContent>
+                    </Card>
+                ))}
+              </div>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Popular Intents</CardTitle>
+                        <CardDescription>Top queries handled by the chatbot.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <BarChart data={popularIntentsData} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                                <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={100} />
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: "hsl(var(--background))",
+                                        borderColor: "hsl(var(--border))",
+                                    }}
+                                />
+                                <Bar dataKey="count" name="Times Triggered" fill="hsl(var(--chart-1))" />
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Chatbot Engagement Funnel</CardTitle>
+                        <CardDescription>How users interact from initial contact to resolution.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <FunnelChart>
+                                <Tooltip
+                                    contentStyle={{
+                                        backgroundColor: "hsl(var(--background))",
+                                        borderColor: "hsl(var(--border))",
+                                    }}
+                                />
+                                <Funnel dataKey="value" data={funnelData} isAnimationActive>
+                                    <LabelList position="right" fill="hsl(var(--foreground))" stroke="none" dataKey="name" />
+                                </Funnel>
+                            </FunnelChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+              </div>
           </TabsContent>
         </Tabs>
       </main>
     </div>
   );
 }
-
