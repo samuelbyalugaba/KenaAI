@@ -42,7 +42,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetDescription,
 } from "@/components/ui/sheet";
 import {
@@ -69,6 +68,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 // MOCK DATA
@@ -220,6 +220,7 @@ const Stats = () => {
 
 const ChatArea = ({ user, chat, onChatbotToggle, onSendMessage, onBack }: { user: UserProfile | null; chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; onBack: () => void; }) => {
     const scrollRef = React.useRef<HTMLDivElement>(null);
+    const isMobile = useIsMobile();
     
     React.useEffect(() => {
         if (scrollRef.current) {
@@ -397,13 +398,14 @@ type ChatLayoutProps = {
   user: UserProfile | null;
   onLogin: () => void;
   onLogout: () => void;
+  onMenuClick: () => void;
 };
 
-export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
+export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutProps) {
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
   const [agents, setAgents] = React.useState<Agent[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
+  const isMobile = useIsMobile();
 
 
   React.useEffect(() => {
@@ -423,12 +425,12 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
         });
 
         setChats(sortedChats);
-        if (sortedChats.length > 0 && window.innerWidth >= 768) { // Select first chat on desktop
+        if (sortedChats.length > 0 && !isMobile) { // Select first chat on desktop
             setSelectedChat(sortedChats[0]);
         }
     }
     prioritizeChats();
-  }, []);
+  }, [isMobile]);
 
   const handleSelectChat = (chat: Chat) => {
     setSelectedChat(chat);
@@ -477,41 +479,16 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
     setAgents(prev => [...prev, newAgent]);
   }
 
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-card text-card-foreground">
-        <div className="flex items-center justify-between p-4 border-b">
-          <KenaAILogo className="h-10" />
-        </div>
-
-        <div className="p-4 space-y-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search" className="pl-9" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Select defaultValue="all-channels">
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all-channels">All Channels</SelectItem>
-                <SelectItem value="email">WhatsApp</SelectItem>
-                <SelectItem value="whatsapp">Webchat</SelectItem>
-                <SelectItem value="whatsapp">Instagram</SelectItem>
-                <SelectItem value="whatsapp">Facebook</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <h2 className="px-4 text-lg font-semibold tracking-tight">Recent Chats</h2>
-        <ChatList chats={chats} selectedChat={selectedChat} onSelectChat={handleSelectChat} />
-    </div>
+  const MainHeader = ({ children }: { children: React.ReactNode }) => (
+    <header className="flex items-center justify-between p-2 border-b h-[61px]">
+        {children}
+    </header>
   )
 
-  const MainHeader = () => (
-    <header className="flex items-center justify-between p-2 border-b h-[61px]">
+  const ChatListHeaderContent = () => (
+    <>
         <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setIsSidebarOpen(true)}>
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
                 <PanelLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-xl font-bold hidden md:block">Chats</h1>
@@ -560,57 +537,161 @@ export function ChatLayout({ user, onLogin, onLogout }: ChatLayoutProps) {
                 </DropdownMenuContent>
             </DropdownMenu>
         </div>
-    </header>
-  )
+    </>
+  );
+
+  const renderMobileView = () => {
+    if (selectedChat) {
+      return (
+        <ChatArea 
+          user={user}
+          chat={selectedChat} 
+          onChatbotToggle={handleChatbotToggle} 
+          onSendMessage={handleSendMessage}
+          onBack={() => setSelectedChat(null)}
+        />
+      );
+    }
+    return (
+      <div className="flex flex-col h-full">
+        <MainHeader>
+          <ChatListHeaderContent />
+        </MainHeader>
+        <SidebarContent />
+      </div>
+    );
+  };
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full bg-card text-card-foreground">
+        <div className="hidden md:flex items-center justify-between p-4 border-b">
+          <KenaAILogo className="h-10" />
+        </div>
+        <div className="p-4 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Search" className="pl-9" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Select defaultValue="all-channels">
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all-channels">All Channels</SelectItem>
+                <SelectItem value="email">WhatsApp</SelectItem>
+                <SelectItem value="whatsapp">Webchat</SelectItem>
+                <SelectItem value="whatsapp">Instagram</SelectItem>
+                <SelectItem value="whatsapp">Facebook</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <h2 className="px-4 text-lg font-semibold tracking-tight">Recent Chats</h2>
+        <ChatList chats={chats} selectedChat={selectedChat} onSelectChat={handleSelectChat} />
+    </div>
+  );
 
   return (
     <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
-      <div className={cn("md:flex md:w-80 lg:w-96 border-r h-full", selectedChat ? "hidden md:flex" : "flex w-full")}>
-        <SidebarContent />
-      </div>
+      { isMobile ? (
+        <div className="w-full h-full flex flex-col">
+          {renderMobileView()}
+        </div>
+      ) : (
+        <>
+          <div className="md:w-80 lg:w-96 border-r h-full">
+            <SidebarContent />
+          </div>
 
-      <div className={cn("flex flex-1 flex-col h-screen", selectedChat ? "flex" : "hidden md:flex")}>
-        <MainHeader />
-        
-        <div className="hidden md:block">
-            <Stats />
-            <Separator />
-        </div>
-        
-        <div className="flex-1 flex flex-col overflow-hidden">
-             { user && selectedChat ? (
-                <ChatArea 
-                    user={user}
-                    chat={selectedChat} 
-                    onChatbotToggle={handleChatbotToggle} 
-                    onSendMessage={handleSendMessage}
-                    onBack={() => setSelectedChat(null)}
-                />
-            ) : (
-                <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                    { !user ? (
-                        <>
-                            <div className="rounded-full bg-primary/10 p-4">
-                                <LogIn className="h-12 w-12 text-primary"/>
-                            </div>
-                            <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
-                            <p className="text-muted-foreground">Please log in as an agent to view and respond to chats.</p>
-                        </>
-                    ) : (
-                        <>
-                            <div className="rounded-full bg-primary/10 p-4">
-                                <MessageSquare className="h-12 w-12 text-primary"/>
-                            </div>
-                            <h2 className="text-2xl font-bold">No Chat Selected</h2>
-                            <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
-                        </>
-                    )}
-                </div>
-            )}
-        </div>
-      </div>
+          <div className="flex flex-1 flex-col h-screen">
+            <MainHeader>
+              <h1 className="text-xl font-bold">Chats</h1>
+              <div className="flex items-center gap-4">
+                  <Button variant="ghost" size="sm" className="gap-2">
+                      <PlusCircle className="h-5 w-5" /> New Chat
+                  </Button>
+                  <div className="hidden md:flex">
+                      <AddAgentDialog onAgentAdd={handleAgentAdd} />
+                  </div>
+                  <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            {user ? (
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
+                                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            ) : (
+                                <UserIcon className="h-5 w-5 text-muted-foreground" />
+                            )}
+                            <span className="sr-only">User Menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {user ? (
+                            <>
+                              <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem>
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Settings</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={onLogout}>
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Log out</span>
+                              </DropdownMenuItem>
+                            </>
+                        ) : (
+                            <DropdownMenuItem onClick={onLogin}>
+                                <LogIn className="mr-2 h-4 w-4" />
+                                <span>Log in as Agent</span>
+                            </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                  </DropdownMenu>
+              </div>
+            </MainHeader>
+            
+            <div className="hidden md:block">
+                <Stats />
+                <Separator />
+            </div>
+            
+            <div className="flex-1 flex flex-col overflow-hidden">
+                 { user && selectedChat ? (
+                    <ChatArea 
+                        user={user}
+                        chat={selectedChat} 
+                        onChatbotToggle={handleChatbotToggle} 
+                        onSendMessage={handleSendMessage}
+                        onBack={() => setSelectedChat(null)}
+                    />
+                ) : (
+                    <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
+                        { !user ? (
+                            <>
+                                <div className="rounded-full bg-primary/10 p-4">
+                                    <LogIn className="h-12 w-12 text-primary"/>
+                                </div>
+                                <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
+                                <p className="text-muted-foreground">Please log in as an agent to view and respond to chats.</p>
+                            </>
+                        ) : (
+                            <>
+                                <div className="rounded-full bg-primary/10 p-4">
+                                    <MessageSquare className="h-12 w-12 text-primary"/>
+                                </div>
+                                <h2 className="text-2xl font-bold">No Chat Selected</h2>
+                                <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
+                            </>
+                        )}
+                    </div>
+                )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
-
-    

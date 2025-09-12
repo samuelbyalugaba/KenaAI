@@ -35,7 +35,7 @@ export default function Home() {
     const props = { onMenuClick: () => setIsNavOpen(true) };
     switch (activeView) {
       case "Chat":
-        return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} />;
+        return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} {...props} />;
       case "Contacts":
         return <ContactsView {...props} />;
       case "Agents":
@@ -45,7 +45,7 @@ export default function Home() {
       case "Announcements":
         return <AnnouncementsView {...props} />;
       default:
-        return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} />;
+        return <ChatLayout user={currentUser} onLogin={handleLogin} onLogout={handleLogout} {...props} />;
     }
   };
 
