@@ -556,7 +556,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
          ) : (
              <DropdownMenuItem onClick={onLogin}>
                  <LogIn className="mr-2 h-4 w-4" />
-                 <span>Log in as Agent</span>
+                 <span>Log in</span>
              </DropdownMenuItem>
          )}
       </DropdownMenuContent>
@@ -572,10 +572,10 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                     <LogIn className="h-12 w-12 text-primary"/>
                 </div>
                 <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
-                <p className="text-muted-foreground">Please log in as an agent to view and respond to chats.</p>
+                <p className="text-muted-foreground">Please log in to view and respond to chats.</p>
                 <Button onClick={onLogin}>
                     <LogIn className="mr-2 h-4 w-4" />
-                    Log in as Agent
+                    Log in
                 </Button>
             </div>
         );
@@ -676,7 +676,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                                     <LogIn className="h-12 w-12 text-primary"/>
                                 </div>
                                 <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
-                                <p className="text-muted-foreground">Please log in as an agent to view and respond to chats.</p>
+                                <p className="text-muted-foreground">Please log in to view and respond to chats.</p>
                             </>
                         ) : (
                             <>
