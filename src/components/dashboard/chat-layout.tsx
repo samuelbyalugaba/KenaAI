@@ -42,8 +42,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
   SheetTrigger,
+  SheetDescription,
 } from "@/components/ui/sheet";
 import {
   Tooltip,
@@ -487,60 +487,100 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
 
   const ChatListHeaderContent = () => (
     <>
-        <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
-                <PanelLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-bold hidden md:block">Chats</h1>
+      <div className="flex items-center gap-2">
+        <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+            <PanelLeft className="h-5 w-5" />
+        </Button>
+        <h1 className="text-xl font-bold hidden md:block">Chats</h1>
+      </div>
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" className="gap-2">
+          <PlusCircle className="h-5 w-5" /> New Chat
+        </Button>
+        <div className="hidden md:flex">
+          <AddAgentDialog onAgentAdd={handleAgentAdd} />
         </div>
-        <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" className="gap-2">
-                <PlusCircle className="h-5 w-5" /> New Chat
-            </Button>
-             <div className="hidden md:flex">
-                <AddAgentDialog onAgentAdd={handleAgentAdd} />
-             </div>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                      {user ? (
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                      ) : (
-                          <UserIcon className="h-5 w-5 text-muted-foreground" />
-                      )}
-                      <span className="sr-only">User Menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                   {user ? (
-                       <>
-                         <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
-                         <DropdownMenuSeparator />
-                         <DropdownMenuItem>
-                           <Settings className="mr-2 h-4 w-4" />
-                           <span>Settings</span>
-                         </DropdownMenuItem>
-                         <DropdownMenuItem onClick={onLogout}>
-                           <LogOut className="mr-2 h-4 w-4" />
-                           <span>Log out</span>
-                         </DropdownMenuItem>
-                       </>
-                   ) : (
-                       <DropdownMenuItem onClick={onLogin}>
-                           <LogIn className="mr-2 h-4 w-4" />
-                           <span>Log in as Agent</span>
-                       </DropdownMenuItem>
-                   )}
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
+        <UserMenu />
+      </div>
     </>
   );
 
+  const MobileChatListHeader = () => (
+    <MainHeader>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Open Menu</span>
+            </Button>
+            <h1 className="text-xl font-bold">Chats</h1>
+        </div>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon">
+                <PlusCircle className="h-5 w-5" />
+                <span className="sr-only">New Chat</span>
+            </Button>
+            <UserMenu />
+        </div>
+    </MainHeader>
+  )
+
+  const UserMenu = () => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+            {user ? (
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
+                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+            ) : (
+                <UserIcon className="h-5 w-5 text-muted-foreground" />
+            )}
+            <span className="sr-only">User Menu</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+         {user ? (
+             <>
+               <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+               <DropdownMenuSeparator />
+               <DropdownMenuItem>
+                 <Settings className="mr-2 h-4 w-4" />
+                 <span>Settings</span>
+               </DropdownMenuItem>
+               <DropdownMenuItem onClick={onLogout}>
+                 <LogOut className="mr-2 h-4 w-4" />
+                 <span>Log out</span>
+               </DropdownMenuItem>
+             </>
+         ) : (
+             <DropdownMenuItem onClick={onLogin}>
+                 <LogIn className="mr-2 h-4 w-4" />
+                 <span>Log in as Agent</span>
+             </DropdownMenuItem>
+         )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+  
+
   const renderMobileView = () => {
+    if (!user) {
+        return (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
+                <div className="rounded-full bg-primary/10 p-4">
+                    <LogIn className="h-12 w-12 text-primary"/>
+                </div>
+                <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
+                <p className="text-muted-foreground">Please log in as an agent to view and respond to chats.</p>
+                <Button onClick={onLogin}>
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Log in as Agent
+                </Button>
+            </div>
+        );
+    }
+    
     if (selectedChat) {
       return (
         <ChatArea 
@@ -553,9 +593,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     }
     return (
       <div className="flex flex-col h-full">
-        <MainHeader>
-          <ChatListHeaderContent />
-        </MainHeader>
+        <MobileChatListHeader />
         <SidebarContent />
       </div>
     );
@@ -563,9 +601,6 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-card text-card-foreground">
-        <div className="hidden md:flex items-center justify-between p-4 border-b">
-          <KenaAILogo className="h-10" />
-        </div>
         <div className="p-4 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -616,42 +651,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                      <div className="hidden md:flex">
                          <AddAgentDialog onAgentAdd={handleAgentAdd} />
                      </div>
-                     <DropdownMenu>
-                         <DropdownMenuTrigger asChild>
-                           <Button variant="ghost" size="icon">
-                               {user ? (
-                                   <Avatar className="h-8 w-8">
-                                     <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
-                                     <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                   </Avatar>
-                               ) : (
-                                   <UserIcon className="h-5 w-5 text-muted-foreground" />
-                               )}
-                               <span className="sr-only">User Menu</span>
-                           </Button>
-                         </DropdownMenuTrigger>
-                         <DropdownMenuContent align="end">
-                           {user ? (
-                               <>
-                                 <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
-                                 <DropdownMenuSeparator />
-                                 <DropdownMenuItem>
-                                   <Settings className="mr-2 h-4 w-4" />
-                                   <span>Settings</span>
-                                 </DropdownMenuItem>
-                                 <DropdownMenuItem onClick={onLogout}>
-                                   <LogOut className="mr-2 h-4 w-4" />
-                                   <span>Log out</span>
-                                 </DropdownMenuItem>
-                               </>
-                           ) : (
-                               <DropdownMenuItem onClick={onLogin}>
-                                   <LogIn className="mr-2 h-4 w-4" />
-                                   <span>Log in as Agent</span>
-                               </DropdownMenuItem>
-                           )}
-                         </DropdownMenuContent>
-                     </DropdownMenu>
+                     <UserMenu />
                  </div>
              </MainHeader>
             
@@ -698,3 +698,4 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
 }
 
     
+
