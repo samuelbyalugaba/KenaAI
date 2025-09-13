@@ -128,7 +128,7 @@ const PriorityBadge = ({ priority }: { priority: Priority }) => {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger>
+        <TooltipTrigger asChild>
           <div className={cn("h-2.5 w-2.5 rounded-full", colorClass)}></div>
         </TooltipTrigger>
         <TooltipContent>
@@ -736,5 +736,7 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
     </div>
   );
 }
+
+    
 
     
