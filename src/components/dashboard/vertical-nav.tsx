@@ -48,6 +48,15 @@ const adminNavItems = [
   { icon: Megaphone, label: "Announcements" as View },
 ];
 
+const superAgentNavItems = [
+  { icon: MessageSquare, label: "Chat" as View },
+  { icon: BookUser, label: "Contacts" as View },
+  { icon: Users, label: "Agents" as View },
+  { icon: Send, label: "Campaigns" as View },
+  { icon: Megaphone, label: "Announcements" as View },
+  { icon: Award, label: "My Performance" as View },
+];
+
 const agentNavItems = [
   { icon: MessageSquare, label: "Chat" as View },
   { icon: BookUser, label: "Contacts" as View },
@@ -67,8 +76,20 @@ type VerticalNavProps = {
 };
 
 export function VerticalNav({ activeView, setActiveView, user, onLogout, isOpen, setIsOpen, onSettingsClick }: VerticalNavProps) {
+  
+  const getNavItems = () => {
+    switch(user?.role) {
+        case 'admin':
+            return adminNavItems;
+        case 'super_agent':
+            return superAgentNavItems;
+        case 'agent':
+        default:
+            return agentNavItems;
+    }
+  }
 
-  const navItems = user?.role === 'admin' ? adminNavItems : agentNavItems;
+  const navItems = getNavItems();
 
   const NavContent = () => (
     <div className="flex h-full flex-col items-center justify-between bg-primary py-4">

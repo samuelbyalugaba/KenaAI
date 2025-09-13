@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { PanelLeft } from "lucide-react";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { CampaignsView } from "@/components/dashboard/campaigns-view";
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "Analytics" | "My Performance";
 
@@ -86,18 +87,13 @@ export default function Home() {
       case "Agents":
         return <AgentsView {...props} />;
       case "Dashboard":
-        // Protect dashboard view
-        if (currentUser?.role === 'admin') {
-          return <DashboardView {...props} />;
-        }
-        // Redirect or show access denied for non-admins
-        return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} />;
+        return <DashboardView {...props} />;
       case "Announcements":
         return <AnnouncementsView {...props} />;
       case "My Performance":
         return <PlaceholderView title="My Performance" {...props} />;
       case "Campaigns":
-         return <PlaceholderView title="Campaigns" {...props} />;
+         return <CampaignsView {...props} />;
        case "Analytics":
          return <PlaceholderView title="Analytics" {...props} />;
       default:
