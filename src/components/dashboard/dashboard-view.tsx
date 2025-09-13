@@ -21,8 +21,6 @@ import {
     Bot,
     ArrowUp,
     ArrowDown,
-    Activity,
-    Users2,
     BarChartIcon,
     PieChartIcon,
     File,
@@ -365,4 +363,3 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
       </main>
     </div>
   );
-}
