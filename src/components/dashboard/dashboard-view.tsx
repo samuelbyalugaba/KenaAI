@@ -25,7 +25,6 @@ import {
     Users2,
     BarChartIcon,
     PieChartIcon,
-    LineChartIcon,
     File,
     Download,
     Mail,
@@ -55,6 +54,7 @@ import { Badge } from "../ui/badge";
 import { mockAgentPerformance } from "@/lib/mock-data";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Label } from "@/components/ui/label";
 
 
 const kpiData = [
