@@ -23,9 +23,13 @@ import {
     ArrowDown,
     Activity,
     Users2,
-    BarChart as BarChartIcon,
+    BarChartIcon,
     PieChartIcon,
-    LineChartIcon
+    LineChartIcon,
+    File,
+    Download,
+    Mail,
+    AlertTriangle
 } from "lucide-react";
 import type { UserProfile, AgentPerformance } from "@/types";
 import { Button } from "../ui/button";
@@ -41,13 +45,16 @@ import {
   Tooltip,
   XAxis,
   YAxis,
-  Legend
+  Legend,
+  Cell
 } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { mockAgentPerformance } from "@/lib/mock-data";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 
 const kpiData = [
@@ -72,7 +79,7 @@ const kpiData = [
     trendDirection: "down" as const,
     icon: Clock,
   },
-  {
+    {
     title: "Customer Satisfaction (CSAT)",
     value: "89%",
     trend: "+2.5%",
@@ -242,16 +249,20 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
                         <PieChart>
                             <Tooltip content={<ChartTooltipContent nameKey="name" />} />
-                            <Pie data={channelBreakdownData} dataKey="value" nameKey="name" />
-                            <Legend content={<ChartTooltipContent />} />
+                            <Pie data={channelBreakdownData} dataKey="value" nameKey="name" >
+                                {channelBreakdownData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                ))}
+                            </Pie>
                         </PieChart>
                     </ChartContainer>
                 </CardContent>
             </Card>
         </section>
         
-        <section className="grid gap-4 md:grid-cols-2">
-            <Card>
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Agent Performance */}
+            <Card className="lg:col-span-2">
                 <CardHeader>
                     <CardTitle>Agent Performance</CardTitle>
                     <CardDescription>Leaderboard of agent efficiency and resolution rates.</CardDescription>
@@ -260,53 +271,98 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     <AgentPerformanceTable agents={mockAgentPerformance} />
                 </CardContent>
             </Card>
+             {/* Customer Engagement */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Response Efficiency vs. SLA</CardTitle>
-                    <CardDescription>Bar chart coming soon.</CardDescription>
+                    <CardTitle>Customer Engagement</CardTitle>
+                    <CardDescription>Metrics on customer interaction and loyalty.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex items-center justify-center text-muted-foreground h-48">
-                    <BarChartIcon className="h-12 w-12" />
+                <CardContent className="space-y-4">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">New vs Returning Customers</CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex justify-around items-center">
+                            <div className="text-center">
+                                <p className="text-2xl font-bold">350</p>
+                                <p className="text-sm text-muted-foreground">New</p>
+                            </div>
+                             <div className="text-center">
+                                <p className="text-2xl font-bold">895</p>
+                                <p className="text-sm text-muted-foreground">Returning</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <p className="text-center text-sm text-muted-foreground pt-4">Campaign & Funnel analytics coming soon.</p>
                 </CardContent>
             </Card>
         </section>
 
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            {/* Export and Reporting */}
+            <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Export &amp; Reporting</CardTitle>
+                    <CardDescription>Generate and schedule custom reports.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Button variant="outline" className="flex-1"><Download className="mr-2 h-4 w-4" /> CSV</Button>
+                        <Button variant="outline" className="flex-1"><Download className="mr-2 h-4 w-4" /> Excel</Button>
+                        <Button variant="outline" className="flex-1"><Download className="mr-2 h-4 w-4" /> PDF</Button>
+                    </div>
+                    <div className="border-t pt-4 space-y-2">
+                        <Label htmlFor="report-frequency">Schedule Email Reports</Label>
+                        <div className="flex gap-2">
+                            <Select defaultValue="weekly">
+                                <SelectTrigger id="report-frequency" className="flex-1">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="daily">Daily</SelectItem>
+                                    <SelectItem value="weekly">Weekly</SelectItem>
+                                    <SelectItem value="monthly">Monthly</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button className="flex-shrink-0"><Mail className="mr-2 h-4 w-4" /> Schedule</Button>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
 
-        {/* Section 4: Customer Engagement */}
-         <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-             <Card className="lg:col-span-1">
+             {/* Smart Alerts */}
+            <Card className="lg:col-span-2">
                 <CardHeader>
-                    <CardTitle>New vs Returning Customers</CardTitle>
+                    <CardTitle>Smart Alerts</CardTitle>
+                    <CardDescription>Real-time notifications and AI-powered suggestions.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex items-center justify-center text-muted-foreground h-48">
-                     <Users2 className="h-12 w-12" />
-                     <p className="ml-4">Metric coming soon</p>
-                </CardContent>
-            </Card>
-             <Card className="lg:col-span-1">
-                <CardHeader>
-                    <CardTitle>Engagement Funnel</CardTitle>
-                    <CardDescription>This section is under construction.</CardDescription>
-                </CardHeader>
-                 <CardContent className="flex items-center justify-center text-muted-foreground h-48">
-                    <LineChartIcon className="h-12 w-12" />
-                </CardContent>
-            </Card>
-             <Card className="lg:col-span-1">
-                <CardHeader>
-                    <CardTitle>Campaign Analytics</CardTitle>
-                    <CardDescription>Campaign metrics coming soon.</CardDescription>
-                </CardHeader>
-                 <CardContent className="flex items-center justify-center text-muted-foreground h-48">
-                    <PieChartIcon className="h-12 w-12" />
+                <CardContent className="space-y-3">
+                    <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle>Spike in Negative Sentiment!</AlertTitle>
+                        <AlertDescription>
+                            Negative customer sentiment has increased by 35% in the last hour.
+                        </AlertDescription>
+                    </Alert>
+                    <Alert>
+                        <Clock className="h-4 w-4" />
+                        <AlertTitle>Response Times Exceeding SLA</AlertTitle>
+                        <AlertDescription>
+                           Average response time is currently 5m 42s, exceeding the 3m target.
+                        </AlertDescription>
+                    </Alert>
+                    <Alert>
+                        <Bot className="h-4 w-4" />
+                        <AlertTitle>AI Training Suggestion</AlertTitle>
+                        <AlertDescription>
+                            Your bot missed 28 intents related to "shipping costs" this week. Consider adding a new training phrase.
+                        </AlertDescription>
+                    </Alert>
                 </CardContent>
             </Card>
         </section>
-
 
       </main>
     </div>
   );
 }
-
-    
