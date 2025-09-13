@@ -27,10 +27,31 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { Separator } from "../ui/separator";
 import { mockUsers, mockChats } from "@/lib/mock-data";
+import { useToast } from "@/hooks/use-toast";
 
 
 const ContactProfile = ({ contact, chatHistory, onBack }: { contact: ContactUser, chatHistory: Message[] | undefined, onBack?: () => void }) => {
+    const { toast } = useToast();
+    const [note, setNote] = React.useState("");
     
+    const handleSaveNote = () => {
+        if (!note.trim()) {
+            toast({
+                variant: "destructive",
+                title: "Empty Note",
+                description: "Cannot save an empty note.",
+            })
+            return;
+        }
+        // In a real app, you would save the note to a database.
+        console.log("Saving note for", contact.name, ":", note);
+        toast({
+            title: "Note Saved",
+            description: `Your note for ${contact.name} has been saved.`,
+        });
+        setNote("");
+    }
+
     const exampleNotes = [
         { id: 1, agent: "Sylvester Mayaya", text: "Customer is interested in the enterprise plan. Follow up next week.", timestamp: "2024-07-29 10:30 AM" },
         { id: 2, agent: "Samuel Byalugaba", text: "Had a difficult call regarding a billing issue. Offered a 10% discount on next month's invoice.", timestamp: "2024-07-28 02:45 PM" },
@@ -74,8 +95,13 @@ const ContactProfile = ({ contact, chatHistory, onBack }: { contact: ContactUser
                                 <AvatarFallback>SM</AvatarFallback>
                             </Avatar>
                              <div className="flex-1">
-                                 <Textarea placeholder="Add a private note for this contact..." rows={2} />
-                                 <Button size="sm" className="mt-2">Save Note</Button>
+                                 <Textarea 
+                                    placeholder="Add a private note for this contact..." 
+                                    rows={2}
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                />
+                                 <Button size="sm" className="mt-2" onClick={handleSaveNote}>Save Note</Button>
                              </div>
                         </div>
                         <ScrollArea className="h-48">
@@ -167,9 +193,9 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
   ) : [];
   
   React.useEffect(() => {
-    if (user && window.innerWidth >= 768) {
+    if (user && window.innerWidth >= 768 && !selectedContact) {
         setSelectedContact(mockUsers[0]);
-    } else {
+    } else if (!user) {
         setSelectedContact(null);
     }
   }, [user])
@@ -275,3 +301,5 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
     </TooltipProvider>
   );
 }
+
+    
