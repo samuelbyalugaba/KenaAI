@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import type { AgentPerformance, UserProfile } from "@/types";
 import { Button } from "../ui/button";
-import { mockAgents } from "@/lib/mock-data";
+import { mockAgents, mockAgentPerformance } from "@/lib/mock-data";
 
 const chatData = [
   { name: 'Jan', conversations: 4000, resolutionTime: 24 },
@@ -33,20 +33,6 @@ const kpiData = [
     { title: "Avg. Resolution Time", value: "2m 15s", icon: Clock, change: "-3.2%", changeType: "decrease" as const },
     { title: "First Response Time", value: "45s", icon: Clock, change: "+8.1%", changeType: "increase" as const },
     { title: "Resolution Rate", value: "89%", icon: CheckCircle, change: "+5.0%", changeType: "increase" as const },
-];
-
-const agentPerformanceData: AgentPerformance[] = [
-    { rank: 1, agent: mockAgents[0], conversations: 125, avgResponseTime: "1m 30s", resolutionRate: 95 },
-    { rank: 2, agent: mockAgents[1], conversations: 110, avgResponseTime: "1m 45s", resolutionRate: 92 },
-    { rank: 3, agent: mockAgents[2], conversations: 98, avgResponseTime: "2m 05s", resolutionRate: 88 },
-    { rank: 4, agent: { id: '4', name: "New Agent", avatar: "https://picsum.photos/id/41/100/100", email: "new.a@example.com", phone: "+1-555-0204", role: "agent", password: "password" }, conversations: 85, avgResponseTime: "2m 15s", resolutionRate: 85 },
-]
-
-const funnelData = [
-    { value: 1234, name: 'Total Chats', fill: 'hsl(var(--chart-1))' },
-    { value: 980, name: 'Bot Engaged', fill: 'hsl(var(--chart-2))' },
-    { value: 450, name: 'Agent Handoff', fill: 'hsl(var(--chart-3))' },
-    { value: 210, name: 'Resolved', fill: 'hsl(var(--chart-4))' },
 ];
 
 const chatbotKpiData = [
@@ -73,7 +59,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   if (user?.role !== 'admin') {
       return (
           <div className="flex h-screen w-full flex-col bg-background text-foreground">
-             <header className="flex items-center justify-between p-4 border-b">
+             <header className="flex items-start sm:items-center justify-between p-4 border-b">
                 <div className="flex items-center gap-2">
                     <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
                         <PanelLeft className="h-5 w-5" />
@@ -109,7 +95,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
       </header>
       <main className="flex-1 overflow-auto p-4">
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="overflow-x-auto whitespace-nowrap">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="agent-performance">Agent Performance</TabsTrigger>
             <TabsTrigger value="chatbot-analytics">Chatbot Analytics</TabsTrigger>
@@ -124,7 +110,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{kpi.value}</div>
-                            <p className={`text-xs text-muted-foreground flex items-center gap-1 ${kpi.changeType === 'increase' ? 'text-emerald-500' : 'text-red-500'}`}>
+                            <p className={`text-xs flex items-center gap-1 ${kpi.changeType === 'increase' ? 'text-emerald-500' : 'text-red-500'}`}>
                                 {kpi.changeType === 'increase' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                 {kpi.change} from last month
                             </p>
@@ -202,9 +188,9 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {agentPerformanceData.map(data => (
+                            {mockAgentPerformance.map(data => (
                                 <TableRow key={data.agent.id}>
-                                    <TableCell className="text-center text-lg font-bold">{data.rank === 1 ? <Award className="text-yellow-500 h-6 w-6" /> : data.rank}</TableCell>
+                                    <TableCell className="text-center text-lg font-bold">{data.rank === 1 ? <Award className="text-yellow-500 h-6 w-6 mx-auto" /> : data.rank}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-10 w-10">
@@ -234,7 +220,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">{kpi.value}</div>
-                            <p className={`text-xs text-muted-foreground flex items-center gap-1 ${kpi.changeType === 'increase' ? 'text-emerald-500' : 'text-red-500'}`}>
+                            <p className={`text-xs flex items-center gap-1 ${kpi.changeType === 'increase' ? 'text-emerald-500' : 'text-red-500'}`}>
                                 {kpi.changeType === 'increase' ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
                                 {kpi.change} from last month
                             </p>
@@ -242,7 +228,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     </Card>
                 ))}
               </div>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                     <CardHeader>
                         <CardTitle>Popular Intents</CardTitle>
@@ -253,8 +239,9 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                             <BarChart data={popularIntentsData} layout="vertical">
                                 <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                                <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={100} />
+                                <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} width={100} tickLine={false} axisLine={false}/>
                                 <Tooltip
+                                    cursor={{ fill: 'hsl(var(--muted))' }}
                                     contentStyle={{
                                         backgroundColor: "hsl(var(--background))",
                                         borderColor: "hsl(var(--border))",
@@ -267,23 +254,12 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Chatbot Engagement Funnel</CardTitle>
-                        <CardDescription>How users interact from initial contact to resolution.</CardDescription>
+                        <CardTitle>Chatbot Engagement</CardTitle>
+                        <CardDescription>A summary of how users interact with the bot.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <FunnelChart>
-                                <Tooltip
-                                    contentStyle={{
-                                        backgroundColor: "hsl(var(--background))",
-                                        borderColor: "hsl(var(--border))",
-                                    }}
-                                />
-                                <Funnel dataKey="value" data={funnelData} isAnimationActive>
-                                    <LabelList position="right" fill="hsl(var(--foreground))" stroke="none" dataKey="name" />
-                                </Funnel>
-                            </FunnelChart>
-                        </ResponsiveContainer>
+                     <CardContent className="text-center text-muted-foreground pt-8">
+                        <p>Engagement funnel chart coming soon.</p>
+                        <p>(Will be implemented without a funnel chart component as requested).</p>
                     </CardContent>
                 </Card>
               </div>

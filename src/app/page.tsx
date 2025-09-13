@@ -94,8 +94,8 @@ export default function Home() {
         return <PlaceholderView title="My Performance" {...props} />;
       case "Campaigns":
          return <CampaignsView {...props} />;
-       case "Analytics":
-         return <PlaceholderView title="Analytics" {...props} />;
+      case "Analytics":
+         return <DashboardView {...props} />;
       default:
         return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} />;
     }
