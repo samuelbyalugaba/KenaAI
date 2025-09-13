@@ -437,12 +437,7 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
   React.useEffect(() => {
     if (!user) {
         setSelectedChat(null);
-    } else if (!isMobile) {
-        // Automatically select the first chat on desktop if one isn't selected
-        // if (!selectedChat && filteredChats.length > 0) {
-        //     setSelectedChat(filteredChats[0]);
-        // }
-    } else {
+    } else if (isMobile) {
         // On mobile, clear selection when switching back to chat list
         setSelectedChat(null);
     }
@@ -650,14 +645,16 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
         <>
           <div className="md:w-80 lg:w-96 border-r h-full flex flex-col">
             <MainHeader>
-                <KenaAILogo className="h-10" />
+                <div />
+                <h1 className="text-xl font-bold">Chats</h1>
+                <div />
             </MainHeader>
             { user ? <SidebarContent /> : null }
           </div>
 
           <div className="flex flex-1 flex-col h-screen">
              <MainHeader>
-                 <div />
+                 <KenaAILogo className="h-10" />
                  <div className="flex items-center gap-4">
                     {user && 
                       <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
