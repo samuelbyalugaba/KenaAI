@@ -1,12 +1,9 @@
 
 
-
-
 export type User = {
     id: string;
     name: string;
     avatar: string;
-    online: boolean;
     email?: string;
     phone?: string;
   };
@@ -19,6 +16,8 @@ export type User = {
   };
   
   export type Priority = 'urgent' | 'high' | 'normal' | 'low';
+
+  export type Channel = "WhatsApp" | "Webchat" | "Instagram" | "Facebook";
   
   export type Chat = {
     id: string;
@@ -29,6 +28,7 @@ export type User = {
     priority: Priority;
     messages: Message[];
     isChatbotActive: boolean;
+    channel: Channel;
   };
 
   export type AgentRole = "admin" | "agent" | "super_agent";

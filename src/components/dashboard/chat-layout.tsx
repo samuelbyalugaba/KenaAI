@@ -23,7 +23,7 @@ import {
   X,
 } from "lucide-react";
 
-import type { Chat, Message, Priority, UserProfile, Agent, User } from "@/types";
+import type { Chat, Message, Priority, UserProfile, Agent, User, Channel } from "@/types";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -89,7 +89,6 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
           <Avatar className="h-10 w-10 border-2 border-background">
             <AvatarImage src={chat.user.avatar} alt={chat.user.name} data-ai-hint="person portrait" />
             <AvatarFallback>{chat.user.name.charAt(0)}</AvatarFallback>
-            {chat.user.online && <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white" />}
           </Avatar>
           <div className="flex-1 overflow-hidden">
             <div className="flex items-center justify-between">
@@ -216,10 +215,7 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
                 </Avatar>
                 <div>
                     <p className="font-semibold">{chat.user.name}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                        <span className={cn("h-2 w-2 rounded-full", chat.user.online ? "bg-green-500" : "bg-gray-400")}></span>
-                        {chat.user.online ? "Online" : "Offline"}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{chat.channel}</p>
                 </div>
             </div>
             <div className="ml-auto flex items-center gap-1 sm:gap-2">
@@ -336,6 +332,8 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
   const [agents, setAgents] = React.useState<Agent[]>([]);
+  const [searchTerm, setSearchTerm] = React.useState("");
+  const [selectedChannel, setSelectedChannel] = React.useState<Channel | "all">("all");
   const isMobile = useIsMobile();
 
 
@@ -363,6 +361,15 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
         setChats([]);
     }
   }, [user]);
+
+  const filteredChats = React.useMemo(() => {
+    return chats.filter(chat => {
+        const matchesSearch = chat.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              chat.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesChannel = selectedChannel === 'all' || chat.channel === selectedChannel;
+        return matchesSearch && matchesChannel;
+    });
+  }, [chats, searchTerm, selectedChannel]);
 
   React.useEffect(() => {
     if (!isMobile && chats.length > 0) {
@@ -428,6 +435,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       unreadCount: 0,
       priority: 'normal',
+      channel: 'Webchat',
       messages: [{
         id: 'm-start',
         sender: 'me',
@@ -516,11 +524,8 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
   const renderMobileView = () => {
     if (!user) {
         return (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                <MainHeader>
-                    <div />
-                    <UserMenu />
-                </MainHeader>
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8 h-full">
+                <MobileChatListHeader />
                 <div className="flex-1 flex flex-col items-center justify-center gap-4">
                     <div className="rounded-full bg-primary/10 p-4">
                         <LogIn className="h-12 w-12 text-primary"/>
@@ -559,25 +564,30 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
         <div className="p-4 space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search" className="pl-9" />
+            <Input 
+                placeholder="Search" 
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
           <div className="flex items-center gap-2">
-            <Select defaultValue="all-channels">
+            <Select value={selectedChannel} onValueChange={(value) => setSelectedChannel(value as any)}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all-channels">All Channels</SelectItem>
-                <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                <SelectItem value="webchat">Webchat</SelectItem>
-                <SelectItem value="instagram">Instagram</SelectItem>
-                <SelectItem value="facebook">Facebook</SelectItem>
+                <SelectItem value="all">All Channels</SelectItem>
+                <SelectItem value="WhatsApp">WhatsApp</SelectItem>
+                <SelectItem value="Webchat">Webchat</SelectItem>
+                <SelectItem value="Instagram">Instagram</SelectItem>
+                <SelectItem value="Facebook">Facebook</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
         <h2 className="px-4 text-lg font-semibold tracking-tight">Recent Chats</h2>
-        <ChatList chats={chats} selectedChat={selectedChat} onSelectChat={handleSelectChat} />
+        <ChatList chats={filteredChats} selectedChat={selectedChat} onSelectChat={handleSelectChat} />
     </div>
   );
 

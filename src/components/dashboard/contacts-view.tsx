@@ -45,13 +45,7 @@ const ContactProfile = ({ contact, chatHistory, onBack }: { contact: ContactUser
                 <div>
                     <CardTitle className="text-2xl">{contact.name}</CardTitle>
                     <CardDescription>
-                        <div className="flex items-center gap-1 mt-1">
-                            <span className={cn(
-                                "block h-2 w-2 rounded-full",
-                                contact.online ? "bg-green-500" : "bg-gray-400"
-                            )} />
-                            {contact.online ? "Online" : "Offline"}
-                        </div>
+                       Last active: 2 hours ago
                     </CardDescription>
                 </div>
             </CardHeader>
@@ -212,10 +206,6 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
                                             <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
                                             <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
-                                        <span className={cn(
-                                            "absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-background",
-                                            contact.online ? "bg-green-500" : "bg-gray-400"
-                                        )} />
                                         </div>
                                         <div>
                                             <div className="font-medium">{contact.name}</div>
