@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { User, Phone, Mail, Search, MessageSquare, ArrowLeft, PanelLeft } from "lucide-react";
+import { User, Phone, Mail, Search, MessageSquare, ArrowLeft, PanelLeft, LogIn } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -22,7 +22,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import type { User as ContactUser, Chat, Message } from "@/types";
+import type { User as ContactUser, Chat, Message, UserProfile } from "@/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { Separator } from "../ui/separator";
@@ -106,35 +106,62 @@ const ContactProfile = ({ contact, chatHistory, onBack }: { contact: ContactUser
     )
 }
 
-const EmptyState = () => (
+const EmptyState = ({ isLoggedOut, onLogin }: { isLoggedOut: boolean; onLogin: () => void; }) => (
     <div className="hidden md:flex flex-col items-center justify-center h-full text-center p-8">
-        <User className="h-16 w-16 text-muted-foreground/50" />
-        <h2 className="mt-4 text-xl font-semibold">Select a Contact</h2>
-        <p className="mt-1 text-muted-foreground">Choose a contact from the list to view their profile and conversation history.</p>
+        {isLoggedOut ? (
+            <>
+                <div className="rounded-full bg-primary/10 p-4">
+                    <LogIn className="h-12 w-12 text-primary"/>
+                </div>
+                <h2 className="mt-4 text-xl font-semibold">Please Log In</h2>
+                <p className="mt-1 text-muted-foreground">Log in to view your contacts.</p>
+                <Button onClick={onLogin} className="mt-4">
+                    <LogIn className="mr-2 h-4 w-4" />
+                    Log in
+                </Button>
+            </>
+        ) : (
+            <>
+                <User className="h-16 w-16 text-muted-foreground/50" />
+                <h2 className="mt-4 text-xl font-semibold">Select a Contact</h2>
+                <p className="mt-1 text-muted-foreground">Choose a contact from the list to view their profile and conversation history.</p>
+            </>
+        )}
     </div>
 )
 
 type ContactsViewProps = {
   onMenuClick: () => void;
+  user: UserProfile | null;
 };
 
-export function ContactsView({ onMenuClick }: ContactsViewProps) {
+export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
   
-  const filteredContacts = mockUsers.filter(contact =>
+  const filteredContacts = user ? mockUsers.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.phone?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ) : [];
   
   React.useEffect(() => {
-    if (window.innerWidth >= 768) {
+    if (user && window.innerWidth >= 768) {
         setSelectedContact(mockUsers[0]);
+    } else {
+        setSelectedContact(null);
     }
-  }, [])
+  }, [user])
 
   const selectedChatHistory = mockChats.find(chat => chat.user.email === selectedContact?.email)?.messages;
+
+  if (!user) {
+      return (
+          <div className="flex h-screen w-full flex-col items-center justify-center bg-background text-foreground">
+              <EmptyState isLoggedOut={true} onLogin={() => {}} />
+          </div>
+      )
+  }
 
   return (
     <TooltipProvider>
@@ -223,7 +250,7 @@ export function ContactsView({ onMenuClick }: ContactsViewProps) {
                         onBack={() => setSelectedContact(null)} 
                     />
                 ) : (
-                    <EmptyState />
+                    <EmptyState isLoggedOut={!user} onLogin={() => {}} />
                 )}
             </div>
         </main>

@@ -8,7 +8,7 @@ import { MessageSquare, Users, Clock, Smile, Frown, Meh, Bot, UserCheck, DollarS
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import type { AgentPerformance } from "@/types";
+import type { AgentPerformance, UserProfile } from "@/types";
 import { Button } from "../ui/button";
 import { mockAgents } from "@/lib/mock-data";
 
@@ -66,9 +66,36 @@ const popularIntentsData = [
 
 type DashboardViewProps = {
   onMenuClick: () => void;
+  user: UserProfile | null;
 };
 
-export function DashboardView({ onMenuClick }: DashboardViewProps) {
+export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
+  if (user?.role !== 'admin') {
+      return (
+          <div className="flex h-screen w-full flex-col bg-background text-foreground">
+             <header className="flex items-center justify-between p-4 border-b">
+                <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+                        <PanelLeft className="h-5 w-5" />
+                        <span className="sr-only">Open Menu</span>
+                    </Button>
+                    <h1 className="text-2xl font-bold">Access Denied</h1>
+                </div>
+            </header>
+            <main className="flex-1 flex items-center justify-center p-4">
+                <Card className="w-full max-w-md">
+                    <CardHeader>
+                        <CardTitle>Permission Required</CardTitle>
+                        <CardDescription>
+                            You do not have permission to view the dashboard. This area is restricted to administrators only.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            </main>
+          </div>
+      )
+  }
+
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
       <header className="flex items-center justify-between p-4 border-b">

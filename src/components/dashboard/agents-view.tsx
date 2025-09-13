@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import type { Agent, AgentRole } from "@/types";
+import type { Agent, AgentRole, UserProfile } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { cn } from "@/lib/utils";
 import { mockAgents as initialMockAgents } from "@/lib/mock-data";
@@ -30,9 +30,10 @@ const roleVariantMap: Record<AgentRole, "default" | "secondary" | "destructive">
 
 type AgentsViewProps = {
   onMenuClick: () => void;
+  user: UserProfile | null;
 };
 
-export function AgentsView({ onMenuClick }: AgentsViewProps) {
+export function AgentsView({ onMenuClick, user }: AgentsViewProps) {
   const [agents, setAgents] = React.useState<Agent[]>(initialMockAgents);
   const [searchTerm, setSearchTerm] = React.useState("");
   
@@ -45,6 +46,8 @@ export function AgentsView({ onMenuClick }: AgentsViewProps) {
   const handleAgentAdd = (newAgent: Agent) => {
     setAgents(prev => [...prev, newAgent]);
   }
+
+  const canAddAgent = user?.role === 'admin' || user?.role === 'super_agent';
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
@@ -66,7 +69,7 @@ export function AgentsView({ onMenuClick }: AgentsViewProps) {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <AddAgentDialog onAgentAdd={handleAgentAdd} />
+            {canAddAgent && <AddAgentDialog onAgentAdd={handleAgentAdd} />}
         </div>
       </header>
       <main className="flex-1 overflow-auto p-4">

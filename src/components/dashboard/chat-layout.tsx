@@ -357,12 +357,19 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
 
         setChats(sortedChats);
     }
-    prioritizeChats();
-  }, []);
+    if (user) {
+        prioritizeChats();
+    } else {
+        setChats([]);
+    }
+  }, [user]);
 
   React.useEffect(() => {
     if (!isMobile && chats.length > 0) {
         // setSelectedChat(chats[0]);
+    }
+    if (isMobile) {
+        setSelectedChat(null);
     }
   }, [isMobile, chats]);
 
@@ -437,6 +444,8 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     }
   }
 
+  const canAddAgent = user?.role === 'admin' || user?.role === 'super_agent';
+
   const MainHeader = ({ children }: { children: React.ReactNode }) => (
     <header className="flex items-center justify-between p-2 border-b h-[61px] flex-shrink-0">
         {children}
@@ -508,15 +517,21 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     if (!user) {
         return (
             <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                <div className="rounded-full bg-primary/10 p-4">
-                    <LogIn className="h-12 w-12 text-primary"/>
+                <MainHeader>
+                    <div />
+                    <UserMenu />
+                </MainHeader>
+                <div className="flex-1 flex flex-col items-center justify-center gap-4">
+                    <div className="rounded-full bg-primary/10 p-4">
+                        <LogIn className="h-12 w-12 text-primary"/>
+                    </div>
+                    <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
+                    <p className="text-muted-foreground">Please log in to view and respond to chats.</p>
+                    <Button onClick={onLogin}>
+                        <LogIn className="mr-2 h-4 w-4" />
+                        Log in
+                    </Button>
                 </div>
-                <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
-                <p className="text-muted-foreground">Please log in to view and respond to chats.</p>
-                <Button onClick={onLogin}>
-                    <LogIn className="mr-2 h-4 w-4" />
-                    Log in
-                </Button>
             </div>
         );
     }
@@ -590,9 +605,9 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                           <PlusCircle className="h-5 w-5" /> New Chat
                       </Button>
                     </NewChatDialog>
-                     <div className="hidden md:flex">
+                     {canAddAgent && <div className="hidden md:flex">
                          <AddAgentDialog onAgentAdd={handleAgentAdd} />
-                     </div>
+                     </div>}
                      <UserMenu />
                  </div>
              </MainHeader>

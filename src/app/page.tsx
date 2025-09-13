@@ -29,6 +29,14 @@ export default function Home() {
         avatar: agent.avatar,
         role: agent.role,
       });
+
+      // Role-based landing page logic
+      if (agent.role === 'admin') {
+        setActiveView('Dashboard');
+      } else {
+        setActiveView('Chat');
+      }
+
       setIsLoginDialogOpen(false); // Close dialog on successful login
       return true;
     }
@@ -37,23 +45,29 @@ export default function Home() {
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setActiveView('Chat'); // Default to chat view on logout
   };
 
   const renderView = () => {
-    const props = { onMenuClick: () => setIsNavOpen(true) };
+    const props = { onMenuClick: () => setIsNavOpen(true), user: currentUser };
     switch (activeView) {
       case "Chat":
-        return <ChatLayout user={currentUser} onLogin={() => setIsLoginDialogOpen(true)} onLogout={handleLogout} {...props} />;
+        return <ChatLayout user={currentUser} onLogin={() => setIsLoginDialogOpen(true)} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
       case "Contacts":
         return <ContactsView {...props} />;
       case "Agents":
         return <AgentsView {...props} />;
       case "Dashboard":
-        return <DashboardView {...props} />;
+        // Protect dashboard view
+        if (currentUser?.role === 'admin') {
+          return <DashboardView {...props} />;
+        }
+        // Redirect or show access denied for non-admins
+        return <ChatLayout user={currentUser} onLogin={() => setIsLoginDialogOpen(true)} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
       case "Announcements":
         return <AnnouncementsView {...props} />;
       default:
-        return <ChatLayout user={currentUser} onLogin={() => setIsLoginDialogOpen(true)} onLogout={handleLogout} {...props} />;
+        return <ChatLayout user={currentUser} onLogin={() => setIsLoginDialogOpen(true)} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
     }
   };
 

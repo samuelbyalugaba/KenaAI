@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import type { Announcement, Agent, AnnouncementCategory } from "@/types";
+import type { Announcement, Agent, AnnouncementCategory, UserProfile } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
@@ -65,7 +65,7 @@ const announcementFormSchema = z.object({
 
 type AnnouncementFormValues = z.infer<typeof announcementFormSchema>;
 
-const AnnouncementForm = ({ onSubmit, form }: { onSubmit: (data: AnnouncementFormValues) => void; form: any; }) => (
+const AnnouncementForm = ({ onSubmit, form, user }: { onSubmit: (data: AnnouncementFormValues) => void; form: any; user: UserProfile | null }) => (
     <Card className="flex-1 flex flex-col h-full border-0 shadow-none md:border md:shadow-sm">
         <CardHeader className="px-0 md:px-6">
           <CardTitle>New Announcement</CardTitle>
@@ -135,7 +135,7 @@ const AnnouncementForm = ({ onSubmit, form }: { onSubmit: (data: AnnouncementFor
     </Card>
 );
 
-const AnnouncementFeed = ({ announcements }: { announcements: Announcement[] }) => (
+const AnnouncementFeed = ({ announcements, user }: { announcements: Announcement[], user: UserProfile | null }) => (
     <ScrollArea className="flex-1 h-full pr-4 -mr-4">
         <div className="space-y-4">
           {announcements.map((ann) => (
@@ -187,10 +187,10 @@ const AnnouncementFeed = ({ announcements }: { announcements: Announcement[] }) 
                                   </div>
                               </div>
                               {/* Comment Input */}
-                              <div className="flex items-start gap-2">
+                              {user && <div className="flex items-start gap-2">
                                  <Avatar className="h-8 w-8">
-                                      <AvatarImage src={mockAdminUser.avatar} alt={mockAdminUser.name} data-ai-hint="person portrait" />
-                                      <AvatarFallback>{mockAdminUser.name.charAt(0)}</AvatarFallback>
+                                      <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person portrait" />
+                                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                   </Avatar>
                                   <div className="relative w-full">
                                       <Textarea placeholder="Add a comment..." className="flex-grow min-h-[40px] pr-12" />
@@ -198,7 +198,7 @@ const AnnouncementFeed = ({ announcements }: { announcements: Announcement[] }) 
                                           <Send className="h-4 w-4" />
                                       </Button>
                                   </div>
-                              </div>
+                              </div>}
                           </div>
                       </div>
                   </CardFooter>
@@ -211,9 +211,10 @@ const AnnouncementFeed = ({ announcements }: { announcements: Announcement[] }) 
 
 type AnnouncementsViewProps = {
   onMenuClick: () => void;
+  user: UserProfile | null;
 };
 
-export function AnnouncementsView({ onMenuClick }: AnnouncementsViewProps) {
+export function AnnouncementsView({ onMenuClick, user }: AnnouncementsViewProps) {
   const [announcements, setAnnouncements] = React.useState(mockAnnouncements);
   const [searchTerm, setSearchTerm] = React.useState("");
   const { toast } = useToast();
@@ -233,9 +234,13 @@ export function AnnouncementsView({ onMenuClick }: AnnouncementsViewProps) {
   ).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   function onSubmit(data: AnnouncementFormValues) {
+    if (!user) return; // Should not happen if UI is correctly protecting form
+    
+    const authorAgent = mockAgents.find(a => a.name === user.name) || mockAdminUser;
+
     const newAnnouncement: Announcement = {
       id: new Date().toISOString(),
-      author: mockAdminUser,
+      author: authorAgent,
       date: new Date().toISOString().split('T')[0],
       readBy: [],
       title: data.title,
@@ -253,6 +258,8 @@ export function AnnouncementsView({ onMenuClick }: AnnouncementsViewProps) {
     
     form.reset();
   }
+
+  const canCreate = user?.role === 'admin' || user?.role === 'super_agent';
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
@@ -277,28 +284,30 @@ export function AnnouncementsView({ onMenuClick }: AnnouncementsViewProps) {
       <main className="flex-1 overflow-hidden p-4">
         {/* Desktop Layout */}
         <div className="hidden md:grid md:grid-cols-3 gap-4 h-full">
-            <div className="md:col-span-1 flex flex-col h-full overflow-hidden">
-                <AnnouncementForm form={form} onSubmit={onSubmit} />
-            </div>
-            <div className="md:col-span-2 overflow-hidden h-full flex flex-col">
+            {canCreate && (
+              <div className="md:col-span-1 flex flex-col h-full overflow-hidden">
+                  <AnnouncementForm form={form} onSubmit={onSubmit} user={user} />
+              </div>
+            )}
+            <div className={cn("overflow-hidden h-full flex flex-col", canCreate ? "md:col-span-2" : "md:col-span-3")}>
               <h2 className="text-xl font-semibold mb-4 px-1">Feed</h2>
-              <AnnouncementFeed announcements={filteredAnnouncements} />
+              <AnnouncementFeed announcements={filteredAnnouncements} user={user} />
             </div>
         </div>
         
         {/* Mobile Layout */}
         <div className="md:hidden h-full">
              <Tabs defaultValue="feed" className="w-full h-full flex flex-col">
-                <TabsList className="w-full">
+                <TabsList className="w-full grid grid-cols-2">
                     <TabsTrigger value="feed" className="flex-1">Feed</TabsTrigger>
-                    <TabsTrigger value="new" className="flex-1">New</TabsTrigger>
+                    {canCreate && <TabsTrigger value="new" className="flex-1">New</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="feed" className="flex-1 overflow-auto mt-4">
-                    <AnnouncementFeed announcements={filteredAnnouncements} />
+                    <AnnouncementFeed announcements={filteredAnnouncements} user={user} />
                 </TabsContent>
-                <TabsContent value="new" className="flex-1 overflow-auto mt-4">
-                    <AnnouncementForm form={form} onSubmit={onSubmit} />
-                </TabsContent>
+                {canCreate && <TabsContent value="new" className="flex-1 overflow-auto mt-4">
+                    <AnnouncementForm form={form} onSubmit={onSubmit} user={user} />
+                </TabsContent>}
             </Tabs>
         </div>
       </main>
