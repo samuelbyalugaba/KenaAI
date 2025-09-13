@@ -141,7 +141,7 @@ const AnnouncementFeed = ({ announcements, user }: { announcements: Announcement
           {announcements.map((ann) => (
               <Card key={ann.id} className="flex flex-col">
                   <CardHeader>
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-center justify-between">
                           <Badge variant={categoryVariantMap[ann.category]}>{ann.category}</Badge>
                           <div className="text-xs text-muted-foreground">{new Date(ann.date).toLocaleDateString()}</div>
                       </div>
@@ -263,7 +263,7 @@ export function AnnouncementsView({ onMenuClick, user }: AnnouncementsViewProps)
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
-      <header className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b">
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
                 <PanelLeft className="h-5 w-5" />

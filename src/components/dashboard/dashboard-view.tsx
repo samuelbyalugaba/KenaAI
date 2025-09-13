@@ -98,7 +98,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
-      <header className="flex items-center justify-between p-4 border-b">
+      <header className="flex items-start sm:items-center justify-between p-4 border-b">
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
                 <PanelLeft className="h-5 w-5" />
