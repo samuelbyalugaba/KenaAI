@@ -22,6 +22,7 @@ import {
   Users,
   User as UserIcon,
   X,
+  Bot,
 } from "lucide-react";
 
 import type { Chat, Message, Priority, UserProfile, Agent, User, Channel } from "@/types";
@@ -116,15 +117,26 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
 );
 
 const priorityMap = {
-  urgent: "destructive",
-  high: "default",
-  normal: "secondary",
-  low: "outline",
+  urgent: "bg-red-500",
+  high: "bg-amber-500",
+  normal: "bg-blue-500",
+  low: "bg-muted-foreground",
 } as const;
 
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
-  const variant = priorityMap[priority];
-  return <Badge variant={variant} className="capitalize h-5">{priority}</Badge>;
+  const colorClass = priorityMap[priority];
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <div className={cn("h-2.5 w-2.5 rounded-full", colorClass)}></div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="capitalize">{priority} Priority</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 };
 
 const Stats = () => {
@@ -253,8 +265,20 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
             </div>
             <div className="ml-auto flex items-center gap-1 sm:gap-2">
                 <div className="flex items-center space-x-2">
+                    {chat.isChatbotActive && (
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Bot className="h-5 w-5 text-muted-foreground" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Chatbot is active</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    )}
                     <Switch id="chatbot-mode" checked={chat.isChatbotActive} onCheckedChange={(isActive) => onChatbotToggle(chat.id, isActive)} />
-                    <Label htmlFor="chatbot-mode" className="hidden sm:block">{chat.isChatbotActive ? "Chatbot Active" : "Manual Mode"}</Label>
+                    <Label htmlFor="chatbot-mode" className="hidden sm:block text-sm">{chat.isChatbotActive ? "Bot" : "Manual"}</Label>
                 </div>
                 <TooltipProvider>
                     <Sheet open={isNotesOpen} onOpenChange={setIsNotesOpen}>
@@ -645,8 +669,8 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
         <>
           <div className="md:w-80 lg:w-96 border-r h-full flex flex-col">
             <MainHeader>
+                <KenaAILogo className="h-10" />
                 <div />
-                <h1 className="text-xl font-bold">Chats</h1>
                 <div />
             </MainHeader>
             { user ? <SidebarContent /> : null }
@@ -654,7 +678,7 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
 
           <div className="flex flex-1 flex-col h-screen">
              <MainHeader>
-                 <KenaAILogo className="h-10" />
+                 <div />
                  <div className="flex items-center gap-4">
                     {user && 
                       <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
