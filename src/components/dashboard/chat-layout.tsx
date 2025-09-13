@@ -680,12 +680,3 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
 }
 
     
-
-    
-
-    
-
-    
-
-
-
