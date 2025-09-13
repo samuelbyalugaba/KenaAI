@@ -23,7 +23,7 @@ import {
   X,
 } from "lucide-react";
 
-import type { Chat, Message, Priority, UserProfile, Agent } from "@/types";
+import type { Chat, Message, Priority, UserProfile, Agent, User } from "@/types";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -42,8 +42,8 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
   SheetDescription,
+  SheetTrigger,
 } from "@/components/ui/sheet";
 import {
   Tooltip,
@@ -70,28 +70,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
-
+import { NewChatDialog } from "./new-chat-dialog";
 
 // MOCK DATA
+const mockUsers: User[] = [
+  { id: 'user1', name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true, email: "kelvin@example.com", phone: "+1-555-0101" },
+  { id: 'user2', name: "Sylvester", avatar: "https://picsum.photos/id/1025/100/100", online: false, email: "sylvester@example.com", phone: "+1-555-0102" },
+  { id: 'user3', name: "Linaliz", avatar: "https://picsum.photos/id/1027/100/100", online: true, email: "linaliz@example.com", phone: "+1-555-0103" },
+  { id: 'user4', name: "Glory", avatar: "https://picsum.photos/id/103/100/100", online: false, email: "glory@example.com", phone: "+1-555-0104" },
+];
+
 const mockChats: Chat[] = [
   {
     id: "1",
-    user: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true, email: "kelvin@example.com", phone: "+1-555-0101" },
+    user: mockUsers[0],
     lastMessage: "Absolutely 🎨 We provide ful...",
     timestamp: "10:41 AM",
     unreadCount: 0,
     priority: "urgent",
     isChatbotActive: true,
     messages: [
-      { id: "m1", sender: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "Hello 👋 What services do you offer?", timestamp: "10:38 AM" },
+      { id: "m1", sender: mockUsers[0], text: "Hello 👋 What services do you offer?", timestamp: "10:38 AM" },
       { id: "m2", sender: "me", text: "Hi Kelvin! 🚀 We offer web app development, mobile app solutions, and AI-powered chatbots.", timestamp: "10:39 AM" },
-      { id: "m3", sender: { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true }, text: "Nice! Do you also handle design?", timestamp: "10:40 AM" },
+      { id: "m3", sender: mockUsers[0], text: "Nice! Do you also handle design?", timestamp: "10:40 AM" },
       { id: "m4", sender: "me", text: "Absolutely 🎨 We provide full-stack design: UI/UX, branding, and even responsive front-end with React.", timestamp: "10:41 AM" },
     ],
   },
   {
     id: "2",
-    user: { name: "Sylvester", avatar: "https://picsum.photos/id/1025/100/100", online: false, email: "sylvester@example.com", phone: "+1-555-0102" },
+    user: mockUsers[1],
     lastMessage: "Sure thing! 💡 I’ll schedule...",
     timestamp: "9:20 AM",
     unreadCount: 0,
@@ -108,7 +115,7 @@ const mockChats: Chat[] = [
   },
   {
     id: "3",
-    user: { name: "Linaliz", avatar: "https://picsum.photos/id/1027/100/100", online: true, email: "linaliz@example.com", phone: "+1-555-0103" },
+    user: mockUsers[2],
     lastMessage: "Anytime, Linaliz! Let me k...",
     timestamp: "Yesterday",
     unreadCount: 0,
@@ -125,7 +132,7 @@ const mockChats: Chat[] = [
   },
   {
     id: "4",
-    user: { name: "Glory", avatar: "https://picsum.photos/id/103/100/100", online: false, email: "glory@example.com", phone: "+1-555-0104" },
+    user: mockUsers[3],
     lastMessage: "My order hasn't arri...",
     timestamp: "Yesterday",
     unreadCount: 1,
@@ -427,7 +434,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
         setChats(sortedChats);
     }
     prioritizeChats();
-  }, [isMobile]);
+  }, []);
 
   const handleSelectChat = (chat: Chat) => {
     setSelectedChat(chat);
@@ -476,6 +483,30 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     setAgents(prev => [...prev, newAgent]);
   }
 
+  const handleStartNewChats = (selectedUsers: User[]) => {
+    const newChats: Chat[] = selectedUsers.map(user => ({
+      id: new Date().toISOString() + user.id,
+      user: user,
+      lastMessage: "New chat started",
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      unreadCount: 0,
+      priority: 'normal',
+      messages: [{
+        id: 'm-start',
+        sender: 'me',
+        text: 'New chat started',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      }],
+      isChatbotActive: false,
+    }));
+    
+    setChats(prev => [...newChats, ...prev]);
+
+    if (newChats.length === 1) {
+      setSelectedChat(newChats[0]);
+    }
+  }
+
   const MainHeader = ({ children }: { children: React.ReactNode }) => (
     <header className="flex items-center justify-between p-2 border-b h-[61px] flex-shrink-0">
         {children}
@@ -492,10 +523,12 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
             <h1 className="text-xl font-bold">Chats</h1>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon">
-                <PlusCircle className="h-5 w-5" />
-                <span className="sr-only">New Chat</span>
-            </Button>
+            <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
+              <Button variant="ghost" size="icon">
+                  <PlusCircle className="h-5 w-5" />
+                  <span className="sr-only">New Chat</span>
+              </Button>
+            </NewChatDialog>
             <UserMenu />
         </div>
     </MainHeader>
@@ -622,9 +655,11 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
              <MainHeader>
                  <div />
                  <div className="flex items-center gap-4">
-                     <Button variant="ghost" size="sm" className="gap-2">
-                         <PlusCircle className="h-5 w-5" /> New Chat
-                     </Button>
+                    <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
+                      <Button variant="ghost" size="sm" className="gap-2">
+                          <PlusCircle className="h-5 w-5" /> New Chat
+                      </Button>
+                    </NewChatDialog>
                      <div className="hidden md:flex">
                          <AddAgentDialog onAgentAdd={handleAgentAdd} />
                      </div>
@@ -677,9 +712,3 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     </div>
   );
 }
-
-    
-
-
-
-    
