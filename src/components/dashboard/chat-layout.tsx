@@ -421,7 +421,7 @@ type ChatLayoutProps = {
 };
 
 export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
-  const [chats, setChats] = React.useState<Chat[]>([]);
+  const [chats, setChats] = React.useState<Chat[]>(initialMockChats);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [searchTerm, setSearchTerm] = React.useState("");
@@ -430,25 +430,12 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
 
 
   React.useEffect(() => {
-    const prioritizeChats = async () => {
-        const prioritized = await Promise.all(initialMockChats.map(async chat => {
-            try {
-                const result = await chatPrioritization({ chatText: chat.lastMessage });
-                return { ...chat, priority: result.priority };
-            } catch {
-                return chat;
-            }
-        }));
-        
-        const sortedChats = prioritized.sort((a, b) => {
+    if (user) {
+        const sortedChats = [...initialMockChats].sort((a, b) => {
             const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
             return priorityOrder[a.priority] - priorityOrder[b.priority];
         });
-
         setChats(sortedChats);
-    }
-    if (user) {
-        prioritizeChats();
     } else {
         setChats([]);
     }
@@ -699,5 +686,6 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
     
 
     
+
 
 
