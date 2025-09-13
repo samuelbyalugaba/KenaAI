@@ -269,3 +269,5 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
+
+    
