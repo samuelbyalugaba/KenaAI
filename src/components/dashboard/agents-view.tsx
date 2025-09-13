@@ -21,6 +21,16 @@ import { AddAgentDialog } from "./add-agent-dialog";
 import { cn } from "@/lib/utils";
 import { mockAgents as initialMockAgents } from "@/lib/mock-data";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+
+
+const mockActivityLogs = [
+  { id: 1, timestamp: "2024-08-20 10:45 AM", agent: "Samuel Byalugaba", action: "Role Change", details: "Changed Linaliz Ready's role to Agent." },
+  { id: 2, timestamp: "2024-08-20 10:42 AM", agent: "Sylvester Mayaya", action: "Login", details: "Logged in from IP 192.168.1.10" },
+  { id: 3, timestamp: "2024-08-20 10:30 AM", agent: "Linaliz Ready", action: "Conversation", details: "Resolved conversation #C-78912" },
+  { id: 4, timestamp: "2024-08-20 10:25 AM", agent: "Samuel Byalugaba", action: "Assignment", details: "Assigned conversation #C-78914 to Sylvester Mayaya" },
+  { id: 5, timestamp: "2024-08-20 10:15 AM", agent: "Sylvester Mayaya", action: "Logout", details: "Logged out" },
+]
 
 const roleVariantMap: Record<AgentRole, "default" | "secondary" | "destructive"> = {
     admin: "destructive",
@@ -84,7 +94,7 @@ export function AgentsView({ onMenuClick, user }: AgentsViewProps) {
             {canAddAgent && <AddAgentDialog onAgentAdd={handleAgentAdd} />}
         </div>
       </header>
-      <main className="flex-1 overflow-auto p-4">
+      <main className="flex-1 overflow-auto p-4 space-y-4">
             <Card>
                 <CardHeader>
                     <CardTitle>Agent Directory</CardTitle>
@@ -160,6 +170,42 @@ export function AgentsView({ onMenuClick, user }: AgentsViewProps) {
                     </div>
                 </CardContent>
             </Card>
+
+            <Card>
+                <Accordion type="single" collapsible>
+                    <AccordionItem value="item-1">
+                        <AccordionTrigger className="px-6">
+                            <div className="flex items-center gap-3">
+                                <Activity className="h-5 w-5" />
+                                <h3 className="text-lg font-semibold">Activity Logs</h3>
+                            </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <Table>
+                               <TableHeader>
+                                   <TableRow>
+                                       <TableHead>Timestamp</TableHead>
+                                       <TableHead>Agent</TableHead>
+                                       <TableHead>Action</TableHead>
+                                       <TableHead>Details</TableHead>
+                                   </TableRow>
+                               </TableHeader>
+                               <TableBody>
+                                   {mockActivityLogs.map(log => (
+                                       <TableRow key={log.id}>
+                                           <TableCell>{log.timestamp}</TableCell>
+                                           <TableCell>{log.agent}</TableCell>
+                                           <TableCell><Badge variant="outline">{log.action}</Badge></TableCell>
+                                           <TableCell>{log.details}</TableCell>
+                                       </TableRow>
+                                   ))}
+                               </TableBody>
+                           </Table>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            </Card>
+
       </main>
     </div>
   );
