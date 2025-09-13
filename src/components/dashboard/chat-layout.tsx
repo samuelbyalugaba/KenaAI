@@ -483,18 +483,18 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     setAgents(prev => [...prev, newAgent]);
   }
 
-  const handleStartNewChats = (selectedUsers: User[]) => {
+  const handleStartNewChats = (selectedUsers: User[], message: string) => {
     const newChats: Chat[] = selectedUsers.map(user => ({
       id: new Date().toISOString() + user.id,
       user: user,
-      lastMessage: "New chat started",
+      lastMessage: message,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       unreadCount: 0,
       priority: 'normal',
       messages: [{
         id: 'm-start',
         sender: 'me',
-        text: 'New chat started',
+        text: message,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       }],
       isChatbotActive: false,
@@ -647,14 +647,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
           <div className="md:w-80 lg:w-96 border-r h-full flex flex-col">
             <MainHeader>
                 <KenaAILogo className="h-10" />
-            </MainHeader>
-            <SidebarContent />
-          </div>
-
-          <div className="flex flex-1 flex-col h-screen">
-             <MainHeader>
-                 <div />
-                 <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4">
                     <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
                       <Button variant="ghost" size="sm" className="gap-2">
                           <PlusCircle className="h-5 w-5" /> New Chat
@@ -665,6 +658,14 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                      </div>
                      <UserMenu />
                  </div>
+            </MainHeader>
+            <SidebarContent />
+          </div>
+
+          <div className="flex flex-1 flex-col h-screen">
+             <MainHeader>
+                 <div />
+                 <div />
              </MainHeader>
             
             <div className="hidden md:block">
