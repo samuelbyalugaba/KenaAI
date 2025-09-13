@@ -20,9 +20,14 @@ import {
     UserCheck,
     Bot,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    Activity,
+    Users2,
+    BarChart as BarChartIcon,
+    PieChartIcon,
+    LineChartIcon
 } from "lucide-react";
-import type { UserProfile } from "@/types";
+import type { UserProfile, AgentPerformance } from "@/types";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -36,8 +41,13 @@ import {
   Tooltip,
   XAxis,
   YAxis,
+  Legend
 } from "recharts"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Badge } from "../ui/badge";
+import { mockAgentPerformance } from "@/lib/mock-data";
 
 
 const kpiData = [
@@ -101,6 +111,40 @@ const channelBreakdownConfig = {
   instagram: { label: 'Instagram', color: '#E4405F' },
   email: { label: 'Email', color: '#EA4335' },
 }
+
+const AgentPerformanceTable = ({ agents }: { agents: AgentPerformance[] }) => (
+    <Table>
+        <TableHeader>
+            <TableRow>
+                <TableHead className="w-[50px]">Rank</TableHead>
+                <TableHead>Agent</TableHead>
+                <TableHead className="text-center">Conversations</TableHead>
+                <TableHead className="text-center">Avg. Response</TableHead>
+                <TableHead className="text-right">Resolution Rate</TableHead>
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            {agents.map((perf) => (
+                <TableRow key={perf.agent.id}>
+                    <TableCell className="font-bold text-lg">{perf.rank}</TableCell>
+                    <TableCell>
+                        <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                                <AvatarImage src={perf.agent.avatar} alt={perf.agent.name} data-ai-hint="person portrait" />
+                                <AvatarFallback>{perf.agent.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="font-medium">{perf.agent.name}</div>
+                        </div>
+                    </TableCell>
+                    <TableCell className="text-center">{perf.conversations}</TableCell>
+                    <TableCell className="text-center">{perf.avgResponseTime}</TableCell>
+                    <TableCell className="text-right">{perf.resolutionRate}%</TableCell>
+                </TableRow>
+            ))}
+        </TableBody>
+    </Table>
+);
+
 
 type DashboardViewProps = {
   onMenuClick: () => void;
@@ -173,7 +217,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         
         {/* Section 2: Conversation Insights */}
         <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-4">
+            <Card className="lg:col-span-5">
                 <CardHeader>
                     <CardTitle>Conversation Volume</CardTitle>
                     <CardDescription>Volume of conversations over the last 7 days.</CardDescription>
@@ -189,7 +233,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     </ChartContainer>
                 </CardContent>
             </Card>
-            <Card className="lg:col-span-3">
+            <Card className="lg:col-span-2">
                 <CardHeader>
                     <CardTitle>Conversation by Source</CardTitle>
                     <CardDescription>Breakdown of conversations by channel.</CardDescription>
@@ -199,13 +243,70 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                         <PieChart>
                             <Tooltip content={<ChartTooltipContent nameKey="name" />} />
                             <Pie data={channelBreakdownData} dataKey="value" nameKey="name" />
+                            <Legend content={<ChartTooltipContent />} />
                         </PieChart>
                     </ChartContainer>
                 </CardContent>
             </Card>
         </section>
+        
+        <section className="grid gap-4 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Agent Performance</CardTitle>
+                    <CardDescription>Leaderboard of agent efficiency and resolution rates.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <AgentPerformanceTable agents={mockAgentPerformance} />
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Response Efficiency vs. SLA</CardTitle>
+                    <CardDescription>Bar chart coming soon.</CardDescription>
+                </CardHeader>
+                <CardContent className="flex items-center justify-center text-muted-foreground h-48">
+                    <BarChartIcon className="h-12 w-12" />
+                </CardContent>
+            </Card>
+        </section>
+
+
+        {/* Section 4: Customer Engagement */}
+         <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+             <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>New vs Returning Customers</CardTitle>
+                </CardHeader>
+                <CardContent className="flex items-center justify-center text-muted-foreground h-48">
+                     <Users2 className="h-12 w-12" />
+                     <p className="ml-4">Metric coming soon</p>
+                </CardContent>
+            </Card>
+             <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Engagement Funnel</CardTitle>
+                    <CardDescription>This section is under construction.</CardDescription>
+                </CardHeader>
+                 <CardContent className="flex items-center justify-center text-muted-foreground h-48">
+                    <LineChartIcon className="h-12 w-12" />
+                </CardContent>
+            </Card>
+             <Card className="lg:col-span-1">
+                <CardHeader>
+                    <CardTitle>Campaign Analytics</CardTitle>
+                    <CardDescription>Campaign metrics coming soon.</CardDescription>
+                </CardHeader>
+                 <CardContent className="flex items-center justify-center text-muted-foreground h-48">
+                    <PieChartIcon className="h-12 w-12" />
+                </CardContent>
+            </Card>
+        </section>
+
 
       </main>
     </div>
   );
 }
+
+    
