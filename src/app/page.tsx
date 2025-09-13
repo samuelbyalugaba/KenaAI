@@ -14,6 +14,8 @@ import { mockAgents } from "@/lib/mock-data";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PanelLeft } from "lucide-react";
+import { SettingsDialog } from "@/components/dashboard/settings-dialog";
+import { ThemeProvider } from "@/components/ui/theme-provider";
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "Analytics" | "My Performance";
 
@@ -43,6 +45,7 @@ export default function Home() {
   const [activeView, setActiveView] = React.useState<View>("Chat");
   const [isNavOpen, setIsNavOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
   const handleLogin = (email: string, password_unused: string) => {
     // In a real app, you'd verify the password. Here, we'll just find the user by email.
@@ -52,6 +55,8 @@ export default function Home() {
         name: agent.name,
         avatar: agent.avatar,
         role: agent.role,
+        email: agent.email,
+        phone: agent.phone
       });
 
       // Role-based landing page logic
@@ -102,25 +107,31 @@ export default function Home() {
 
   if (!currentUser) {
     return (
-        <main className="flex h-screen w-full items-center justify-center bg-background p-4">
-            <LoginDialog onLogin={handleLogin} />
-        </main>
+        <ThemeProvider>
+            <main className="flex h-screen w-full items-center justify-center bg-background p-4">
+                <LoginDialog onLogin={handleLogin} />
+            </main>
+        </ThemeProvider>
     )
   }
 
   return (
-    <main className="flex h-screen bg-background">
-      <VerticalNav 
-        activeView={activeView} 
-        setActiveView={setActiveView} 
-        user={currentUser}
-        onLogout={handleLogout}
-        isOpen={isNavOpen}
-        setIsOpen={setIsNavOpen}
-      />
-      <div className="flex-1 md:pl-[70px] min-w-0">
-        {renderView()}
-      </div>
-    </main>
+    <ThemeProvider>
+        <main className="flex h-screen bg-background">
+        <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} user={currentUser} />
+        <VerticalNav 
+            activeView={activeView} 
+            setActiveView={setActiveView} 
+            user={currentUser}
+            onLogout={handleLogout}
+            isOpen={isNavOpen}
+            setIsOpen={setIsNavOpen}
+            onSettingsClick={() => setIsSettingsOpen(true)}
+        />
+        <div className="flex-1 md:pl-[70px] min-w-0">
+            {renderView()}
+        </div>
+        </main>
+    </ThemeProvider>
   );
 }

@@ -48,6 +48,8 @@ export type User = {
     name: string;
     avatar: string;
     role: AgentRole;
+    email?: string;
+    phone?: string;
   };
   
   export type AnnouncementCategory = "General" | "Urgent" | "Training";

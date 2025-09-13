@@ -24,7 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { View } from "@/app/page";
-import type { AgentRole, UserProfile } from "@/types";
+import type { UserProfile } from "@/types";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 import {
   DropdownMenu,
@@ -46,7 +46,6 @@ const adminNavItems = [
   { icon: Send, label: "Campaigns" as View },
   { icon: BarChart, label: "Analytics" as View },
   { icon: Megaphone, label: "Announcements" as View },
-  { icon: Settings, label: "Settings" as View },
 ];
 
 const agentNavItems = [
@@ -54,7 +53,6 @@ const agentNavItems = [
   { icon: BookUser, label: "Contacts" as View },
   { icon: Megaphone, label: "Announcements" as View },
   { icon: Award, label: "My Performance" as View },
-  { icon: Settings, label: "Settings" as View },
 ];
 
 
@@ -65,9 +63,10 @@ type VerticalNavProps = {
     onLogout: () => void;
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
+    onSettingsClick: () => void;
 };
 
-export function VerticalNav({ activeView, setActiveView, user, onLogout, isOpen, setIsOpen }: VerticalNavProps) {
+export function VerticalNav({ activeView, setActiveView, user, onLogout, isOpen, setIsOpen, onSettingsClick }: VerticalNavProps) {
 
   const navItems = user?.role === 'admin' ? adminNavItems : agentNavItems;
 
@@ -122,7 +121,7 @@ export function VerticalNav({ activeView, setActiveView, user, onLogout, isOpen,
                      <>
                        <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
                        <DropdownMenuSeparator />
-                       <DropdownMenuItem onClick={() => setActiveView("Settings")}>
+                       <DropdownMenuItem onClick={onSettingsClick}>
                          <Settings className="mr-2 h-4 w-4" />
                          <span>Settings</span>
                        </DropdownMenuItem>
