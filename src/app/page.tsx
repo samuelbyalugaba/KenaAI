@@ -18,16 +18,6 @@ export default function Home() {
   const [activeView, setActiveView] = React.useState<View>("Chat");
   const [isNavOpen, setIsNavOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(true);
-
-  React.useEffect(() => {
-    if (currentUser) {
-      setIsLoginDialogOpen(false);
-    } else {
-      setIsLoginDialogOpen(true);
-    }
-  }, [currentUser]);
-
 
   const handleLogin = (email: string, password_unused: string) => {
     // In a real app, you'd verify the password. Here, we'll just find the user by email.
@@ -46,7 +36,6 @@ export default function Home() {
         setActiveView('Chat');
       }
 
-      setIsLoginDialogOpen(false); // Close dialog on successful login
       return true;
     }
     return false;
@@ -61,7 +50,7 @@ export default function Home() {
     const props = { onMenuClick: () => setIsNavOpen(true), user: currentUser };
     switch (activeView) {
       case "Chat":
-        return <ChatLayout user={currentUser} onLogin={() => setIsLoginDialogOpen(true)} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
+        return <ChatLayout user={currentUser} onLogin={() => { /* Handled by main component */}} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
       case "Contacts":
         return <ContactsView {...props} />;
       case "Agents":
@@ -72,23 +61,18 @@ export default function Home() {
           return <DashboardView {...props} />;
         }
         // Redirect or show access denied for non-admins
-        return <ChatLayout user={currentUser} onLogin={() => setIsLoginDialogOpen(true)} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
+        return <ChatLayout user={currentUser} onLogin={() => {}} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
       case "Announcements":
         return <AnnouncementsView {...props} />;
       default:
-        return <ChatLayout user={currentUser} onLogin={() => setIsLoginDialogOpen(true)} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
+        return <ChatLayout user={currentUser} onLogin={() => {}} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
     }
   };
 
   if (!currentUser) {
     return (
-        <main className="flex h-screen bg-background">
-            <LoginDialog 
-                isOpen={isLoginDialogOpen} 
-                onOpenChange={setIsLoginDialogOpen}
-                onLogin={handleLogin}
-                hideCloseButton={true}
-            />
+        <main className="flex h-screen w-full items-center justify-center bg-background p-4">
+            <LoginDialog onLogin={handleLogin} />
         </main>
     )
   }
@@ -105,11 +89,6 @@ export default function Home() {
       <div className="flex-1 md:pl-[70px] min-w-0">
         {renderView()}
       </div>
-       <LoginDialog 
-        isOpen={isLoginDialogOpen && !currentUser} 
-        onOpenChange={setIsLoginDialogOpen}
-        onLogin={handleLogin}
-      />
     </main>
   );
 }

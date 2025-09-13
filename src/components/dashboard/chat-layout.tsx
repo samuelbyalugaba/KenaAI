@@ -96,7 +96,9 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
               <span className="text-xs text-muted-foreground flex-shrink-0">{chat.timestamp}</span>
             </div>
             <div className="flex items-center justify-between mt-1">
-              <p className="text-sm text-muted-foreground truncate flex-grow pr-2">{chat.lastMessage}</p>
+              <p className="text-sm text-muted-foreground truncate flex-grow pr-2">
+                {chat.lastMessage.length > 15 ? `${chat.lastMessage.slice(0, 15)}...` : chat.lastMessage}
+              </p>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <PriorityBadge priority={chat.priority} />
                 {chat.unreadCount > 0 && (
@@ -381,7 +383,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     if (isMobile) {
         setSelectedChat(null);
     }
-  }, [isMobile, chats]);
+  }, [isMobile]);
 
   const handleSelectChat = (chat: Chat) => {
     setSelectedChat(chat);
