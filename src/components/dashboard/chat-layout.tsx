@@ -135,9 +135,9 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
 );
 
 const priorityMap = {
-  urgent: "bg-red-500",
-  high: "bg-amber-500",
-  normal: "bg-blue-500",
+  urgent: "bg-destructive",
+  high: "bg-chart-5",
+  normal: "bg-accent",
   low: "bg-muted-foreground",
 } as const;
 
