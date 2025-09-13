@@ -134,12 +134,12 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
   </ScrollArea>
 );
 
-const priorityMap = {
-  urgent: "bg-destructive",
-  high: "bg-chart-5",
-  normal: "bg-accent",
-  low: "bg-muted-foreground",
-} as const;
+const priorityMap: Record<Priority, string> = {
+  urgent: "bg-red-500",
+  high: "bg-[#4f2668]",
+  normal: "bg-blue-500",
+  low: "bg-gray-400",
+};
 
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
   const colorClass = priorityMap[priority];
@@ -469,7 +469,7 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
         setSelectedChat(null);
     } else if (isMobile) {
         // On mobile, clear selection when switching back to chat list
-        setSelectedChat(null);
+        // setSelectedChat(null);
     }
   }, [user, isMobile]);
 
@@ -715,24 +715,11 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
                     />
                 ) : (
                     <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                        { !user ? (
-                            <>
-                                <div className="rounded-full bg-primary/10 p-4">
-                                    <LogIn className="h-12 w-12 text-primary"/>
-                                </div>
-                                <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
-                                <p className="text-muted-foreground">Please log in to view and respond to chats.</p>
-                                {/* Login on desktop is handled by the main page.tsx component */}
-                            </>
-                        ) : (
-                            <>
-                                <div className="rounded-full bg-primary/10 p-4">
-                                    <MessageSquare className="h-12 w-12 text-primary"/>
-                                </div>
-                                <h2 className="text-2xl font-bold">No Chat Selected</h2>
-                                <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
-                            </>
-                        )}
+                        <div className="rounded-full bg-primary/10 p-4">
+                            <MessageSquare className="h-12 w-12 text-primary"/>
+                        </div>
+                        <h2 className="text-2xl font-bold">No Chat Selected</h2>
+                        <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
                     </div>
                 )}
             </div>
@@ -750,3 +737,4 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
     
 
     
+
