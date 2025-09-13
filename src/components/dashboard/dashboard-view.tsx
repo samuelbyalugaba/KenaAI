@@ -285,16 +285,6 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Chatbot Engagement</CardTitle>
-                        <CardDescription>A summary of how users interact with the bot.</CardDescription>
-                    </CardHeader>
-                     <CardContent className="text-center text-muted-foreground pt-8">
-                        <p>Engagement funnel chart is under construction.</p>
-                        <p>(This will be implemented without a funnel chart component as requested).</p>
-                    </CardContent>
-                </Card>
               </div>
           </TabsContent>
         </Tabs>
@@ -302,5 +292,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
+
+    
 
     
