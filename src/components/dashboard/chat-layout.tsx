@@ -372,9 +372,6 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
   }, [chats, searchTerm, selectedChannel]);
 
   React.useEffect(() => {
-    if (!isMobile && chats.length > 0) {
-        // setSelectedChat(chats[0]);
-    }
     if (isMobile) {
         setSelectedChat(null);
     }
