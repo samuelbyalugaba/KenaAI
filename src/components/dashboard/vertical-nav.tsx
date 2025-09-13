@@ -36,7 +36,6 @@ const navItems = [
 ];
 
 const bottomNavItems = [
-    { icon: Globe, label: "Language" as View },
     { icon: Wallet, label: "Payments" as View },
     { icon: Settings, label: "Settings" as View },
     { icon: Cog, label: "System Settings" as View },

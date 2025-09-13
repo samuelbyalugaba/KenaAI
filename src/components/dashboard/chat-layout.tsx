@@ -613,10 +613,10 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-channels">All Channels</SelectItem>
-                <SelectItem value="email">WhatsApp</SelectItem>
-                <SelectItem value="whatsapp">Webchat</SelectItem>
-                <SelectItem value="whatsapp">Instagram</SelectItem>
-                <SelectItem value="whatsapp">Facebook</SelectItem>
+                <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                <SelectItem value="webchat">Webchat</SelectItem>
+                <SelectItem value="instagram">Instagram</SelectItem>
+                <SelectItem value="facebook">Facebook</SelectItem>
               </SelectContent>
             </Select>
           </div>
