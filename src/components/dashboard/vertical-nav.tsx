@@ -8,11 +8,10 @@ import {
   Settings,
   Users,
   Megaphone,
-  History,
-  Cog,
-  Globe,
-  Wallet,
-  LayoutDashboard
+  LayoutDashboard,
+  Send,
+  BarChart,
+  Award
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -26,20 +25,25 @@ import type { View } from "@/app/page";
 import type { AgentRole } from "@/types";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 
-const navItems = [
-  { icon: MessageSquare, label: "Chat" as View },
+const adminNavItems = [
+  { icon: LayoutDashboard, label: "Dashboard" as View },
+  { icon: MessageSquare, label: "Chat" as View,},
   { icon: BookUser, label: "Contacts" as View },
   { icon: Users, label: "Agents" as View },
-  { icon: LayoutDashboard, label: "Dashboard" as View, adminOnly: true },
+  { icon: Send, label: "Campaigns" as View },
+  { icon: BarChart, label: "Analytics" as View },
   { icon: Megaphone, label: "Announcements" as View },
-  { icon: History, label: "History" as View },
+  { icon: Settings, label: "Settings" as View },
 ];
 
-const bottomNavItems = [
-    { icon: Wallet, label: "Payments" as View },
-    { icon: Settings, label: "Settings" as View },
-    { icon: Cog, label: "System Settings" as View },
-]
+const agentNavItems = [
+  { icon: MessageSquare, label: "Chat" as View },
+  { icon: BookUser, label: "Contacts" as View },
+  { icon: Megaphone, label: "Announcements" as View },
+  { icon: Award, label: "My Performance" as View },
+  { icon: Settings, label: "Settings" as View },
+];
+
 
 type VerticalNavProps = {
     activeView: View;
@@ -51,36 +55,12 @@ type VerticalNavProps = {
 
 export function VerticalNav({ activeView, setActiveView, userRole, isOpen, setIsOpen }: VerticalNavProps) {
 
-  const visibleNavItems = navItems.filter(item => !item.adminOnly || userRole === 'admin');
+  const navItems = userRole === 'admin' ? adminNavItems : agentNavItems;
 
   const NavContent = () => (
     <div className="flex h-full flex-col items-center justify-between bg-primary py-4">
         <nav className="flex flex-col items-center gap-4 px-2">
-            {visibleNavItems.map((item) => (
-            <Tooltip key={item.label}>
-                <TooltipTrigger asChild>
-                <button
-                    onClick={() => {
-                        setActiveView(item.label)
-                        setIsOpen(false)
-                    }}
-                    className={cn(
-                    "flex h-12 w-12 items-center justify-center rounded-lg text-primary-foreground transition-colors hover:bg-primary-foreground/10 hover:text-white",
-                    activeView === item.label
-                        ? "bg-accent text-accent-foreground"
-                        : "text-primary-foreground"
-                    )}
-                >
-                    <item.icon className="h-6 w-6" />
-                    <span className="sr-only">{item.label}</span>
-                </button>
-                </TooltipTrigger>
-                <TooltipContent side="right">{item.label}</TooltipContent>
-            </Tooltip>
-            ))}
-        </nav>
-        <nav className="flex flex-col items-center gap-4 px-2">
-            {bottomNavItems.map((item) => (
+            {navItems.map((item) => (
             <Tooltip key={item.label}>
                 <TooltipTrigger asChild>
                 <button
