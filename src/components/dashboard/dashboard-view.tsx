@@ -38,8 +38,6 @@ import {
   BarChart,
   Line,
   LineChart,
-  Pie,
-  PieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -54,8 +52,8 @@ import { Badge } from "../ui/badge";
 import { mockAgentPerformance } from "@/lib/mock-data";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { Label } from "@/components/ui/label";
 import { KenaAILogo } from "../ui/kena-ai-logo";
+import { Label } from "@/components/ui/label";
 
 
 const kpiData = [
@@ -107,18 +105,34 @@ const conversationVolumeData = [
 ];
 
 const channelBreakdownData = [
-    { name: 'WhatsApp', value: 400, fill: 'var(--color-whatsapp)' },
-    { name: 'Facebook', value: 300, fill: 'var(--color-facebook)' },
-    { name: 'Instagram', value: 300, fill: 'var(--color-instagram)' },
-    { name: 'Email', value: 200, fill: 'var(--color-email)' },
+    { name: 'WhatsApp', value: 400, fill: 'hsl(var(--chart-1))' },
+    { name: 'Facebook', value: 300, fill: 'hsl(var(--chart-2))' },
+    { name: 'Instagram', value: 300, fill: 'hsl(var(--chart-3))' },
+    { name: 'Email', value: 200, fill: 'hsl(var(--chart-4))' },
 ];
 
 const channelBreakdownConfig = {
-  whatsapp: { label: 'WhatsApp', color: '#25D366' },
-  facebook: { label: 'Facebook', color: '#1877F2' },
-  instagram: { label: 'Instagram', color: '#E4405F' },
-  email: { label: 'Email', color: '#EA4335' },
+  value: {
+    label: "Conversations",
+  },
+  WhatsApp: {
+    label: "WhatsApp",
+    color: "hsl(var(--chart-1))",
+  },
+  Facebook: {
+    label: "Facebook",
+    color: "hsl(var(--chart-2))",
+  },
+  Instagram: {
+    label: "Instagram",
+    color: "hsl(var(--chart-3))",
+  },
+  Email: {
+    label: "Email",
+    color: "hsl(var(--chart-4))",
+  },
 }
+
 
 const AgentPerformanceTable = ({ agents }: { agents: AgentPerformance[] }) => (
     <Table>
@@ -315,15 +329,24 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                             <CardTitle>Breakdown by Channel</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
-                                <PieChart>
-                                    <Tooltip content={<ChartTooltipContent nameKey="name" />} />
-                                    <Pie data={channelBreakdownData} dataKey="value" nameKey="name" >
-                                        {channelBreakdownData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                           <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
+                                <BarChart data={channelBreakdownData} layout="vertical" margin={{ left: 10, right: 10 }}>
+                                    <XAxis type="number" hide />
+                                    <YAxis 
+                                        dataKey="name" 
+                                        type="category" 
+                                        tickLine={false} 
+                                        axisLine={false} 
+                                        tickMargin={10}
+                                        tickFormatter={(value) => channelBreakdownConfig[value as keyof typeof channelBreakdownConfig]?.label}
+                                    />
+                                    <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                    <Bar dataKey="value" radius={4}>
+                                         {channelBreakdownData.map((entry) => (
+                                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                                         ))}
-                                    </Pie>
-                                </PieChart>
+                                    </Bar>
+                                </BarChart>
                             </ChartContainer>
                         </CardContent>
                     </Card>
@@ -386,5 +409,3 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
-
-    
