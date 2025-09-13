@@ -49,7 +49,6 @@ import {
 } from "@/components/ui/sheet";
 import {
   Tooltip,
-  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
@@ -261,7 +260,7 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
                         <SheetTrigger asChild>
                            <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-muted-foreground"><NotebookPen className="h-5 w-5"/></Button>
+                                    <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => setIsNotesOpen(true)}><NotebookPen className="h-5 w-5" /></Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Add Note</TooltipContent>
                             </Tooltip>
