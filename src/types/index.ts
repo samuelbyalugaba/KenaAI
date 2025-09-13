@@ -6,6 +6,7 @@ export type User = {
     avatar: string;
     email?: string;
     phone?: string;
+    assignedAgentId?: string;
   };
   
   export type Message = {

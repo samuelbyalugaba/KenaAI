@@ -11,14 +11,14 @@ export const mockAgents: Agent[] = [
 ];
 
 export const mockUsers: User[] = [
-  { id: 'user1', name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", email: "kelvin@example.com", phone: "+1-555-0101" },
+  { id: 'user1', name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", email: "kelvin@example.com", phone: "+1-555-0101", assignedAgentId: '3' },
   { id: 'user2', name: "Sylvester", avatar: "https://picsum.photos/id/1025/100/100", email: "sylvester@example.com", phone: "+1-555-0102" },
-  { id: 'user3', name: "Linaliz", avatar: "https://picsum.photos/id/1027/100/100", email: "linaliz@example.com", phone: "+1-555-0103" },
+  { id: 'user3', name: "Linaliz", avatar: "https://picsum.photos/id/1027/100/100", email: "linaliz@example.com", phone: "+1-555-0103", assignedAgentId: '4' },
   { id: 'user4', name: "Glory", avatar: "https://picsum.photos/id/103/100/100", email: "glory@example.com", phone: "+1-555-0104" },
-  { id: 'user5', name: "Alice", avatar: "https://picsum.photos/id/201/100/100", email: "alice@example.com", phone: "+1-555-0105" },
+  { id: 'user5', name: "Alice", avatar: "https://picsum.photos/id/201/100/100", email: "alice@example.com", phone: "+1-555-0105", assignedAgentId: '3' },
   { id: 'user6', name: "Bob", avatar: "https://picsum.photos/id/202/100/100", email: "bob@example.com", phone: "+1-555-0106" },
   { id: 'user7', name: "Charlie", avatar: "https://picsum.photos/id/203/100/100", email: "charlie@example.com", phone: "+1-555-0107" },
-  { id: 'user8', name: "Diana", avatar: "https://picsum.photos/id/204/100/100", email: "diana@example.com", phone: "+1-555-0108" },
+  { id: 'user8', name: "Diana", avatar: "https://picsum.photos/id/204/100/100", email: "diana@example.com", phone: "+1-555-0108", assignedAgentId: '1' },
 ];
 
 export const mockChats: Chat[] = [
