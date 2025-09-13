@@ -30,6 +30,13 @@ import { mockUsers, mockChats } from "@/lib/mock-data";
 
 
 const ContactProfile = ({ contact, chatHistory, onBack }: { contact: ContactUser, chatHistory: Message[] | undefined, onBack?: () => void }) => {
+    
+    const exampleNotes = [
+        { id: 1, agent: "Sylvester Mayaya", text: "Customer is interested in the enterprise plan. Follow up next week.", timestamp: "2024-07-29 10:30 AM" },
+        { id: 2, agent: "Samuel Byalugaba", text: "Had a difficult call regarding a billing issue. Offered a 10% discount on next month's invoice.", timestamp: "2024-07-28 02:45 PM" },
+        { id: 3, agent: "Sylvester Mayaya", text: "Called to confirm delivery address. Everything is correct.", timestamp: "2024-07-27 11:15 AM" },
+    ];
+
     return (
         <Card className="h-full flex flex-col">
             <CardHeader className="flex flex-row items-center gap-4">
@@ -59,9 +66,29 @@ const ContactProfile = ({ contact, chatHistory, onBack }: { contact: ContactUser
                 </div>
                 <Separator />
                 <div>
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Agent Notes</h3>
-                    <Textarea placeholder="Add a private note for this contact..." rows={3} />
-                    <Button size="sm" className="mt-2">Save Note</Button>
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4">Agent Notes</h3>
+                    <div className="space-y-4">
+                        <div className="flex gap-3">
+                             <Avatar className="h-8 w-8">
+                                <AvatarImage src="https://picsum.photos/id/40/100/100" alt="Sylvester Mayaya" data-ai-hint="person portrait" />
+                                <AvatarFallback>SM</AvatarFallback>
+                            </Avatar>
+                             <div className="flex-1">
+                                 <Textarea placeholder="Add a private note for this contact..." rows={2} />
+                                 <Button size="sm" className="mt-2">Save Note</Button>
+                             </div>
+                        </div>
+                        <ScrollArea className="h-48">
+                            <div className="space-y-4 pr-4">
+                                {exampleNotes.map(note => (
+                                    <div key={note.id} className="text-sm border-l-2 pl-3">
+                                        <p className="font-medium">{note.text}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">- {note.agent} on {note.timestamp}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </div>
                 </div>
                 <Separator />
                 <div>

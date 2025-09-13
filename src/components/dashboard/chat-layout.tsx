@@ -10,6 +10,7 @@ import {
   LogIn,
   LogOut,
   MessageSquare,
+  NotebookPen,
   PanelLeft,
   Paperclip,
   PlusCircle,
@@ -44,6 +45,7 @@ import {
   SheetTitle,
   SheetDescription,
   SheetTrigger,
+  SheetFooter,
 } from "@/components/ui/sheet";
 import {
   Tooltip,
@@ -183,11 +185,13 @@ const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack }: { chat: Chat
 
 const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onBack: () => void }) => {
     const [summary, setSummary] = React.useState<string | null>(null);
-    const [isLoading, setIsLoading] = React.useState(false);
+    const [isLoadingSummary, setIsLoadingSummary] = React.useState(false);
+    const [isNotesOpen, setIsNotesOpen] = React.useState(false);
+    const [note, setNote] = React.useState("");
     const { toast } = useToast();
 
     const handleSummarize = async () => {
-        setIsLoading(true);
+        setIsLoadingSummary(true);
         setSummary(null);
         try {
             const chatThread = chat.messages.map(m => `${typeof m.sender === 'string' ? 'You' : m.sender.name}: ${m.text}`).join('\n');
@@ -201,7 +205,34 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
                 description: "Could not generate chat summary.",
             })
         }
-        setIsLoading(false);
+        setIsLoadingSummary(false);
+    }
+
+    const handleSaveNote = () => {
+        if (!note.trim()) {
+            toast({
+                variant: "destructive",
+                title: "Empty Note",
+                description: "Cannot save an empty note.",
+            })
+            return;
+        }
+        // In a real app, you would save the note to a database.
+        // For now, we just show a confirmation toast.
+        console.log("Saving note for", chat.user.name, ":", note);
+        toast({
+            title: "Note Saved",
+            description: `Your note for ${chat.user.name} has been saved.`,
+        });
+        setNote("");
+        setIsNotesOpen(false);
+    }
+
+    const isActionSheetOpen = !!summary || isLoadingSummary;
+    const onActionSheetOpenChange = (isOpen: boolean) => {
+        if (!isOpen) {
+            setSummary(null);
+        }
     }
 
     return (
@@ -226,7 +257,38 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
                     <Label htmlFor="chatbot-mode" className="hidden sm:block">{chat.isChatbotActive ? "Chatbot Active" : "Manual Mode"}</Label>
                 </div>
                 <TooltipProvider>
-                    <Sheet open={!!summary || isLoading} onOpenChange={(isOpen) => !isOpen && setSummary(null)}>
+                    <Sheet open={isNotesOpen} onOpenChange={setIsNotesOpen}>
+                        <SheetTrigger asChild>
+                           <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-muted-foreground"><NotebookPen className="h-5 w-5"/></Button>
+                                </TooltipTrigger>
+                                <TooltipContent>Add Note</TooltipContent>
+                            </Tooltip>
+                        </SheetTrigger>
+                        <SheetContent>
+                            <SheetHeader>
+                                <SheetTitle>Add Note for {chat.user.name}</SheetTitle>
+                                <SheetDescription>
+                                    Add a private note to this contact's profile. Only agents can see this.
+                                </SheetDescription>
+                            </SheetHeader>
+                            <div className="py-4">
+                                <Textarea 
+                                    placeholder="e.g., Customer is interested in enterprise plan..." 
+                                    rows={8}
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                />
+                            </div>
+                            <SheetFooter>
+                                <Button variant="outline" onClick={() => setIsNotesOpen(false)}>Cancel</Button>
+                                <Button onClick={handleSaveNote}>Save Note</Button>
+                            </SheetFooter>
+                        </SheetContent>
+                    </Sheet>
+                    
+                    <Sheet open={isActionSheetOpen} onOpenChange={onActionSheetOpenChange}>
                       <SheetTrigger asChild>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -243,7 +305,7 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
                           </SheetDescription>
                         </SheetHeader>
                         <div className="py-4">
-                          {isLoading && <p>Generating summary...</p>}
+                          {isLoadingSummary && <p>Generating summary...</p>}
                           {summary && <p className="text-sm text-muted-foreground">{summary}</p>}
                         </div>
                       </SheetContent>
@@ -325,12 +387,11 @@ const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string;
 
 type ChatLayoutProps = {
   user: UserProfile | null;
-  onLogin: () => void;
   onLogout: () => void;
   onMenuClick: () => void;
 };
 
-export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutProps) {
+export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
   const [agents, setAgents] = React.useState<Agent[]>([]);
@@ -376,14 +437,16 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
   React.useEffect(() => {
     if (!user) {
         setSelectedChat(null);
-    }
-  }, [user]);
-
-  React.useEffect(() => {
-    if (isMobile) {
+    } else if (!isMobile) {
+        // Automatically select the first chat on desktop if one isn't selected
+        // if (!selectedChat && filteredChats.length > 0) {
+        //     setSelectedChat(filteredChats[0]);
+        // }
+    } else {
+        // On mobile, clear selection when switching back to chat list
         setSelectedChat(null);
     }
-  }, [isMobile]);
+  }, [user, isMobile]);
 
   const handleSelectChat = (chat: Chat) => {
     setSelectedChat(chat);
@@ -515,12 +578,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                  <span>Log out</span>
                </DropdownMenuItem>
              </>
-         ) : (
-             <DropdownMenuItem onClick={onLogin}>
-                 <LogIn className="mr-2 h-4 w-4" />
-                 <span>Log in</span>
-             </DropdownMenuItem>
-         )}
+         ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -528,6 +586,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
 
   const renderMobileView = () => {
     if (!user) {
+        // In mobile, login is handled by the main page.tsx which shows LoginDialog full screen
         return null;
     }
     
@@ -636,10 +695,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                                 </div>
                                 <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
                                 <p className="text-muted-foreground">Please log in to view and respond to chats.</p>
-                                <Button onClick={onLogin}>
-                                    <LogIn className="mr-2 h-4 w-4" />
-                                    Log in
-                                </Button>
+                                {/* Login on desktop is handled by the main page.tsx component */}
                             </>
                         ) : (
                             <>

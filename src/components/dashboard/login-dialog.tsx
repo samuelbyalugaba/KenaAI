@@ -57,7 +57,7 @@ export function LoginDialog({ onLogin }: LoginDialogProps) {
             <div className="mx-auto mb-4">
                 <KenaAILogo className="h-16" />
             </div>
-          <CardTitle>Agent Login</CardTitle>
+          <CardTitle>Login</CardTitle>
           <CardDescription>
             Enter your credentials to access the chat dashboard.
           </CardDescription>
@@ -79,7 +79,7 @@ export function LoginDialog({ onLogin }: LoginDialogProps) {
                     <FormControl>
                         <Input
                         type="email"
-                        placeholder="agent@example.com"
+                        placeholder="john.d@example.com"
                         {...field}
                         />
                     </FormControl>
