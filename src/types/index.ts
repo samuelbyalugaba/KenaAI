@@ -61,7 +61,7 @@ export type User = {
     date: string;
     category: AnnouncementCategory;
     content: string;
-readBy: Agent[];
+    readBy: Agent[];
   };
 
   export type AgentPerformance = {
@@ -71,3 +71,16 @@ readBy: Agent[];
     avgResponseTime: string;
     resolutionRate: number;
   };
+
+  export type Campaign = {
+    id: string;
+    title: string;
+    description?: string;
+    type: "Broadcast" | "Scheduled" | "Automated";
+    audience: User[];
+    message: string;
+    status: "Draft" | "Scheduled" | "Sending" | "Completed" | "Failed";
+    createdAt: string;
+    sentAt?: string;
+  };
+
