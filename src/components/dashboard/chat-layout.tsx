@@ -425,9 +425,6 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
         });
 
         setChats(sortedChats);
-        if (sortedChats.length > 0 && !isMobile) { // Select first chat on desktop
-            setSelectedChat(sortedChats[0]);
-        }
     }
     prioritizeChats();
   }, [isMobile]);
@@ -485,30 +482,10 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     </header>
   )
 
-  const ChatListHeaderContent = () => (
-    <>
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
-            <PanelLeft className="h-5 w-5" />
-        </Button>
-        <h1 className="text-xl font-bold hidden md:block">Chats</h1>
-      </div>
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" className="gap-2">
-          <PlusCircle className="h-5 w-5" /> New Chat
-        </Button>
-        <div className="hidden md:flex">
-          <AddAgentDialog onAgentAdd={handleAgentAdd} />
-        </div>
-        <UserMenu />
-      </div>
-    </>
-  );
-
   const MobileChatListHeader = () => (
     <MainHeader>
         <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+            <Button variant="ghost" size="icon" onClick={onMenuClick}>
                 <PanelLeft className="h-5 w-5" />
                 <span className="sr-only">Open Menu</span>
             </Button>
@@ -677,6 +654,10 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                                 </div>
                                 <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
                                 <p className="text-muted-foreground">Please log in to view and respond to chats.</p>
+                                <Button onClick={onLogin}>
+                                    <LogIn className="mr-2 h-4 w-4" />
+                                    Log in
+                                </Button>
                             </>
                         ) : (
                             <>
@@ -699,3 +680,6 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
 
     
 
+
+
+    
