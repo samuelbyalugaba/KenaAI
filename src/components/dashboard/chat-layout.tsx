@@ -103,6 +103,24 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
                 {chat.lastMessage.length > 15 ? `${chat.lastMessage.slice(0, 15)}...` : chat.lastMessage}
               </p>
               <div className="flex items-center gap-2 flex-shrink-0">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger>
+                      {chat.isChatbotActive ? (
+                        <Bot className="h-4 w-4 text-muted-foreground" />
+                      ) : (
+                        <UserIcon className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        {chat.isChatbotActive
+                          ? "Handled by Bot"
+                          : "Handled by Agent"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
                 <PriorityBadge priority={chat.priority} />
                 {chat.unreadCount > 0 && (
                   <Badge className="flex h-5 w-5 items-center justify-center rounded-full p-0 bg-accent text-accent-foreground">{chat.unreadCount}</Badge>
@@ -265,20 +283,8 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
             </div>
             <div className="ml-auto flex items-center gap-1 sm:gap-2">
                 <div className="flex items-center space-x-2">
-                    {chat.isChatbotActive && (
-                        <TooltipProvider>
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    <Bot className="h-5 w-5 text-muted-foreground" />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Chatbot is active</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        </TooltipProvider>
-                    )}
                     <Switch id="chatbot-mode" checked={chat.isChatbotActive} onCheckedChange={(isActive) => onChatbotToggle(chat.id, isActive)} />
-                    <Label htmlFor="chatbot-mode" className="hidden sm:block text-sm">{chat.isChatbotActive ? "Bot" : "Manual"}</Label>
+                    <Label htmlFor="chatbot-mode" className="hidden sm:block text-sm">{chat.isChatbotActive ? "Bot Mode" : "Manual Mode"}</Label>
                 </div>
                 <TooltipProvider>
                     <Sheet open={isNotesOpen} onOpenChange={setIsNotesOpen}>
@@ -736,6 +742,8 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
     </div>
   );
 }
+
+    
 
     
 
