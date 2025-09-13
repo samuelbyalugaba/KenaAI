@@ -26,7 +26,9 @@ import {
     File,
     Download,
     Mail,
-    AlertTriangle
+    AlertTriangle,
+    Star,
+    TrendingUp
 } from "lucide-react";
 import type { UserProfile, AgentPerformance } from "@/types";
 import { Button } from "../ui/button";
@@ -191,16 +193,18 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                 <PanelLeft className="h-5 w-5" />
                 <span className="sr-only">Open Menu</span>
             </Button>
-            <h1 className="text-2xl font-bold">Analytics / Reports</h1>
+            <h1 className="text-2xl font-bold">Analytics Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
             <Button variant="outline" className="gap-2"><Calendar className="h-4 w-4" /> Date Range</Button>
-            <Button className="gap-2"><FileText className="h-4 w-4" /> Export Report</Button>
+            <Button className="gap-2"><Download className="h-4 w-4" /> Export Report</Button>
         </div>
       </header>
-      <main className="flex-1 overflow-auto p-4 space-y-4">
-        {/* Section 1: Top KPI Cards */}
-        <section>
+      <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 space-y-8">
+        
+        {/* Section 1: Key Metrics */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Key Metrics</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             {kpiData.map((kpi) => (
               <Card key={kpi.title}>
@@ -218,148 +222,137 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
               </Card>
             ))}
           </div>
-        </section>
+        </div>
         
-        {/* Section 2: Conversation Insights */}
-        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-5">
-                <CardHeader>
-                    <CardTitle>Conversation Volume</CardTitle>
-                    <CardDescription>Volume of conversations over the last 7 days.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <ChartContainer config={{}} className="h-[250px] w-full">
-                         <LineChart data={conversationVolumeData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                            <YAxis tickLine={false} axisLine={false} />
-                            <Tooltip content={<ChartTooltipContent />} />
-                            <Line type="monotone" dataKey="conversations" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                        </LineChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
-            <Card className="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle>Conversation by Source</CardTitle>
-                    <CardDescription>Breakdown of conversations by channel.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
-                        <PieChart>
-                            <Tooltip content={<ChartTooltipContent nameKey="name" />} />
-                            <Pie data={channelBreakdownData} dataKey="value" nameKey="name" >
-                                {channelBreakdownData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                                ))}
-                            </Pie>
-                        </PieChart>
-                    </ChartContainer>
-                </CardContent>
-            </Card>
-        </section>
-        
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Section 2: Main Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Main Column */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Conversation Insights */}
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Conversation Insights</h2>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Conversation Volume</CardTitle>
+                      <CardDescription>Volume of conversations over the last 7 days.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                       <ChartContainer config={{}} className="h-[300px] w-full">
+                           <LineChart data={conversationVolumeData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                              <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                              <YAxis tickLine={false} axisLine={false} />
+                              <Tooltip content={<ChartTooltipContent />} />
+                              <Line type="monotone" dataKey="conversations" stroke="hsl(var(--primary))" strokeWidth={2} dot={true} />
+                          </LineChart>
+                      </ChartContainer>
+                  </CardContent>
+              </Card>
+            </div>
+            
             {/* Agent Performance */}
-            <Card className="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle>Agent Performance</CardTitle>
-                    <CardDescription>Leaderboard of agent efficiency and resolution rates.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <AgentPerformanceTable agents={mockAgentPerformance} />
-                </CardContent>
-            </Card>
-             {/* Customer Engagement */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Customer Engagement</CardTitle>
-                    <CardDescription>Metrics on customer interaction and loyalty.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <Card>
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-base">New vs Returning Customers</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex justify-around items-center">
-                            <div className="text-center">
-                                <p className="text-2xl font-bold">350</p>
-                                <p className="text-sm text-muted-foreground">New</p>
-                            </div>
-                             <div className="text-center">
-                                <p className="text-2xl font-bold">895</p>
-                                <p className="text-sm text-muted-foreground">Returning</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <p className="text-center text-sm text-muted-foreground pt-4">Campaign & Funnel analytics coming soon.</p>
-                </CardContent>
-            </Card>
-        </section>
+            <div>
+                <h2 className="text-2xl font-bold mb-4">Agent Performance</h2>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Agent Leaderboard</CardTitle>
+                        <CardDescription>Ranking agents by efficiency and resolution rates.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <AgentPerformanceTable agents={mockAgentPerformance} />
+                    </CardContent>
+                </Card>
+            </div>
+            
+             {/* Chatbot Analysis */}
+            <div>
+                <h2 className="text-2xl font-bold mb-4">Chatbot Analysis</h2>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Unanswered Queries</CardTitle>
+                        <CardDescription>Log of queries the chatbot could not resolve.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-center text-muted-foreground p-8">Unanswered queries log is under construction.</p>
+                    </CardContent>
+                </Card>
+            </div>
 
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {/* Export and Reporting */}
-            <Card className="lg:col-span-1">
-                <CardHeader>
-                    <CardTitle>Export &amp; Reporting</CardTitle>
-                    <CardDescription>Generate and schedule custom reports.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        <Button variant="outline" className="flex-1"><Download className="mr-2 h-4 w-4" /> CSV</Button>
-                        <Button variant="outline" className="flex-1"><Download className="mr-2 h-4 w-4" /> Excel</Button>
-                        <Button variant="outline" className="flex-1"><Download className="mr-2 h-4 w-4" /> PDF</Button>
-                    </div>
-                    <div className="border-t pt-4 space-y-2">
-                        <Label htmlFor="report-frequency">Schedule Email Reports</Label>
-                        <div className="flex gap-2">
-                            <Select defaultValue="weekly">
-                                <SelectTrigger id="report-frequency" className="flex-1">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="daily">Daily</SelectItem>
-                                    <SelectItem value="weekly">Weekly</SelectItem>
-                                    <SelectItem value="monthly">Monthly</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Button className="flex-shrink-0"><Mail className="mr-2 h-4 w-4" /> Schedule</Button>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+          </div>
+
+          {/* Sidebar Column */}
+          <div className="lg:col-span-1 space-y-8">
 
              {/* Smart Alerts */}
-            <Card className="lg:col-span-2">
-                <CardHeader>
-                    <CardTitle>Smart Alerts</CardTitle>
-                    <CardDescription>Real-time notifications and AI-powered suggestions.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Spike in Negative Sentiment!</AlertTitle>
-                        <AlertDescription>
-                            Negative customer sentiment has increased by 35% in the last hour.
-                        </AlertDescription>
-                    </Alert>
-                    <Alert>
-                        <Clock className="h-4 w-4" />
-                        <AlertTitle>Response Times Exceeding SLA</AlertTitle>
-                        <AlertDescription>
-                           Average response time is currently 5m 42s, exceeding the 3m target.
-                        </AlertDescription>
-                    </Alert>
-                    <Alert>
-                        <Bot className="h-4 w-4" />
-                        <AlertTitle>AI Training Suggestion</AlertTitle>
-                        <AlertDescription>
-                            Your bot missed 28 intents related to "shipping costs" this week. Consider adding a new training phrase.
-                        </AlertDescription>
-                    </Alert>
-                </CardContent>
-            </Card>
-        </section>
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Smart Alerts</h2>
+               <div className="space-y-3">
+                  <Alert variant="destructive">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Spike in Negative Sentiment!</AlertTitle>
+                      <AlertDescription>
+                          Negative customer sentiment has increased by 35% in the last hour.
+                      </AlertDescription>
+                  </Alert>
+                  <Alert>
+                      <Clock className="h-4 w-4" />
+                      <AlertTitle>Response Times Exceeding SLA</AlertTitle>
+                      <AlertDescription>
+                         Average response time is currently 5m 42s, exceeding the 3m target.
+                      </AlertDescription>
+                  </Alert>
+              </div>
+            </div>
+
+            {/* Conversation Breakdown */}
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Conversation Sources</h2>
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Breakdown by Channel</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
+                          <PieChart>
+                              <Tooltip content={<ChartTooltipContent nameKey="name" />} />
+                              <Pie data={channelBreakdownData} dataKey="value" nameKey="name" >
+                                  {channelBreakdownData.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                                  ))}
+                              </Pie>
+                          </PieChart>
+                      </ChartContainer>
+                  </CardContent>
+              </Card>
+            </div>
+
+             {/* Customer Engagement */}
+            <div>
+                <h2 className="text-2xl font-bold mb-4">Customer Engagement</h2>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>New vs Returning</CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex justify-around items-center">
+                        <div className="text-center">
+                            <p className="text-3xl font-bold">350</p>
+                            <p className="text-sm text-muted-foreground">New</p>
+                        </div>
+                          <div className="text-center">
+                            <p className="text-3xl font-bold">895</p>
+                            <p className="text-sm text-muted-foreground">Returning</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+          </div>
+
+        </div>
 
       </main>
     </div>
   );
+}
+
+    
