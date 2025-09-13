@@ -75,7 +75,7 @@ export default function Home() {
     const props = { onMenuClick: () => setIsNavOpen(true), user: currentUser };
     switch (activeView) {
       case "Chat":
-        return <ChatLayout user={currentUser} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
+        return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} />;
       case "Contacts":
         return <ContactsView {...props} />;
       case "Agents":
@@ -86,7 +86,7 @@ export default function Home() {
           return <DashboardView {...props} />;
         }
         // Redirect or show access denied for non-admins
-        return <ChatLayout user={currentUser} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
+        return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} />;
       case "Announcements":
         return <AnnouncementsView {...props} />;
       case "My Performance":
@@ -96,7 +96,7 @@ export default function Home() {
        case "Analytics":
          return <PlaceholderView title="Analytics" {...props} />;
       default:
-        return <ChatLayout user={currentUser} onLogout={handleLogout} onMenuClick={() => setIsNavOpen(true)} />;
+        return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} />;
     }
   };
 
@@ -113,7 +113,8 @@ export default function Home() {
       <VerticalNav 
         activeView={activeView} 
         setActiveView={setActiveView} 
-        userRole={currentUser?.role} 
+        user={currentUser}
+        onLogout={handleLogout}
         isOpen={isNavOpen}
         setIsOpen={setIsNavOpen}
       />

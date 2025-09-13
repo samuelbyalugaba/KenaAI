@@ -135,10 +135,10 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
 );
 
 const priorityMap: Record<Priority, string> = {
-  urgent: "bg-red-500",
+  urgent: "bg-destructive",
   high: "bg-[#4f2668]",
-  normal: "bg-blue-500",
-  low: "bg-gray-400",
+  normal: "bg-accent",
+  low: "bg-muted-foreground",
 };
 
 const PriorityBadge = ({ priority }: { priority: Priority }) => {
@@ -291,7 +291,7 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
                         <SheetTrigger asChild>
                            <Tooltip>
                                 <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-muted-foreground" onClick={() => setIsNotesOpen(true)}><NotebookPen className="h-5 w-5" /></Button>
+                                    <Button variant="ghost" size="icon" className="text-muted-foreground"><NotebookPen className="h-5 w-5" /></Button>
                                 </TooltipTrigger>
                                 <TooltipContent>Add Note</TooltipContent>
                             </Tooltip>
@@ -417,11 +417,10 @@ const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string;
 
 type ChatLayoutProps = {
   user: UserProfile | null;
-  onLogout: () => void;
   onMenuClick: () => void;
 };
 
-export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
+export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
   const [agents, setAgents] = React.useState<Agent[]>([]);
@@ -569,46 +568,10 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
                   <span className="sr-only">New Chat</span>
               </Button>
             </NewChatDialog>
-            <UserMenu />
         </div>
     </MainHeader>
   )
-
-  const UserMenu = () => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-            {user ? (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
-                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-            ) : (
-                <UserIcon className="h-5 w-5 text-muted-foreground" />
-            )}
-            <span className="sr-only">User Menu</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-         {user ? (
-             <>
-               <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
-               <DropdownMenuSeparator />
-               <DropdownMenuItem>
-                 <Settings className="mr-2 h-4 w-4" />
-                 <span>Settings</span>
-               </DropdownMenuItem>
-               <DropdownMenuItem onClick={onLogout}>
-                 <LogOut className="mr-2 h-4 w-4" />
-                 <span>Log out</span>
-               </DropdownMenuItem>
-             </>
-         ) : null}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
   
-
   const renderMobileView = () => {
     if (!user) {
         // In mobile, login is handled by the main page.tsx which shows LoginDialog full screen
@@ -696,7 +659,6 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
                      {canAddAgent && <div className="hidden md:flex">
                          <AddAgentDialog onAgentAdd={handleAgentAdd} />
                      </div>}
-                     <UserMenu />
                  </div>
              </MainHeader>
             
@@ -737,4 +699,5 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
     
 
     
+
 

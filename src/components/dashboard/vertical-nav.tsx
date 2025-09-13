@@ -11,7 +11,9 @@ import {
   LayoutDashboard,
   Send,
   BarChart,
-  Award
+  Award,
+  LogOut,
+  User as UserIcon
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -22,8 +24,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { View } from "@/app/page";
-import type { AgentRole } from "@/types";
+import type { AgentRole, UserProfile } from "@/types";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "../ui/button";
+
 
 const adminNavItems = [
   { icon: LayoutDashboard, label: "Dashboard" as View },
@@ -48,14 +61,15 @@ const agentNavItems = [
 type VerticalNavProps = {
     activeView: View;
     setActiveView: (view: View) => void;
-    userRole?: AgentRole;
+    user: UserProfile | null;
+    onLogout: () => void;
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
 };
 
-export function VerticalNav({ activeView, setActiveView, userRole, isOpen, setIsOpen }: VerticalNavProps) {
+export function VerticalNav({ activeView, setActiveView, user, onLogout, isOpen, setIsOpen }: VerticalNavProps) {
 
-  const navItems = userRole === 'admin' ? adminNavItems : agentNavItems;
+  const navItems = user?.role === 'admin' ? adminNavItems : agentNavItems;
 
   const NavContent = () => (
     <div className="flex h-full flex-col items-center justify-between bg-primary py-4">
@@ -83,6 +97,44 @@ export function VerticalNav({ activeView, setActiveView, userRole, isOpen, setIs
             </Tooltip>
             ))}
         </nav>
+        <div className="flex flex-col items-center gap-4 px-2">
+             <DropdownMenu>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-12 w-12 rounded-lg hover:bg-primary-foreground/10">
+                        {user ? (
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="person glasses"/>
+                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        ) : (
+                            <UserIcon className="h-6 w-6 text-primary-foreground" />
+                        )}
+                        <span className="sr-only">User Menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right">User Menu</TooltipContent>
+              </Tooltip>
+              <DropdownMenuContent align="end" side="right">
+                 {user ? (
+                     <>
+                       <DropdownMenuLabel>{user.name}</DropdownMenuLabel>
+                       <DropdownMenuSeparator />
+                       <DropdownMenuItem onClick={() => setActiveView("Settings")}>
+                         <Settings className="mr-2 h-4 w-4" />
+                         <span>Settings</span>
+                       </DropdownMenuItem>
+                       <DropdownMenuItem onClick={onLogout}>
+                         <LogOut className="mr-2 h-4 w-4" />
+                         <span>Log out</span>
+                       </DropdownMenuItem>
+                     </>
+                 ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
     </div>
   );
 
