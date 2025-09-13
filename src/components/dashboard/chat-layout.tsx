@@ -105,7 +105,7 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
               <div className="flex items-center gap-2 flex-shrink-0">
                 <TooltipProvider>
                   <Tooltip>
-                    <TooltipTrigger>
+                    <TooltipTrigger asChild>
                       {chat.isChatbotActive ? (
                         <Bot className="h-4 w-4 text-muted-foreground" />
                       ) : (
@@ -742,6 +742,8 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
     </div>
   );
 }
+
+    
 
     
 
