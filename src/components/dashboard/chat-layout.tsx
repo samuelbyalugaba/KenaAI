@@ -436,6 +436,14 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
     prioritizeChats();
   }, []);
 
+  React.useEffect(() => {
+    // We don't want to automatically select a chat on mount anymore.
+    // User should click a chat to open it.
+    // if (!isMobile) {
+    //   setSelectedChat(chats[0]);
+    // }
+  }, [isMobile, chats]);
+
   const handleSelectChat = (chat: Chat) => {
     setSelectedChat(chat);
   }
@@ -647,7 +655,14 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
           <div className="md:w-80 lg:w-96 border-r h-full flex flex-col">
             <MainHeader>
                 <KenaAILogo className="h-10" />
-                <div className="flex items-center gap-4">
+            </MainHeader>
+            <SidebarContent />
+          </div>
+
+          <div className="flex flex-1 flex-col h-screen">
+             <MainHeader>
+                 <div />
+                 <div className="flex items-center gap-4">
                     <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
                       <Button variant="ghost" size="sm" className="gap-2">
                           <PlusCircle className="h-5 w-5" /> New Chat
@@ -658,14 +673,6 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
                      </div>
                      <UserMenu />
                  </div>
-            </MainHeader>
-            <SidebarContent />
-          </div>
-
-          <div className="flex flex-1 flex-col h-screen">
-             <MainHeader>
-                 <div />
-                 <div />
              </MainHeader>
             
             <div className="hidden md:block">
