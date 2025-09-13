@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import type { AgentPerformance } from "@/types";
 import { Button } from "../ui/button";
+import { mockAgents } from "@/lib/mock-data";
 
 const chatData = [
   { name: 'Jan', conversations: 4000, resolutionTime: 24 },
@@ -35,10 +36,10 @@ const kpiData = [
 ];
 
 const agentPerformanceData: AgentPerformance[] = [
-    { rank: 1, agent: { id: '1', name: "Samuel Byalugaba", avatar: "https://picsum.photos/id/1/100/100", email: "samuel.b@example.com", phone: "+1-555-0201", role: "admin" }, conversations: 125, avgResponseTime: "1m 30s", resolutionRate: 95 },
-    { rank: 2, agent: { id: '2', name: "Kelvin Malisa", avatar: "https://picsum.photos/id/1025/100/100", email: "kelvin.m@example.com", phone: "+1-555-0202", role: "admin" }, conversations: 110, avgResponseTime: "1m 45s", resolutionRate: 92 },
-    { rank: 3, agent: { id: '3', name: "Sylvester Mayaya", avatar: "https://picsum.photos/id/40/100/100", email: "sylvester.m@example.com", phone: "+1-555-0203", role: "super_agent" }, conversations: 98, avgResponseTime: "2m 05s", resolutionRate: 88 },
-    { rank: 4, agent: { id: '4', name: "New Agent", avatar: "https://picsum.photos/id/41/100/100", email: "new.a@example.com", phone: "+1-555-0204", role: "agent" }, conversations: 85, avgResponseTime: "2m 15s", resolutionRate: 85 },
+    { rank: 1, agent: mockAgents[0], conversations: 125, avgResponseTime: "1m 30s", resolutionRate: 95 },
+    { rank: 2, agent: mockAgents[1], conversations: 110, avgResponseTime: "1m 45s", resolutionRate: 92 },
+    { rank: 3, agent: mockAgents[2], conversations: 98, avgResponseTime: "2m 05s", resolutionRate: 88 },
+    { rank: 4, agent: { id: '4', name: "New Agent", avatar: "https://picsum.photos/id/41/100/100", email: "new.a@example.com", phone: "+1-555-0204", role: "agent", password: "password" }, conversations: 85, avgResponseTime: "2m 15s", resolutionRate: 85 },
 ]
 
 const funnelData = [

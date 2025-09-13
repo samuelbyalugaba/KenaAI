@@ -26,44 +26,7 @@ import type { User as ContactUser, Chat, Message } from "@/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { Separator } from "../ui/separator";
-
-const mockContacts: ContactUser[] = [
-    { name: "Kelvin", avatar: "https://picsum.photos/id/1011/100/100", online: true, email: "kelvin@example.com", phone: "+1-555-0101" },
-    { name: "Sylvester", avatar: "https://picsum.photos/id/1025/100/100", online: false, email: "sylvester@example.com", phone: "+1-555-0102" },
-    { name: "Linaliz", avatar: "https://picsum.photos/id/1027/100/100", online: true, email: "linaliz@example.com", phone: "+1-555-0103" },
-    { name: "Glory", avatar: "https://picsum.photos/id/103/100/100", online: false, email: "glory@example.com", phone: "+1-555-0104" },
-    { name: "John Doe", avatar: "https://picsum.photos/id/10/100/100", online: true, email: "john.d@example.com", phone: "+1-555-0105" },
-    { name: "Jane Smith", avatar: "https://picsum.photos/id/20/100/100", online: false, email: "jane.s@example.com", phone: "+1-555-0106" },
-];
-
-const mockChats: Chat[] = [
-  {
-    id: "1",
-    user: mockContacts[0],
-    lastMessage: "Absolutely 🎨 We provide ful...",
-    timestamp: "10:41 AM",
-    unreadCount: 0,
-    priority: "urgent",
-    isChatbotActive: true,
-    messages: [
-      { id: "m1", sender: mockContacts[0], text: "Hello 👋 What services do you offer?", timestamp: "10:38 AM" },
-      { id: "m2", sender: "me", text: "Hi Kelvin! 🚀 We offer web app development, mobile app solutions, and AI-powered chatbots.", timestamp: "10:39 AM" },
-    ],
-  },
-  {
-    id: "2",
-    user: mockContacts[1],
-    lastMessage: "Sure thing! 💡 I’ll schedule...",
-    timestamp: "9:20 AM",
-    unreadCount: 0,
-    priority: "low",
-    isChatbotActive: false,
-    messages: [
-       { id: "m5", sender: mockContacts[1], text: "Perfect 🙌 I’d love a demo of how it works.", timestamp: "09:19 AM" },
-       { id: "m6", sender: "me", text: "Sure thing! 💡 I’ll schedule a quick demo for you this afternoon.", timestamp: "09:20 AM" }
-    ],
-  },
-];
+import { mockUsers, mockChats } from "@/lib/mock-data";
 
 
 const ContactProfile = ({ contact, chatHistory, onBack }: { contact: ContactUser, chatHistory: Message[] | undefined, onBack?: () => void }) => {
@@ -159,7 +122,7 @@ export function ContactsView({ onMenuClick }: ContactsViewProps) {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
   
-  const filteredContacts = mockContacts.filter(contact =>
+  const filteredContacts = mockUsers.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.phone?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -167,7 +130,7 @@ export function ContactsView({ onMenuClick }: ContactsViewProps) {
   
   React.useEffect(() => {
     if (window.innerWidth >= 768) {
-        setSelectedContact(mockContacts[0]);
+        setSelectedContact(mockUsers[0]);
     }
   }, [])
 

@@ -1,6 +1,7 @@
 
 
 
+
 export type User = {
     id: string;
     name: string;
@@ -39,6 +40,7 @@ export type User = {
     phone: string;
     role: AgentRole;
     avatar: string;
+    password?: string;
   };
 
   export type UserProfile = {

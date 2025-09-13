@@ -20,12 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import type { Agent, AgentRole } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { cn } from "@/lib/utils";
-
-const mockAgents: Agent[] = [
-    { id: '1', name: "Samuel Byalugaba", avatar: "https://picsum.photos/id/1/100/100", email: "samuel.b@example.com", phone: "+1-555-0201", role: "admin" },
-    { id: '2', name: "Kelvin Malisa", avatar: "https://picsum.photos/id/1025/100/100", email: "kelvin.m@example.com", phone: "+1-555-0202", role: "admin" },
-    { id: '3', name: "Sylvester Mayaya", avatar: "https://picsum.photos/id/40/100/100", email: "sylvester.m@example.com", phone: "+1-555-0203", role: "super_agent" },
-];
+import { mockAgents as initialMockAgents } from "@/lib/mock-data";
 
 const roleVariantMap: Record<AgentRole, "default" | "secondary" | "destructive"> = {
     admin: "destructive",
@@ -38,7 +33,7 @@ type AgentsViewProps = {
 };
 
 export function AgentsView({ onMenuClick }: AgentsViewProps) {
-  const [agents, setAgents] = React.useState<Agent[]>(mockAgents);
+  const [agents, setAgents] = React.useState<Agent[]>(initialMockAgents);
   const [searchTerm, setSearchTerm] = React.useState("");
   
   const filteredAgents = agents.filter(agent =>
