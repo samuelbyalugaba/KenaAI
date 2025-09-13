@@ -18,11 +18,26 @@ import {
     Clock,
     Smile,
     UserCheck,
-    Bot
+    Bot,
+    ArrowUp,
+    ArrowDown
 } from "lucide-react";
 import type { UserProfile } from "@/types";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
+import {
+  Bar,
+  BarChart,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 
 const kpiData = [
@@ -30,39 +45,62 @@ const kpiData = [
     title: "Total Conversations",
     value: "1,245",
     trend: "+15.2%",
-    trendColor: "text-emerald-500",
+    trendDirection: "up" as const,
     icon: MessageSquare,
   },
   {
     title: "Bot vs Agent Conversations",
     value: "70% / 30%",
-    trend: "+3.1%",
-    trendColor: "text-emerald-500",
+    trend: "+3.1% Bot",
+    trendDirection: "up" as const,
     icon: Bot,
   },
   {
     title: "Average Response Time",
     value: "2m 13s",
     trend: "-5.8%",
-    trendColor: "text-red-500",
+    trendDirection: "down" as const,
     icon: Clock,
   },
   {
     title: "Customer Satisfaction (CSAT)",
     value: "89%",
     trend: "+2.5%",
-    trendColor: "text-emerald-500",
+    trendDirection: "up" as const,
     icon: Smile,
   },
   {
     title: "Agent Availability",
     value: "15 Active",
     trend: "+1",
-    trendColor: "text-emerald-500",
+    trendDirection: "up" as const,
     icon: UserCheck,
   },
 ];
 
+const conversationVolumeData = [
+  { date: "Mon", conversations: 150 },
+  { date: "Tue", conversations: 210 },
+  { date: "Wed", conversations: 180 },
+  { date: "Thu", conversations: 250 },
+  { date: "Fri", conversations: 220 },
+  { date: "Sat", conversations: 300 },
+  { date: "Sun", conversations: 280 },
+];
+
+const channelBreakdownData = [
+    { name: 'WhatsApp', value: 400, fill: 'var(--color-whatsapp)' },
+    { name: 'Facebook', value: 300, fill: 'var(--color-facebook)' },
+    { name: 'Instagram', value: 300, fill: 'var(--color-instagram)' },
+    { name: 'Email', value: 200, fill: 'var(--color-email)' },
+];
+
+const channelBreakdownConfig = {
+  whatsapp: { label: 'WhatsApp', color: '#25D366' },
+  facebook: { label: 'Facebook', color: '#1877F2' },
+  instagram: { label: 'Instagram', color: '#E4405F' },
+  email: { label: 'Email', color: '#EA4335' },
+}
 
 type DashboardViewProps = {
   onMenuClick: () => void;
@@ -123,7 +161,8 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{kpi.value}</div>
-                  <p className={cn("text-xs text-muted-foreground", kpi.trendColor)}>
+                  <p className={cn("text-xs text-muted-foreground flex items-center", kpi.trendDirection === 'up' ? "text-emerald-500" : "text-red-500")}>
+                    {kpi.trendDirection === 'up' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
                     {kpi.trend} from last week
                   </p>
                 </CardContent>
@@ -132,7 +171,40 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
           </div>
         </section>
         
-        {/* Other sections will be built here */}
+        {/* Section 2: Conversation Insights */}
+        <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+            <Card className="lg:col-span-4">
+                <CardHeader>
+                    <CardTitle>Conversation Volume</CardTitle>
+                    <CardDescription>Volume of conversations over the last 7 days.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                     <ChartContainer config={{}} className="h-[250px] w-full">
+                         <LineChart data={conversationVolumeData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                            <YAxis tickLine={false} axisLine={false} />
+                            <Tooltip content={<ChartTooltipContent />} />
+                            <Line type="monotone" dataKey="conversations" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                        </LineChart>
+                    </ChartContainer>
+                </CardContent>
+            </Card>
+            <Card className="lg:col-span-3">
+                <CardHeader>
+                    <CardTitle>Conversation by Source</CardTitle>
+                    <CardDescription>Breakdown of conversations by channel.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
+                        <PieChart>
+                            <Tooltip content={<ChartTooltipContent nameKey="name" />} />
+                            <Pie data={channelBreakdownData} dataKey="value" nameKey="name" />
+                        </PieChart>
+                    </ChartContainer>
+                </CardContent>
+            </Card>
+        </section>
+
       </main>
     </div>
   );
