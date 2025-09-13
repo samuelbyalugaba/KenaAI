@@ -51,6 +51,7 @@ import {
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
+  TooltipContent,
 } from "@/components/ui/tooltip";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
@@ -711,3 +712,5 @@ export function ChatLayout({ user, onLogout, onMenuClick }: ChatLayoutProps) {
     </div>
   );
 }
+
+    
