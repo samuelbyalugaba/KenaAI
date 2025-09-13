@@ -42,6 +42,10 @@ export type User = {
     role: AgentRole;
     avatar: string;
     password?: string;
+    status?: 'Online' | 'Offline' | 'Busy';
+    conversationsToday?: number;
+    avgResponseTime?: string;
+    csat?: number;
   };
 
   export type UserProfile = {
@@ -83,5 +87,3 @@ export type User = {
     createdAt: string;
     sentAt?: string;
   };
-
-    

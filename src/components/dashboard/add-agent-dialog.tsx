@@ -71,6 +71,10 @@ export function AddAgentDialog({ onAgentAdd }: AddAgentDialogProps) {
         ...data,
         avatar: `https://picsum.photos/seed/${data.name}/100/100`,
         role: data.role as AgentRole,
+        status: "Offline",
+        conversationsToday: 0,
+        avgResponseTime: "N/A",
+        csat: 90 + Math.floor(Math.random() * 10), // Random high CSAT for new agent
     };
     onAgentAdd(newAgent);
 

@@ -2,12 +2,11 @@
 "use client";
 
 import * as React from "react";
-import { User, Phone, Mail, Search, ShieldCheck, PanelLeft } from "lucide-react";
+import { User, Phone, Mail, Search, ShieldCheck, PanelLeft, MoreHorizontal, Star, Activity, MessageSquare } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -21,11 +20,24 @@ import type { Agent, AgentRole, UserProfile } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { cn } from "@/lib/utils";
 import { mockAgents as initialMockAgents } from "@/lib/mock-data";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 const roleVariantMap: Record<AgentRole, "default" | "secondary" | "destructive"> = {
     admin: "destructive",
     super_agent: "default",
     agent: "secondary"
+}
+
+const statusVariantMap: Record<NonNullable<Agent['status']>, "default" | "secondary" | "outline"> = {
+    Online: "default",
+    Busy: "secondary",
+    Offline: "outline",
+}
+
+const statusColorMap: Record<NonNullable<Agent['status']>, string> = {
+    Online: "bg-green-500",
+    Busy: "bg-orange-500",
+    Offline: "bg-gray-400",
 }
 
 type AgentsViewProps = {
@@ -40,7 +52,7 @@ export function AgentsView({ onMenuClick, user }: AgentsViewProps) {
   const filteredAgents = agents.filter(agent =>
     agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     agent.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    agent.phone.toLowerCase().includes(searchTerm.toLowerCase())
+    agent.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAgentAdd = (newAgent: Agent) => {
@@ -57,13 +69,13 @@ export function AgentsView({ onMenuClick, user }: AgentsViewProps) {
                 <PanelLeft className="h-5 w-5" />
                 <span className="sr-only">Open Menu</span>
             </Button>
-            <h1 className="text-2xl font-bold">Agents</h1>
+            <h1 className="text-2xl font-bold">Agents & Team Management</h1>
         </div>
         <div className="flex items-center gap-4 w-full sm:w-auto">
             <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
-                    placeholder="Search agents..." 
+                    placeholder="Search by name, email, role..." 
                     className="pl-9"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -73,21 +85,22 @@ export function AgentsView({ onMenuClick, user }: AgentsViewProps) {
         </div>
       </header>
       <main className="flex-1 overflow-auto p-4">
-        {/* Desktop View */}
-        <div className="hidden md:block">
             <Card>
                 <CardHeader>
-                    <CardTitle>Agent List</CardTitle>
+                    <CardTitle>Agent Directory</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ScrollArea className="h-[calc(100vh-220px)]">
+                    <div className="overflow-x-auto">
                         <Table>
                             <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[250px]">Name</TableHead>
-                                <TableHead>Email</TableHead>
+                                <TableHead className="w-[250px]">Agent</TableHead>
                                 <TableHead>Phone Number</TableHead>
                                 <TableHead>Role</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-center">Conversations</TableHead>
+                                <TableHead className="text-center">Avg. Response</TableHead>
+                                <TableHead className="text-center">CSAT</TableHead>
                                 <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                             </TableHeader>
@@ -100,76 +113,53 @@ export function AgentsView({ onMenuClick, user }: AgentsViewProps) {
                                                 <AvatarImage src={agent.avatar} alt={agent.name} data-ai-hint="person portrait" />
                                                 <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
-                                            <div className="font-medium">{agent.name}</div>
+                                            <div>
+                                                <div className="font-medium">{agent.name}</div>
+                                                <div className="text-xs text-muted-foreground">{agent.email}</div>
+                                            </div>
                                         </div>
                                     </TableCell>
-                                    <TableCell>{agent.email}</TableCell>
                                     <TableCell>{agent.phone}</TableCell>
                                     <TableCell>
                                         <Badge variant={roleVariantMap[agent.role]} className="capitalize">
                                             {agent.role.replace("_", " ")}
                                         </Badge>
                                     </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <div className={cn("h-2.5 w-2.5 rounded-full", statusColorMap[agent.status || "Offline"])}></div>
+                                            <span>{agent.status}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-center">{agent.conversationsToday}</TableCell>
+                                    <TableCell className="text-center">{agent.avgResponseTime}</TableCell>
+                                    <TableCell className="text-center">
+                                        <div className="flex items-center justify-center gap-1">
+                                            <Star className="w-4 h-4 text-yellow-400" />
+                                            <span>{agent.csat}%</span>
+                                        </div>
+                                    </TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="ghost" size="icon">
-                                            <User className="h-4 w-4" />
-                                            <span className="sr-only">View Profile</span>
-                                        </Button>
-                                        <Button variant="ghost" size="icon">
-                                            <Mail className="h-4 w-4" />
-                                            <span className="sr-only">Send Email</span>
-                                        </Button>
-                                        <Button variant="ghost" size="icon">
-                                            <Phone className="h-4 w-4" />
-                                            <span className="sr-only">Call</span>
-                                        </Button>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    <span className="sr-only">Actions</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                                                <DropdownMenuItem className="text-destructive">Remove</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
                             ))}
                             </TableBody>
                         </Table>
-                    </ScrollArea>
+                    </div>
                 </CardContent>
             </Card>
-        </div>
-
-        {/* Mobile View */}
-        <div className="md:hidden">
-            <ScrollArea className="h-[calc(100vh-180px)]">
-                <div className="space-y-4">
-                {filteredAgents.map((agent) => (
-                    <Card key={agent.id}>
-                        <CardHeader>
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-12 w-12">
-                                    <AvatarImage src={agent.avatar} alt={agent.name} data-ai-hint="person portrait" />
-                                    <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <CardTitle>{agent.name}</CardTitle>
-                                    <Badge variant={roleVariantMap[agent.role]} className="capitalize mt-1">
-                                        {agent.role.replace("_", " ")}
-                                    </Badge>
-                                </div>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            <p className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-muted-foreground" /> {agent.email}</p>
-                            <p className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" /> {agent.phone}</p>
-                        </CardContent>
-                        <CardFooter className="flex justify-end gap-2">
-                            <Button variant="outline" size="sm">
-                                <Mail className="h-4 w-4 mr-2" /> Email
-                            </Button>
-                            <Button size="sm">
-                                <Phone className="h-4 w-4 mr-2" /> Call
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                ))}
-                </div>
-            </ScrollArea>
-        </div>
       </main>
     </div>
   );

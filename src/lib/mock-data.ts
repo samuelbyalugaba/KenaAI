@@ -1,20 +1,68 @@
 
 import type { Agent, Chat, User, AgentPerformance } from "@/types";
 
-export const mockAdminUser: Agent = { id: '1', name: "Samuel Byalugaba", avatar: "https://picsum.photos/seed/sam/100/100", email: "samuel.b@example.com", phone: "+1-555-0201", role: "admin", password: "password" };
+export const mockAdminUser: Agent = { 
+    id: '1', 
+    name: "Samuel Byalugaba", 
+    avatar: "https://picsum.photos/seed/sam/100/100", 
+    email: "samuel.b@example.com", 
+    phone: "+1-555-0201", 
+    role: "admin", 
+    password: "password",
+    status: "Online",
+    conversationsToday: 12,
+    avgResponseTime: "1m 45s",
+    csat: 98,
+};
 
 export const mockAgents: Agent[] = [
     mockAdminUser,
-    { id: '2', name: "Kelvin Malisa", avatar: "https://picsum.photos/seed/kelvin/100/100", email: "kelvin.m@example.com", phone: "+1-555-0202", role: "admin", password: "password" },
-    { id: '3', name: "Sylvester Mayaya", avatar: "https://picsum.photos/seed/sly/100/100", email: "sylvester.m@example.com", phone: "+1-555-0203", role: "super_agent", password: "password" },
-    { id: '4', name: "Linaliz Ready", avatar: "https://picsum.photos/seed/linaliz/100/100", email: "linaliz.r@example.com", phone: "+1-555-0204", role: "agent", password: "password" },
+    { 
+        id: '2', 
+        name: "Kelvin Malisa", 
+        avatar: "https://picsum.photos/seed/kelvin/100/100", 
+        email: "kelvin.m@example.com", 
+        phone: "+1-555-0202", 
+        role: "admin", 
+        password: "password",
+        status: "Online",
+        conversationsToday: 15,
+        avgResponseTime: "1m 30s",
+        csat: 95,
+    },
+    { 
+        id: '3', 
+        name: "Sylvester Mayaya", 
+        avatar: "https://picsum.photos/seed/sly/100/100", 
+        email: "sylvester.m@example.com", 
+        phone: "+1-555-0203", 
+        role: "super_agent", 
+        password: "password",
+        status: "Busy",
+        conversationsToday: 25,
+        avgResponseTime: "2m 10s",
+        csat: 92,
+    },
+    { 
+        id: '4', 
+        name: "Linaliz Ready", 
+        avatar: "https://picsum.photos/seed/linaliz/100/100", 
+        email: "linaliz.r@example.com", 
+        phone: "+1-555-0204", 
+        role: "agent", 
+        password: "password",
+        status: "Offline",
+        conversationsToday: 8,
+        avgResponseTime: "3m 05s",
+        csat: 88,
+    },
 ];
 
 export const mockAgentPerformance: AgentPerformance[] = [
     { rank: 1, agent: mockAgents[0], conversations: 125, avgResponseTime: "1m 30s", resolutionRate: 95 },
     { rank: 2, agent: mockAgents[1], conversations: 110, avgResponseTime: "1m 45s", resolutionRate: 92 },
     { rank: 3, agent: mockAgents[2], conversations: 98, avgResponseTime: "2m 05s", resolutionRate: 88 },
-    { rank: 4, agent: { id: '5', name: "New Agent", avatar: "https://picsum.photos/seed/new/100/100", email: "new.a@example.com", phone: "+1-555-0204", role: "agent", password: "password" }, conversations: 85, avgResponseTime: "2m 15s", resolutionRate: 85 },
+    { rank: 4, agent: { ...mockAgents[3], id: '5', name: "New Agent" }, conversations: 85, avgResponseTime: "2m 15s", resolutionRate: 85 },
 ]
 
 export const mockUsers: User[] = [
@@ -156,5 +204,3 @@ export const mockChats: Chat[] = [
     ],
   },
 ];
-
-    
