@@ -44,7 +44,6 @@ const adminNavItems = [
   { icon: BookUser, label: "Contacts" as View },
   { icon: Users, label: "Agents" as View },
   { icon: Send, label: "Campaigns" as View },
-  { icon: BarChart, label: "Analytics" as View },
   { icon: Megaphone, label: "Announcements" as View },
 ];
 

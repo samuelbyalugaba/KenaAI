@@ -18,7 +18,7 @@ import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 
-export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "Analytics" | "My Performance";
+export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
 
 const PlaceholderView = ({ title, onMenuClick }: { title: string, onMenuClick: () => void }) => (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
@@ -94,8 +94,6 @@ export default function Home() {
         return <PlaceholderView title="My Performance" {...props} />;
       case "Campaigns":
          return <CampaignsView {...props} />;
-      case "Analytics":
-         return <DashboardView {...props} />;
       default:
         return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} />;
     }
