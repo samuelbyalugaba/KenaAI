@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "../ui/alert";
+import { cn } from "@/lib/utils";
 
 const loginFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -36,9 +37,10 @@ type LoginDialogProps = {
     isOpen: boolean;
     onOpenChange: (open: boolean) => void;
     onLogin: (email: string, password_unused: string) => boolean;
+    hideCloseButton?: boolean;
 };
 
-export function LoginDialog({ isOpen, onOpenChange, onLogin }: LoginDialogProps) {
+export function LoginDialog({ isOpen, onOpenChange, onLogin, hideCloseButton }: LoginDialogProps) {
   const [error, setError] = React.useState<string | null>(null);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -68,7 +70,7 @@ export function LoginDialog({ isOpen, onOpenChange, onLogin }: LoginDialogProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={cn("sm:max-w-md", hideCloseButton && "data-[state=open]:pointer-events-auto")} onPointerDownOutside={hideCloseButton ? (e) => e.preventDefault() : undefined}>
         <DialogHeader>
           <DialogTitle>Agent Login</DialogTitle>
           <DialogDescription>

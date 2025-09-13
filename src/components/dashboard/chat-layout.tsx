@@ -81,23 +81,23 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
         <button
           key={chat.id}
           className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2 text-left transition-all hover:bg-primary/10",
+            "flex items-start gap-3 rounded-lg px-3 py-2 text-left transition-all hover:bg-primary/10",
             selectedChat?.id === chat.id && "bg-primary/20"
           )}
           onClick={() => onSelectChat(chat)}
         >
-          <Avatar className="h-10 w-10 border-2 border-background">
+          <Avatar className="h-10 w-10 border-2 border-background flex-shrink-0">
             <AvatarImage src={chat.user.avatar} alt={chat.user.name} data-ai-hint="person portrait" />
             <AvatarFallback>{chat.user.name.charAt(0)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 overflow-hidden">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold truncate">{chat.user.name}</h3>
-              <span className="text-xs text-muted-foreground">{chat.timestamp}</span>
+              <span className="text-xs text-muted-foreground flex-shrink-0">{chat.timestamp}</span>
             </div>
             <div className="flex items-center justify-between mt-1">
-              <p className="text-sm text-muted-foreground truncate">{chat.lastMessage}</p>
-              <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground truncate flex-grow pr-2">{chat.lastMessage}</p>
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <PriorityBadge priority={chat.priority} />
                 {chat.unreadCount > 0 && (
                   <Badge className="flex h-5 w-5 items-center justify-center rounded-full p-0 bg-accent text-accent-foreground">{chat.unreadCount}</Badge>
@@ -372,6 +372,12 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
   }, [chats, searchTerm, selectedChannel]);
 
   React.useEffect(() => {
+    if (!user) {
+        setSelectedChat(null);
+    }
+  }, [user]);
+
+  React.useEffect(() => {
     if (isMobile) {
         setSelectedChat(null);
     }
@@ -520,22 +526,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
 
   const renderMobileView = () => {
     if (!user) {
-        return (
-            <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center p-8 h-full">
-                <MobileChatListHeader />
-                <div className="flex-1 flex flex-col items-center justify-center gap-4">
-                    <div className="rounded-full bg-primary/10 p-4">
-                        <LogIn className="h-12 w-12 text-primary"/>
-                    </div>
-                    <h2 className="text-2xl font-bold">Welcome to KenaAI Chat</h2>
-                    <p className="text-muted-foreground">Please log in to view and respond to chats.</p>
-                    <Button onClick={onLogin}>
-                        <LogIn className="mr-2 h-4 w-4" />
-                        Log in
-                    </Button>
-                </div>
-            </div>
-        );
+        return null;
     }
     
     if (selectedChat) {
@@ -600,18 +591,20 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
             <MainHeader>
                 <KenaAILogo className="h-10" />
             </MainHeader>
-            <SidebarContent />
+            { user ? <SidebarContent /> : null }
           </div>
 
           <div className="flex flex-1 flex-col h-screen">
              <MainHeader>
                  <div />
                  <div className="flex items-center gap-4">
-                    <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
-                      <Button variant="ghost" size="sm" className="gap-2">
-                          <PlusCircle className="h-5 w-5" /> New Chat
-                      </Button>
-                    </NewChatDialog>
+                    {user && 
+                      <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
+                        <Button variant="ghost" size="sm" className="gap-2">
+                            <PlusCircle className="h-5 w-5" /> New Chat
+                        </Button>
+                      </NewChatDialog>
+                    }
                      {canAddAgent && <div className="hidden md:flex">
                          <AddAgentDialog onAgentAdd={handleAgentAdd} />
                      </div>}
@@ -620,7 +613,7 @@ export function ChatLayout({ user, onLogin, onLogout, onMenuClick }: ChatLayoutP
              </MainHeader>
             
             <div className="hidden md:block">
-                <Stats />
+                {user && <Stats />}
                 <Separator />
             </div>
             

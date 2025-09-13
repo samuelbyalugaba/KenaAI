@@ -12,13 +12,22 @@ import { AnnouncementsView } from "@/components/dashboard/announcements-view";
 import { LoginDialog } from "@/components/dashboard/login-dialog";
 import { mockAgents } from "@/lib/mock-data";
 
-export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Language" | "Payments" | "Settings" | "System Settings";
+export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings";
 
 export default function Home() {
   const [activeView, setActiveView] = React.useState<View>("Chat");
   const [isNavOpen, setIsNavOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(false);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(true);
+
+  React.useEffect(() => {
+    if (currentUser) {
+      setIsLoginDialogOpen(false);
+    } else {
+      setIsLoginDialogOpen(true);
+    }
+  }, [currentUser]);
+
 
   const handleLogin = (email: string, password_unused: string) => {
     // In a real app, you'd verify the password. Here, we'll just find the user by email.
@@ -71,6 +80,19 @@ export default function Home() {
     }
   };
 
+  if (!currentUser) {
+    return (
+        <main className="flex h-screen bg-background">
+            <LoginDialog 
+                isOpen={isLoginDialogOpen} 
+                onOpenChange={setIsLoginDialogOpen}
+                onLogin={handleLogin}
+                hideCloseButton={true}
+            />
+        </main>
+    )
+  }
+
   return (
     <main className="flex h-screen bg-background">
       <VerticalNav 
@@ -84,7 +106,7 @@ export default function Home() {
         {renderView()}
       </div>
        <LoginDialog 
-        isOpen={isLoginDialogOpen} 
+        isOpen={isLoginDialogOpen && !currentUser} 
         onOpenChange={setIsLoginDialogOpen}
         onLogin={handleLogin}
       />
