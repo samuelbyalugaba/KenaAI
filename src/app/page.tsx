@@ -17,6 +17,7 @@ import { PanelLeft } from "lucide-react";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
+import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
 
@@ -91,7 +92,7 @@ export default function Home() {
       case "Announcements":
         return <AnnouncementsView {...props} />;
       case "My Performance":
-        return <PlaceholderView title="My Performance" {...props} />;
+        return <MyPerformanceView {...props} />;
       case "Campaigns":
          return <CampaignsView {...props} />;
       default:
