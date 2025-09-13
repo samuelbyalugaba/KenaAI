@@ -19,7 +19,7 @@ import {
     CheckCircle,
     Star,
     Flame,
-    BarChart,
+    BarChart as BarChartIcon,
     PieChart,
     Download
 } from "lucide-react";
@@ -27,6 +27,8 @@ import type { UserProfile } from "@/types";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import {
+  Bar,
+  BarChart,
   Line,
   LineChart,
   ResponsiveContainer,
