@@ -9,6 +9,8 @@ import {
     User,
     Mail,
     Phone,
+    ArrowDown,
+    ArrowUp,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -44,17 +46,41 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import type { Agent, UserProfile } from "@/types";
+import type { Agent, UserProfile, AgentPerformance } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { mockAgents as initialMockAgents } from "@/lib/mock-data";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { ChartContainer, ChartTooltipContent } from "../ui/chart";
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
     Online: "bg-emerald-500",
     Busy: "bg-amber-500",
     Offline: "bg-slate-400",
 };
+
+const activityLogs = [
+  { id: 'log1', timestamp: '2024-08-01 10:05:14', agent: 'Samuel Byalugaba', action: 'Login', details: 'Logged in from IP 192.168.1.10' },
+  { id: 'log2', timestamp: '2024-08-01 10:07:21', agent: 'Sylvester Mayaya', action: 'Conversation Assigned', details: 'Assigned chat with Kelvin (#1)' },
+  { id: 'log3', timestamp: '2024-08-01 10:15:03', agent: 'Kelvin Malisa', action: 'Role Change', details: 'Role changed from Agent to Super Agent' },
+  { id: 'log4', timestamp: '2024-08-01 10:22:45', agent: 'Linaliz Ready', action: 'Message Sent', details: 'Sent message in chat with Diana' },
+  { id: 'log5', timestamp: '2024-08-01 10:30:00', agent: 'Samuel Byalugaba', action: 'Logout', details: 'Session duration: 24m 46s' },
+];
+
+const mostActiveAgents = [
+    { name: 'Sylvester Mayaya', conversations: 25, avatar: "https://picsum.photos/seed/sly/100/100" },
+    { name: 'Kelvin Malisa', conversations: 15, avatar: "https://picsum.photos/seed/kelvin/100/100" },
+    { name: 'Samuel Byalugaba', conversations: 12, avatar: "https://picsum.photos/seed/sam/100/100" },
+];
+
+const responseTimeData = [
+    { name: "Samuel B.", time: 105, fill: "hsl(var(--chart-1))" },
+    { name: "Kelvin M.", time: 90, fill: "hsl(var(--chart-2))" },
+    { name: "Sylvester M.", time: 130, fill: "hsl(var(--chart-3))" },
+    { name: "Linaliz R.", time: 185, fill: "hsl(var(--chart-4))" },
+];
 
 export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; user: UserProfile | null }) {
   const [agents, setAgents] = React.useState<Agent[]>(initialMockAgents);
@@ -132,15 +158,10 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                     <SelectItem value="Offline">Offline</SelectItem>
                 </SelectContent>
             </Select>
-             <AddAgentDialog onAgentAdd={handleAgentAdd}>
-                <Button className="gap-1">
-                    <PlusCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Add New Agent</span>
-                </Button>
-            </AddAgentDialog>
+            <AddAgentDialog onAgentAdd={handleAgentAdd} />
         </div>
       </header>
-      <main className="flex-1 overflow-auto p-4">
+      <main className="flex-1 overflow-auto p-4 space-y-8">
         <Card>
           <CardHeader>
             <CardTitle>Agent Directory</CardTitle>
@@ -210,6 +231,87 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
               </TableBody>
             </Table>
           </CardContent>
+        </Card>
+
+        <div>
+            <h2 className="text-2xl font-bold mb-4">Agent Performance</h2>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Most Active Agents</CardTitle>
+                        <CardDescription>Agents with the most conversations today.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ul className="space-y-4">
+                            {mostActiveAgents.map(agent => (
+                                <li key={agent.name} className="flex items-center gap-4">
+                                    <Avatar>
+                                        <AvatarImage src={agent.avatar} alt={agent.name} />
+                                        <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">{agent.name}</div>
+                                    <div className="font-bold">{agent.conversations}</div>
+                                </li>
+                            ))}
+                        </ul>
+                    </CardContent>
+                </Card>
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Response Time Comparison</CardTitle>
+                        <CardDescription>Average response time in seconds.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ChartContainer config={{}} className="h-64">
+                            <BarChart data={responseTimeData}>
+                                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                                <YAxis hide />
+                                <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                <Bar dataKey="time" radius={4}>
+                                    {responseTimeData.map(entry => (
+                                        <Cell key={entry.name} fill={entry.fill} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+
+        <Card>
+            <Accordion type="single" collapsible>
+                <AccordionItem value="activity-logs">
+                    <AccordionTrigger className="px-6">
+                        <div className="flex flex-col items-start">
+                            <CardTitle>Activity Logs</CardTitle>
+                            <CardDescription>An audit trail of all agent actions.</CardDescription>
+                        </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Timestamp</TableHead>
+                                    <TableHead>Agent</TableHead>
+                                    <TableHead>Action</TableHead>
+                                    <TableHead>Details</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {activityLogs.map(log => (
+                                    <TableRow key={log.id}>
+                                        <TableCell>{log.timestamp}</TableCell>
+                                        <TableCell>{log.agent}</TableCell>
+                                        <TableCell><Badge variant="secondary">{log.action}</Badge></TableCell>
+                                        <TableCell>{log.details}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
         </Card>
       </main>
     </div>
