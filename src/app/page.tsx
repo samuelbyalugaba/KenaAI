@@ -84,10 +84,10 @@ export default function Home() {
         <ThemeProvider>
              <main className="flex h-screen w-full items-center justify-center bg-background p-4">
                 <div className="w-full h-full grid lg:grid-cols-2">
-                    <div className="hidden lg:flex flex-col items-center justify-center bg-primary text-primary-foreground p-8">
+                    <div className="hidden lg:flex flex-col items-center justify-center bg-secondary text-secondary-foreground p-8">
                         <KenaAILogo className="h-24" />
                         <h1 className="mt-4 text-3xl font-bold">Smarter Conversations, Simplified</h1>
-                        <p className="mt-2 text-center text-primary-foreground/80">
+                        <p className="mt-2 text-center text-secondary-foreground/80">
                             Welcome to the future of customer engagement. Manage all your channels from one powerful dashboard.
                         </p>
                     </div>
