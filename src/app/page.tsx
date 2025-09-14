@@ -11,7 +11,6 @@ import type { UserProfile } from "@/types";
 import { AnnouncementsView } from "@/components/dashboard/announcements-view";
 import { mockAgents } from "@/lib/mock-data";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
-import { ThemeProvider } from "@/components/ui/theme-provider";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 import { AuthForm } from "@/components/dashboard/auth-form";
@@ -79,31 +78,27 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
 
   if (!currentUser) {
     return (
-      <ThemeProvider defaultTheme="dark" storageKey="kena-ui-theme">
-        <main className="flex h-screen w-full items-center justify-center bg-background p-4 overflow-hidden auth-page-background">
-          <AuthForm onLogin={handleLogin} />
-        </main>
-      </ThemeProvider>
+      <main className="flex h-screen w-full items-center justify-center bg-background p-4 overflow-hidden auth-page-background">
+        <AuthForm onLogin={handleLogin} />
+      </main>
     );
   }
 
   return (
-    <ThemeProvider>
-        <main className="flex h-screen bg-background">
-        <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} user={currentUser} />
-        <VerticalNav 
-            activeView={activeView} 
-            setActiveView={setActiveView} 
-            user={currentUser}
-            onLogout={handleLogout}
-            isOpen={isNavOpen}
-            setIsOpen={setIsNavOpen}
-            onSettingsClick={() => setIsSettingsOpen(true)}
-        />
-        <div className="flex-1 md:pl-[70px] min-w-0">
-            {renderView()}
-        </div>
-        </main>
-    </ThemeProvider>
+    <main className="flex h-screen bg-background">
+      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} user={currentUser} />
+      <VerticalNav 
+          activeView={activeView} 
+          setActiveView={setActiveView} 
+          user={currentUser}
+          onLogout={handleLogout}
+          isOpen={isNavOpen}
+          setIsOpen={setIsNavOpen}
+          onSettingsClick={() => setIsSettingsOpen(true)}
+      />
+      <div className="flex-1 md:pl-[70px] min-w-0">
+          {renderView()}
+      </div>
+    </main>
   );
 }

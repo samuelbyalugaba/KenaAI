@@ -105,11 +105,9 @@ export function AuthForm({ onLogin }: AuthFormProps) {
             </p>
         </div>
 
-        <div className="flex justify-center">
-            <div className="bg-muted p-1 rounded-full flex gap-1">
-                <Button variant={authMode === 'signin' ? 'secondary' : 'ghost'} size="sm" className="rounded-full" onClick={() => setAuthMode('signin')}>Sign in</Button>
-                <Button variant={authMode === 'signup' ? 'secondary' : 'ghost'} size="sm" className="rounded-full" onClick={() => setAuthMode('signup')}>Sign up</Button>
-            </div>
+        <div className="flex justify-center gap-2">
+            <Button variant={authMode === 'signin' ? 'secondary' : 'ghost'} size="sm" className="rounded-full transition-all duration-200 ease-in-out hover:scale-105" onClick={() => setAuthMode('signin')}>Sign in</Button>
+            <Button variant={authMode === 'signup' ? 'secondary' : 'ghost'} size="sm" className="rounded-full transition-all duration-200 ease-in-out hover:scale-105" onClick={() => setAuthMode('signup')}>Sign up</Button>
         </div>
         
         <div className="text-left space-y-4">
