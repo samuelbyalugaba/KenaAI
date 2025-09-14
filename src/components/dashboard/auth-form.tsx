@@ -256,9 +256,11 @@ export function AuthForm({ onLogin }: AuthFormProps) {
             <div className="grid grid-cols-2 gap-4">
                 <Button variant="outline">
                     <GoogleIcon />
+                    Google
                 </Button>
                 <Button variant="outline">
                     <AppleIcon />
+                    Apple
                 </Button>
             </div>
         </div>
