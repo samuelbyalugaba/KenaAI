@@ -157,14 +157,19 @@ const PriorityBadge = ({ priority }: { priority: Priority }) => {
   );
 };
 
-const Stats = () => {
-    const stats = [
-        { title: "Total Chats", value: "4", icon: MessageSquare },
-        { title: "Open", value: "1", icon: Users },
-        { title: "Closed", value: "3", icon: CheckCircle },
-        { title: "Pending", value: "1", icon: Clock },
-        { title: "Avg. Response", value: "1m 2sc", icon: Clock },
-      ];
+const Stats = ({ chats }: { chats: Chat[] }) => {
+  const totalChats = chats.length;
+  const openChats = chats.filter(c => c.unreadCount > 0).length;
+  const closedChats = totalChats - openChats;
+  const pendingChats = chats.filter(c => c.isChatbotActive).length;
+
+  const stats = [
+    { title: "Total Chats", value: totalChats.toString(), icon: MessageSquare },
+    { title: "Open", value: openChats.toString(), icon: Users },
+    { title: "Closed", value: closedChats.toString(), icon: CheckCircle },
+    { title: "Pending", value: pendingChats.toString(), icon: Clock },
+    { title: "Avg. Response", value: "1m 2s", icon: Clock },
+  ];
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 p-4">
@@ -650,7 +655,7 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
              </MainHeader>
             
             <div className="hidden md:block">
-                {user && <Stats />}
+                {user && <Stats chats={chats} />}
                 <Separator />
             </div>
             
@@ -678,6 +683,8 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
     </div>
   );
 }
+
+    
 
     
 
