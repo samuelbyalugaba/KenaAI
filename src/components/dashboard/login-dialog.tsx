@@ -6,7 +6,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -18,6 +17,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "../ui/alert";
 import { KenaAILogo } from "../ui/kena-ai-logo";
+import { KeyRound, Mail, Eye, EyeOff } from "lucide-react";
+import { Checkbox } from "../ui/checkbox";
+import Link from "next/link";
 
 const loginFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -32,6 +34,7 @@ type LoginDialogProps = {
 
 export function LoginDialog({ onLogin }: LoginDialogProps) {
   const [error, setError] = React.useState<string | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
     defaultValues: {
@@ -52,60 +55,91 @@ export function LoginDialog({ onLogin }: LoginDialogProps) {
   }
 
   return (
-    <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-            <div className="mx-auto mb-4">
-                <KenaAILogo className="h-16" />
-            </div>
-          <CardTitle>Login</CardTitle>
-          <CardDescription>
-            Enter your credentials to access the chat dashboard.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                {error && (
-                    <Alert variant="destructive">
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
-                <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Email</FormLabel>
+    <div className="w-full max-w-md space-y-8">
+        <div className="text-center">
+            <KenaAILogo className="h-16 mx-auto mb-4 lg:hidden" />
+            <h1 className="text-3xl font-bold">Welcome Back</h1>
+            <p className="text-muted-foreground">Enter your credentials to access your account.</p>
+        </div>
+        
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {error && (
+                <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+            <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Email</FormLabel>
+                 <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <FormControl>
                         <Input
-                        type="email"
-                        placeholder="john.d@example.com"
-                        {...field}
+                            type="email"
+                            placeholder="john.d@example.com"
+                            className="pl-10"
+                            {...field}
                         />
                     </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Password</FormLabel>
+                </div>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Password</FormLabel>
+                <div className="relative">
+                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <FormControl>
-                        <Input type="password" placeholder="********" {...field} />
+                        <Input 
+                            type={showPassword ? "text" : "password"} 
+                            placeholder="********" 
+                            className="pl-10 pr-10"
+                            {...field} 
+                        />
                     </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Logging in..." : "Log In"}
-                </Button>
-            </form>
-            </Form>
-        </CardContent>
-    </Card>
+                    <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-muted-foreground hover:bg-transparent"
+                        onClick={() => setShowPassword(prev => !prev)}
+                    >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        <span className="sr-only">{showPassword ? 'Hide password' : 'Show password'}</span>
+                    </Button>
+                </div>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            
+            <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2">
+                    <Checkbox id="remember-me" />
+                    <label htmlFor="remember-me" className="text-muted-foreground">Remember me</label>
+                </div>
+                <Link href="#" className="font-medium text-primary hover:underline">
+                    Forgot password?
+                </Link>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? "Logging in..." : "Log In"}
+            </Button>
+        </form>
+        </Form>
+        <p className="text-center text-sm text-muted-foreground">
+            Don't have an account? <Link href="#" className="font-semibold text-primary hover:underline">Sign Up</Link>
+        </p>
+    </div>
   );
 }
