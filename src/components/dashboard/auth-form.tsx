@@ -46,14 +46,6 @@ const GoogleIcon = () => (
     </svg>
 );
 
-const AppleIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-      <path d="M8.082 4.33a4.23 4.23 0 0 0-1.805.412 4.23 4.23 0 0 1-1.8-1.528A4.23 4.23 0 0 0 2.2 4.33C.623 6.135.43 9.04.88 11.243c.439 2.148 1.947 3.59 3.578 3.59.852 0 1.69-.378 2.454-.91.751.532 1.58.85 2.378.85.798 0 1.627-.318 2.378-.85.764.532 1.602.91 2.454.91 1.63 0 3.14-.1442 3.578-3.59.45-2.203.257-5.108-1.32-6.913a4.23 4.23 0 0 0-2.278-2.204 4.23 4.23 0 0 1-1.8 1.528 4.23 4.23 0 0 0-1.805-.412Z"/>
-      <path d="M7.762 3.185a.8.8 0 0 1 1.042.062c.281.25.52.625.738 1.093a.6.6 0 0 1-.94.625c-.21-.447-.419-.785-.668-.993a.8.8 0 0 1-.172-.187Z"/>
-    </svg>
-);
-
-
 export function AuthForm({ onLogin }: AuthFormProps) {
   const [authMode, setAuthMode] = React.useState<'signin' | 'signup'>('signin');
   const [error, setError] = React.useState<string | null>(null);
@@ -203,14 +195,10 @@ export function AuthForm({ onLogin }: AuthFormProps) {
                 </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4">
                 <Button variant="outline">
                     <GoogleIcon />
                     Google
-                </Button>
-                <Button variant="outline">
-                    <AppleIcon />
-                    Apple
                 </Button>
             </div>
         </div>
