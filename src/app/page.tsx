@@ -19,6 +19,9 @@ import { ThemeProvider } from "@/components/ui/theme-provider";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 import { KenaAILogo } from "@/components/ui/kena-ai-logo";
+import { SignUpDialog } from "@/components/dashboard/signup-dialog";
+import { cn } from "@/lib/utils";
+
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
 
@@ -27,6 +30,8 @@ export default function Home() {
   const [isNavOpen, setIsNavOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const [authView, setAuthView] = React.useState<'login' | 'signup'>('login');
+
 
   const handleLogin = (email: string, password_unused: string) => {
     // In a real app, you'd verify the password. Here, we'll just find the user by email.
@@ -80,19 +85,35 @@ export default function Home() {
   };
 
   if (!currentUser) {
+    const WelcomePanel = () => (
+      <div className="flex flex-col items-center justify-center p-8 transition-opacity duration-500">
+          <KenaAILogo className="h-24" />
+          <h1 className="mt-4 text-3xl font-bold text-center">Smarter Conversations, Simplified</h1>
+          <p className="mt-2 text-center text-secondary-foreground/80">
+              Welcome to the future of customer engagement. Manage all your channels from one powerful dashboard.
+          </p>
+      </div>
+    );
+  
     return (
         <ThemeProvider>
-             <main className="flex h-screen w-full items-center justify-center bg-background p-4">
+             <main className="flex h-screen w-full items-center justify-center bg-background p-4 overflow-hidden">
                 <div className="w-full h-full grid lg:grid-cols-2">
-                    <div className="hidden lg:flex flex-col items-center justify-center bg-secondary text-secondary-foreground p-8">
-                        <KenaAILogo className="h-24" />
-                        <h1 className="mt-4 text-3xl font-bold">Smarter Conversations, Simplified</h1>
-                        <p className="mt-2 text-center text-secondary-foreground/80">
-                            Welcome to the future of customer engagement. Manage all your channels from one powerful dashboard.
-                        </p>
+                    <div className={cn(
+                        "hidden lg:flex flex-col items-center justify-center bg-secondary text-secondary-foreground transition-all duration-700 ease-in-out",
+                         authView === 'login' ? 'order-1' : 'order-2'
+                    )}>
+                       <WelcomePanel />
                     </div>
-                    <div className="flex items-center justify-center">
-                        <LoginDialog onLogin={handleLogin} />
+                    <div className={cn(
+                        "flex items-center justify-center transition-all duration-700 ease-in-out",
+                         authView === 'login' ? 'order-2' : 'order-1'
+                    )}>
+                        {authView === 'login' ? (
+                            <LoginDialog onLogin={handleLogin} onSwitchToSignUp={() => setAuthView('signup')} />
+                        ) : (
+                            <SignUpDialog onSwitchToLogin={() => setAuthView('login')} />
+                        )}
                     </div>
                 </div>
             </main>
