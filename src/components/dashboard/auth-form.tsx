@@ -95,120 +95,6 @@ export function AuthForm({ onLogin }: AuthFormProps) {
     }
   }
 
-  const SignupForm = (
-    <>
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormControl>
-                        <Input
-                            placeholder="First name"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormControl>
-                        <Input
-                            placeholder="Last name"
-                            {...field}
-                        />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
-        <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-                <FormItem>
-                <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <FormControl>
-                        <Input
-                            type="email"
-                            placeholder="Enter your email"
-                            className="pl-9"
-                            {...field}
-                        />
-                    </FormControl>
-                </div>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-        <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-                <FormItem>
-                <FormControl>
-                    <Input 
-                        type="password" 
-                        placeholder="Create a password" 
-                        {...field} 
-                    />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-    </>
-  );
-
-  const SigninForm = (
-      <>
-        <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-                <FormItem>
-                <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <FormControl>
-                        <Input
-                            type="email"
-                            placeholder="Enter your email"
-                            className="pl-9"
-                            {...field}
-                        />
-                    </FormControl>
-                </div>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-        <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-                <FormItem>
-                <FormControl>
-                    <Input 
-                        type="password" 
-                        placeholder="Enter your password" 
-                        {...field} 
-                    />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-        />
-      </>
-  )
-
   return (
     <div className="relative w-full max-w-md space-y-6 animate-in fade-in-50 duration-500 bg-card p-8 rounded-2xl border z-10">
         <div className="flex flex-col items-center space-y-2 text-center">
@@ -236,7 +122,77 @@ export function AuthForm({ onLogin }: AuthFormProps) {
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 
-                {authMode === 'signin' ? SigninForm : SignupForm}
+                {authMode === 'signup' && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="firstName"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormControl>
+                                    <Input
+                                        placeholder="First name"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="lastName"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormControl>
+                                    <Input
+                                        placeholder="Last name"
+                                        {...field}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
+                )}
+
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                        <FormItem>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <FormControl>
+                                <Input
+                                    type="email"
+                                    placeholder="Enter your email"
+                                    className="pl-9"
+                                    {...field}
+                                />
+                            </FormControl>
+                        </div>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormControl>
+                            <Input 
+                                type="password" 
+                                placeholder={authMode === 'signin' ? 'Enter your password' : 'Create a password'}
+                                {...field} 
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
 
                 <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_14px_0_hsl(var(--primary)/40%)] hover:shadow-[0_6px_20px_hsl(var(--primary)/30%)]" size="lg" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting 
@@ -285,9 +241,5 @@ export function AuthForm({ onLogin }: AuthFormProps) {
     </div>
   );
 }
-
-    
-
-    
 
     
