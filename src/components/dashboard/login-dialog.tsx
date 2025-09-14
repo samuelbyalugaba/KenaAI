@@ -59,8 +59,8 @@ export function LoginDialog({ onLogin, onSwitchToSignUp }: LoginDialogProps) {
     <div className="w-full max-w-md space-y-8 animate-in fade-in-50 duration-500">
         <div className="text-center">
             <KenaAILogo className="h-16 mx-auto mb-4 lg:hidden" />
-            <h1 className="text-3xl font-bold">Welcome Back</h1>
-            <p className="text-muted-foreground">Enter your credentials to access your account.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome Back</h1>
+            <p className="text-muted-foreground mt-2">Enter your credentials to access your account.</p>
         </div>
         
         <Form {...form}>
@@ -82,7 +82,7 @@ export function LoginDialog({ onLogin, onSwitchToSignUp }: LoginDialogProps) {
                         <Input
                             type="email"
                             placeholder="john.d@example.com"
-                            className="pl-10"
+                            className="pl-10 bg-secondary/50"
                             {...field}
                         />
                     </FormControl>
@@ -103,7 +103,7 @@ export function LoginDialog({ onLogin, onSwitchToSignUp }: LoginDialogProps) {
                         <Input 
                             type={showPassword ? "text" : "password"} 
                             placeholder="********" 
-                            className="pl-10 pr-10"
+                            className="pl-10 pr-10 bg-secondary/50"
                             {...field} 
                         />
                     </FormControl>
@@ -126,14 +126,14 @@ export function LoginDialog({ onLogin, onSwitchToSignUp }: LoginDialogProps) {
             <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
                     <Checkbox id="remember-me" />
-                    <label htmlFor="remember-me" className="text-muted-foreground">Remember me</label>
+                    <label htmlFor="remember-me" className="text-muted-foreground cursor-pointer">Remember me</label>
                 </div>
                 <Link href="#" className="font-medium text-primary hover:underline">
                     Forgot password?
                 </Link>
             </div>
 
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+            <Button type="submit" className="w-full shadow-sm" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Logging in..." : "Log In"}
             </Button>
         </form>

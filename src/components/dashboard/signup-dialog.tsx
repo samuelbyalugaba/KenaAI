@@ -53,8 +53,8 @@ export function SignUpDialog({ onSwitchToLogin }: SignUpDialogProps) {
     <div className="w-full max-w-md space-y-8 animate-in fade-in-50 duration-500">
         <div className="text-center">
             <KenaAILogo className="h-16 mx-auto mb-4 lg:hidden" />
-            <h1 className="text-3xl font-bold">Create an Account</h1>
-            <p className="text-muted-foreground">Join us and start simplifying your conversations.</p>
+            <h1 className="text-3xl font-bold tracking-tight">Create an Account</h1>
+            <p className="text-muted-foreground mt-2">Join us and start simplifying your conversations.</p>
         </div>
         
         <Form {...form}>
@@ -70,7 +70,7 @@ export function SignUpDialog({ onSwitchToLogin }: SignUpDialogProps) {
                     <FormControl>
                         <Input
                             placeholder="John Doe"
-                            className="pl-10"
+                            className="pl-10 bg-secondary/50"
                             {...field}
                         />
                     </FormControl>
@@ -91,7 +91,7 @@ export function SignUpDialog({ onSwitchToLogin }: SignUpDialogProps) {
                         <Input
                             type="email"
                             placeholder="john.doe@example.com"
-                            className="pl-10"
+                            className="pl-10 bg-secondary/50"
                             {...field}
                         />
                     </FormControl>
@@ -112,7 +112,7 @@ export function SignUpDialog({ onSwitchToLogin }: SignUpDialogProps) {
                         <Input 
                             type={showPassword ? "text" : "password"} 
                             placeholder="********" 
-                            className="pl-10 pr-10"
+                            className="pl-10 pr-10 bg-secondary/50"
                             {...field} 
                         />
                     </FormControl>
@@ -132,7 +132,7 @@ export function SignUpDialog({ onSwitchToLogin }: SignUpDialogProps) {
             )}
             />
 
-            <Button type="submit" className="w-full" disabled={form.formState.isSubmitting}>
+            <Button type="submit" className="w-full shadow-sm" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Creating Account..." : "Create Account"}
             </Button>
         </form>
