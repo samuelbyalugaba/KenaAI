@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils";
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
 
-export default function Home() {
+export default function Home({ params, searchParams }: { params: {}; searchParams: {} }) {
   const [activeView, setActiveView] = React.useState<View>("Chat");
   const [isNavOpen, setIsNavOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
