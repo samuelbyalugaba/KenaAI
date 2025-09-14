@@ -52,7 +52,7 @@ import { mockAgents as initialMockAgents } from "@/lib/mock-data";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
