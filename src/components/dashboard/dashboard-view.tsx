@@ -54,6 +54,8 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { KenaAILogo } from "../ui/kena-ai-logo";
 import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Input } from "../ui/input";
 
 
 const kpiData = [
@@ -215,8 +217,73 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
             <Button variant="outline" className="hidden sm:flex gap-2"><Calendar className="h-4 w-4" /> Date Range</Button>
             <Button variant="outline" size="icon" className="sm:hidden"><Calendar className="h-4 w-4" /></Button>
 
-            <Button className="hidden sm:flex gap-2"><Download className="h-4 w-4" /> Export Report</Button>
-            <Button size="icon" className="sm:hidden"><Download className="h-4 w-4" /></Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button className="hidden sm:flex gap-2"><Download className="h-4 w-4" /> Export Report</Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-64" align="end">
+                    <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem><File className="mr-2 h-4 w-4" /> Export as PDF</DropdownMenuItem>
+                    <DropdownMenuItem><Download className="mr-2 h-4 w-4" /> Export as CSV</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        <div className="px-2 py-1.5">
+                            <Label htmlFor="report-email" className="text-xs font-semibold">Schedule Email Report</Label>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Input id="report-email" type="email" placeholder="your@email.com" className="h-8 flex-1" />
+                            </div>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Select defaultValue="weekly">
+                                    <SelectTrigger className="h-8 flex-1">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="daily">Daily</SelectItem>
+                                        <SelectItem value="weekly">Weekly</SelectItem>
+                                        <SelectItem value="monthly">Monthly</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Button size="sm">Schedule</Button>
+                            </div>
+                        </div>
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button size="icon" className="sm:hidden"><Download className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                 <DropdownMenuContent className="w-64" align="end">
+                    <DropdownMenuLabel>Export Options</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem><File className="mr-2 h-4 w-4" /> Export as PDF</DropdownMenuItem>
+                    <DropdownMenuItem><Download className="mr-2 h-4 w-4" /> Export as CSV</DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                        <div className="px-2 py-1.5">
+                            <Label htmlFor="report-email-mobile" className="text-xs font-semibold">Schedule Email Report</Label>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Input id="report-email-mobile" type="email" placeholder="your@email.com" className="h-8 flex-1" />
+                            </div>
+                             <div className="flex items-center gap-2 mt-2">
+                                <Select defaultValue="weekly">
+                                    <SelectTrigger className="h-8 flex-1">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="daily">Daily</SelectItem>
+                                        <SelectItem value="weekly">Weekly</SelectItem>
+                                        <SelectItem value="monthly">Monthly</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <Button size="sm">Schedule</Button>
+                            </div>
+                        </div>
+                    </DropdownMenuGroup>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
       </header>
       <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8">
@@ -372,37 +439,6 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     </Card>
                 </div>
 
-                {/* Exporting & Reporting */}
-                <div>
-                    <h2 className="text-2xl font-bold mb-4">Export & Reporting</h2>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Export Reports</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex flex-col sm:flex-row gap-2">
-                                <Button variant="outline" className="w-full justify-start gap-2"><File className="h-4 w-4" /> Export as PDF</Button>
-                                <Button variant="outline" className="w-full justify-start gap-2"><Download className="h-4 w-4" /> Export as CSV</Button>
-                            </div>
-                            <div className="border-t pt-4 space-y-2">
-                                <Label htmlFor="report-frequency">Schedule Email Reports</Label>
-                                <div className="flex gap-2">
-                                    <Select defaultValue="weekly">
-                                        <SelectTrigger id="report-frequency" className="flex-1">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="daily">Daily</SelectItem>
-                                            <SelectItem value="weekly">Weekly</SelectItem>
-                                            <SelectItem value="monthly">Monthly</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Button><Mail className="h-4 w-4" /></Button>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
             </div>
         </div>
       </main>
