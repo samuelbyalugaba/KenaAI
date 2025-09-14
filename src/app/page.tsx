@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -10,19 +9,12 @@ import { AgentsView } from "@/components/dashboard/agents-view";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import type { UserProfile } from "@/types";
 import { AnnouncementsView } from "@/components/dashboard/announcements-view";
-import { LoginDialog } from "@/components/dashboard/login-dialog";
 import { mockAgents } from "@/lib/mock-data";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PanelLeft } from "lucide-react";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
-import { KenaAILogo } from "@/components/ui/kena-ai-logo";
-import { SignUpDialog } from "@/components/dashboard/signup-dialog";
-import { cn } from "@/lib/utils";
-
+import { AuthForm } from "@/components/dashboard/auth-form";
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
 
@@ -31,8 +23,6 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   const [isNavOpen, setIsNavOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
-  const [authView, setAuthView] = React.useState<'login' | 'signup'>('login');
-
 
   const handleLogin = (email: string, password_unused: string) => {
     // In a real app, you'd verify the password. Here, we'll just find the user by email.
@@ -46,7 +36,6 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
         phone: agent.phone
       });
 
-      // Role-based landing page logic
       if (agent.role === 'admin') {
         setActiveView('Dashboard');
       } else {
@@ -60,7 +49,7 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
 
   const handleLogout = () => {
     setCurrentUser(null);
-    setActiveView('Chat'); // Default to chat view on logout
+    setActiveView('Chat');
   };
 
   const renderView = () => {
@@ -86,40 +75,13 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   };
 
   if (!currentUser) {
-    const WelcomePanel = () => (
-      <div className="flex flex-col items-center justify-center p-8 transition-opacity duration-500 text-center">
-          <KenaAILogo className="h-24" />
-          <h1 className="mt-6 text-3xl font-bold">Smarter Conversations, Simplified</h1>
-          <p className="mt-2 max-w-sm text-secondary-foreground/80">
-              Welcome to the future of customer engagement. Manage all your channels from one powerful dashboard.
-          </p>
-      </div>
-    );
-  
     return (
-        <ThemeProvider>
-             <main className="flex h-screen w-full items-center justify-center bg-background p-4 overflow-hidden">
-                <div className="w-full h-full grid lg:grid-cols-2 gap-8">
-                    <div className={cn(
-                        "hidden lg:flex flex-col items-center justify-center bg-secondary/50 text-secondary-foreground transition-all duration-700 ease-in-out rounded-2xl border shadow-sm",
-                         authView === 'login' ? 'order-1' : 'order-2'
-                    )}>
-                       <WelcomePanel />
-                    </div>
-                    <div className={cn(
-                        "flex items-center justify-center transition-all duration-700 ease-in-out",
-                         authView === 'login' ? 'order-2' : 'order-1'
-                    )}>
-                        {authView === 'login' ? (
-                            <LoginDialog onLogin={handleLogin} onSwitchToSignUp={() => setAuthView('signup')} />
-                        ) : (
-                            <SignUpDialog onSwitchToLogin={() => setAuthView('login')} />
-                        )}
-                    </div>
-                </div>
-            </main>
-        </ThemeProvider>
-    )
+      <ThemeProvider defaultTheme="dark" storageKey="kena-ui-theme">
+        <main className="flex h-screen w-full items-center justify-center bg-background p-4 overflow-hidden auth-page-background">
+          <AuthForm onLogin={handleLogin} />
+        </main>
+      </ThemeProvider>
+    );
   }
 
   return (
