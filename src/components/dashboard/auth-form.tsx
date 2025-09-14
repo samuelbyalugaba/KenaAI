@@ -15,15 +15,14 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "../ui/alert";
-import { Mail, X } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Separator } from "../ui/separator";
+import { Mail } from "lucide-react";
+import { KenaAILogo } from "../ui/kena-ai-logo";
 
 const signupSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
   lastName: z.string().min(1, { message: "Last name is required" }),
   email: z.string().email({ message: "Please enter a valid email." }),
-  phone: z.string().optional(),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
 });
 
 const loginSchema = z.object({
@@ -52,7 +51,7 @@ const AppleIcon = () => (
 
 
 export function AuthForm({ onLogin }: AuthFormProps) {
-  const [authMode, setAuthMode] = React.useState<'signup' | 'signin'>('signup');
+  const [authMode, setAuthMode] = React.useState<'signin' | 'signup'>('signin');
   const [error, setError] = React.useState<string | null>(null);
 
   const form = useForm<SignUpFormValues | LoginFormValues>({
@@ -61,6 +60,7 @@ export function AuthForm({ onLogin }: AuthFormProps) {
         firstName: "",
         lastName: "",
         email: "",
+        password: ""
     } : {
         email: "",
         password: ""
@@ -101,7 +101,6 @@ export function AuthForm({ onLogin }: AuthFormProps) {
                     <FormControl>
                         <Input
                             placeholder="First name"
-                            className="bg-muted/30 border-white/20"
                             {...field}
                         />
                     </FormControl>
@@ -117,7 +116,6 @@ export function AuthForm({ onLogin }: AuthFormProps) {
                     <FormControl>
                         <Input
                             placeholder="Last name"
-                            className="bg-muted/30 border-white/20"
                             {...field}
                         />
                     </FormControl>
@@ -137,7 +135,7 @@ export function AuthForm({ onLogin }: AuthFormProps) {
                         <Input
                             type="email"
                             placeholder="Enter your email"
-                            className="pl-9 bg-muted/30 border-white/20"
+                            className="pl-9"
                             {...field}
                         />
                     </FormControl>
@@ -148,20 +146,16 @@ export function AuthForm({ onLogin }: AuthFormProps) {
         />
         <FormField
             control={form.control}
-            name="phone"
+            name="password"
             render={({ field }) => (
                 <FormItem>
-                <div className="relative flex items-center">
-                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm">🇺🇸</span>
-                    <FormControl>
-                        <Input
-                            type="tel"
-                            placeholder="(775) 351-6501"
-                            className="pl-10 bg-muted/30 border-white/20"
-                            {...field}
-                        />
-                    </FormControl>
-                </div>
+                <FormControl>
+                    <Input 
+                        type="password" 
+                        placeholder="Create a password" 
+                        {...field} 
+                    />
+                </FormControl>
                 <FormMessage />
                 </FormItem>
             )}
@@ -182,7 +176,7 @@ export function AuthForm({ onLogin }: AuthFormProps) {
                         <Input
                             type="email"
                             placeholder="Enter your email"
-                            className="pl-9 bg-muted/30 border-white/20"
+                            className="pl-9"
                             {...field}
                         />
                     </FormControl>
@@ -200,7 +194,6 @@ export function AuthForm({ onLogin }: AuthFormProps) {
                     <Input 
                         type="password" 
                         placeholder="Enter your password" 
-                        className="bg-muted/30 border-white/20"
                         {...field} 
                     />
                 </FormControl>
@@ -211,21 +204,24 @@ export function AuthForm({ onLogin }: AuthFormProps) {
       </>
   )
 
-
   return (
-    <div className="relative w-full max-w-md space-y-6 animate-in fade-in-50 duration-500 bg-card/80 backdrop-blur-sm p-8 rounded-2xl border border-white/10 z-10">
-        <Button variant="ghost" size="icon" className="absolute top-4 right-4 text-muted-foreground hover:bg-white/10">
-            <X className="h-4 w-4" />
-        </Button>
+    <div className="relative w-full max-w-md space-y-6 animate-in fade-in-50 duration-500 bg-card p-8 rounded-2xl border z-10">
+        <div className="flex flex-col items-center space-y-2 text-center">
+            <KenaAILogo className="h-10" />
+            <h1 className="text-2xl font-bold">{authMode === 'signin' ? 'Welcome Back!' : 'Create an Account'}</h1>
+            <p className="text-muted-foreground text-sm">
+                {authMode === 'signin' ? 'Sign in to access your dashboard.' : 'Get started with KenaAI.'}
+            </p>
+        </div>
+
         <div className="flex justify-center">
-            <div className="bg-secondary/50 p-1 rounded-full flex gap-1">
-                <Button variant={authMode === 'signup' ? 'secondary' : 'ghost'} size="sm" className="rounded-full" onClick={() => setAuthMode('signup')}>Sign up</Button>
+            <div className="bg-muted p-1 rounded-full flex gap-1">
                 <Button variant={authMode === 'signin' ? 'secondary' : 'ghost'} size="sm" className="rounded-full" onClick={() => setAuthMode('signin')}>Sign in</Button>
+                <Button variant={authMode === 'signup' ? 'secondary' : 'ghost'} size="sm" className="rounded-full" onClick={() => setAuthMode('signup')}>Sign up</Button>
             </div>
         </div>
         
         <div className="text-left space-y-4">
-            <h1 className="text-2xl font-bold">{authMode === 'signup' ? 'Create an account' : 'Sign in to your account'}</h1>
             {error && (
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
@@ -235,12 +231,12 @@ export function AuthForm({ onLogin }: AuthFormProps) {
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 
-                {authMode === 'signup' ? SignupForm : SigninForm}
+                {authMode === 'signin' ? SigninForm : SignupForm}
 
-                <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" size="lg" disabled={form.formState.isSubmitting}>
+                <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_14px_0_hsl(var(--primary)/40%)] hover:shadow-[0_6px_20px_hsl(var(--primary)/30%)]" size="lg" disabled={form.formState.isSubmitting}>
                     {form.formState.isSubmitting 
                         ? 'Processing...' 
-                        : (authMode === 'signup' ? 'Create an account' : 'Sign in')
+                        : (authMode === 'signin' ? 'Sign in' : 'Create an account')
                     }
                 </Button>
             </form>
@@ -250,18 +246,18 @@ export function AuthForm({ onLogin }: AuthFormProps) {
         <div>
             <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-white/20"></span>
+                    <span className="w-full border-t"></span>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">Or {authMode === 'signup' ? 'sign up' : 'sign in'} with</span>
+                    <span className="bg-card px-2 text-muted-foreground">Or {authMode === 'signin' ? 'sign in' : 'sign up'} with</span>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="bg-secondary/50 border-white/20 hover:bg-white/10">
+                <Button variant="outline">
                     <GoogleIcon />
                 </Button>
-                <Button variant="outline" className="bg-secondary/50 border-white/20 hover:bg-white/10">
+                <Button variant="outline">
                     <AppleIcon />
                 </Button>
             </div>
