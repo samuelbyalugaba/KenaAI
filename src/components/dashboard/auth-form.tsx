@@ -60,20 +60,15 @@ export function AuthForm({ onLogin }: AuthFormProps) {
 
   const form = useForm<SignUpFormValues | LoginFormValues>({
     resolver: zodResolver(authMode === 'signup' ? signupSchema : loginSchema),
-    defaultValues: authMode === 'signup' ? {
-        firstName: "",
-        lastName: "",
-        email: "",
-        password: ""
-    } : {
-        email: "",
-        password: ""
-    }
   });
   
   React.useEffect(() => {
-    form.reset();
     setError(null);
+    form.reset(
+      authMode === 'signup'
+        ? { firstName: "", lastName: "", email: "", password: "" }
+        : { email: "", password: "" }
+    );
   }, [authMode, form]);
 
   function onSubmit(data: SignUpFormValues | LoginFormValues) {
@@ -284,5 +279,7 @@ export function AuthForm({ onLogin }: AuthFormProps) {
     </div>
   );
 }
+
+    
 
     
