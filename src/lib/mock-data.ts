@@ -1,5 +1,6 @@
 
-import type { Agent, Chat, User, AgentPerformance } from "@/types";
+
+import type { Agent, Chat, User, AgentPerformance, UnansweredQuery } from "@/types";
 
 export const mockAdminUser: Agent = { 
     id: '1', 
@@ -203,4 +204,11 @@ export const mockChats: Chat[] = [
       { id: "m2", sender: "me", text: "We're sorry to hear that. Could you tell me which device you are using?", timestamp: "4 days ago" },
     ],
   },
+];
+
+export const mockUnansweredQueries: UnansweredQuery[] = [
+    { id: 'uq1', query: "Do you ship to Mars?", timestamp: "2 hours ago", status: 'pending' },
+    { id: 'uq2', query: "Can I pay with cryptocurrency?", timestamp: "5 hours ago", status: 'pending' },
+    { id: 'uq3', query: "What is the meaning of life?", timestamp: "1 day ago", status: 'resolved' },
+    { id: 'uq4', query: "How do I reset my password if I forgot my email?", timestamp: "2 days ago", status: 'pending' },
 ];

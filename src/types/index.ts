@@ -87,3 +87,10 @@ export type User = {
     createdAt: string;
     sentAt?: string;
   };
+
+  export type UnansweredQuery = {
+    id: string;
+    query: string;
+    timestamp: string;
+    status: 'pending' | 'resolved';
+  };

@@ -28,9 +28,10 @@ import {
     Mail,
     AlertTriangle,
     Star,
-    TrendingUp
+    TrendingUp,
+    MoreHorizontal
 } from "lucide-react";
-import type { UserProfile, AgentPerformance } from "@/types";
+import type { UserProfile, AgentPerformance, UnansweredQuery } from "@/types";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -49,13 +50,14 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import { mockAgentPerformance } from "@/lib/mock-data";
+import { mockAgentPerformance, mockUnansweredQueries as initialUnansweredQueries } from "@/lib/mock-data";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { KenaAILogo } from "../ui/kena-ai-logo";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Input } from "../ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 
 const kpiData = [
@@ -176,6 +178,19 @@ type DashboardViewProps = {
 };
 
 export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
+  const { toast } = useToast();
+  const [unansweredQueries, setUnansweredQueries] = React.useState<UnansweredQuery[]>(initialUnansweredQueries);
+
+  const handleMarkAsResolved = (queryId: string) => {
+    setUnansweredQueries(prev => prev.map(q => q.id === queryId ? { ...q, status: 'resolved' } : q));
+    toast({ title: "Query Updated", description: "Marked as resolved." });
+  }
+
+  const handleAddToKB = () => {
+    toast({ title: "Action Required", description: "This functionality is under construction." });
+  }
+
+
   if (user?.role !== 'admin') {
       return (
           <div className="flex h-screen w-full flex-col bg-background text-foreground">
@@ -353,12 +368,67 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                 <div>
                     <h2 className="text-2xl font-bold mb-4">Chatbot Analysis</h2>
                      <Card>
-                        <CardHeader>
-                            <CardTitle>Unanswered Queries</CardTitle>
-                            <CardDescription>Log of queries the chatbot could not resolve.</CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div>
+                                <CardTitle>Unanswered Queries</CardTitle>
+                                <CardDescription>Log of queries the chatbot could not resolve.</CardDescription>
+                            </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className="ml-auto gap-1">
+                                        Export
+                                        <Download className="h-3 w-3" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
+                                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-center text-muted-foreground p-8">Unanswered queries log is under construction.</p>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Query</TableHead>
+                                        <TableHead>Timestamp</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {unansweredQueries.map((item) => (
+                                        <TableRow key={item.id}>
+                                            <TableCell className="font-medium">{item.query}</TableCell>
+                                            <TableCell>{item.timestamp}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={item.status === 'resolved' ? 'default' : 'secondary'}>
+                                                    {item.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button size="icon" variant="ghost">
+                                                            <MoreHorizontal className="h-4 w-4" />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="end">
+                                                        <DropdownMenuItem onClick={handleAddToKB}>
+                                                            Add to Knowledge Base
+                                                        </DropdownMenuItem>
+                                                        {item.status === 'pending' && (
+                                                            <DropdownMenuItem onClick={() => handleMarkAsResolved(item.id)}>
+                                                                Mark as Resolved
+                                                            </DropdownMenuItem>
+                                                        )}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         </CardContent>
                     </Card>
                 </div>
