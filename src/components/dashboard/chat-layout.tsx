@@ -101,10 +101,12 @@ const ChatList = ({ chats, selectedChat, onSelectChat, isLoading }: { chats: Cha
               <span className="text-xs text-muted-foreground flex-shrink-0">{chat.timestamp}</span>
             </div>
             <div className="flex items-center justify-between mt-1">
-              <p className="text-sm text-muted-foreground truncate flex-grow pr-2">
-                {chat.lastMessage}
+              <p className="text-sm text-muted-foreground truncate">
+                {chat.lastMessage.length > 40
+                  ? `${chat.lastMessage.substring(0, 40)}...`
+                  : chat.lastMessage}
               </p>
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-2 flex-shrink-0 pl-2">
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -766,4 +768,5 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
     </div>
   );
 }
+
 
