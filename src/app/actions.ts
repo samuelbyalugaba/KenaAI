@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getDb } from "@/lib/db";
@@ -644,7 +643,7 @@ export async function sendMessage(chatId: string, text: string, agentId: string)
         const chatsCollection = await getChatsCollection();
         
         const timestamp = new Date();
-        const newMessage: Omit<Message, 'id' | '_id'> = {
+        const newMessageToInsert: Omit<Message, 'id' | '_id'> = {
             chatId: new ObjectId(chatId),
             sender: 'me', // 'me' denotes the agent
             senderId: new ObjectId(agentId),
@@ -652,17 +651,25 @@ export async function sendMessage(chatId: string, text: string, agentId: string)
             timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
 
-        const result = await messagesCollection.insertOne(newMessage as any);
+        const result = await messagesCollection.insertOne(newMessageToInsert as any);
 
         if (result.insertedId) {
             await chatsCollection.updateOne(
                 { _id: new ObjectId(chatId) },
-                { $set: { lastMessage: text, timestamp: newMessage.timestamp } }
+                { $set: { lastMessage: text, timestamp: newMessageToInsert.timestamp } }
             );
             
+            const finalNewMessage: Message = {
+                ...newMessageToInsert,
+                _id: result.insertedId,
+                id: result.insertedId.toString(),
+                chatId: newMessageToInsert.chatId.toString(),
+                senderId: newMessageToInsert.senderId.toString(),
+            };
+
             return { 
                 success: true, 
-                newMessage: { ...newMessage, id: result.insertedId.toString() } as Message
+                newMessage: finalNewMessage
             };
         }
         return { success: false };
@@ -731,3 +738,4 @@ export async function startNewChats(users: User[], message: string, companyId: s
     }
     return newChats;
 }
+
