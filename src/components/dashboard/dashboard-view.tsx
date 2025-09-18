@@ -188,12 +188,41 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   }
 
   const kpiData = React.useMemo(() => {
+    if (isLoading) return Array(5).fill({});
+
     const totalConversations = chats.length;
     const botConversations = chats.filter(c => c.isChatbotActive).length;
     const agentConversations = totalConversations - botConversations;
     const botPercentage = totalConversations > 0 ? (botConversations / totalConversations) * 100 : 0;
     const agentPercentage = totalConversations > 0 ? (agentConversations / totalConversations) * 100 : 0;
     
+    let totalSeconds = 0;
+    let validAgentsForTime = 0;
+    agents.forEach(agent => {
+        if (agent.avgResponseTime && agent.avgResponseTime !== 'N/A') {
+            const minMatch = agent.avgResponseTime.match(/(\d+)m/);
+            const secMatch = agent.avgResponseTime.match(/(\d+)s/);
+            let seconds = 0;
+            if (minMatch) seconds += parseInt(minMatch[1]) * 60;
+            if (secMatch) seconds += parseInt(secMatch[1]);
+            totalSeconds += seconds;
+            validAgentsForTime++;
+        }
+    });
+    const avgSeconds = validAgentsForTime > 0 ? totalSeconds / validAgentsForTime : 0;
+    const avgMinutes = Math.floor(avgSeconds / 60);
+    const remainingSeconds = Math.round(avgSeconds % 60);
+
+    let totalCsat = 0;
+    let validAgentsForCsat = 0;
+    agents.forEach(agent => {
+        if (agent.csat) {
+            totalCsat += agent.csat;
+            validAgentsForCsat++;
+        }
+    });
+    const avgCsat = validAgentsForCsat > 0 ? totalCsat / validAgentsForCsat : 0;
+
     return [
         {
             title: "Total Conversations",
@@ -211,14 +240,14 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         },
         {
             title: "Average Response Time",
-            value: `${Math.floor(Math.random() * 3)}m ${Math.floor(Math.random()*60)}s`,
+            value: `${avgMinutes}m ${remainingSeconds}s`,
             trend: "-5.8%",
             trendDirection: "down" as const,
             icon: Clock,
         },
         {
             title: "Customer Satisfaction (CSAT)",
-            value: `${85 + Math.floor(Math.random() * 15)}%`,
+            value: `${avgCsat.toFixed(1)}%`,
             trend: "+2.5%",
             trendDirection: "up" as const,
             icon: Smile,
@@ -231,7 +260,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
             icon: UserCheck,
         },
     ]
-  }, [chats, agents]);
+  }, [chats, agents, isLoading]);
 
   const channelBreakdownData = React.useMemo(() => {
     const counts = chats.reduce((acc, chat) => {
@@ -374,7 +403,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     <Card key={kpi.title}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                        <kpi.icon className="h-4 w-4 text-muted-foreground" />
+                        {kpi.icon && <kpi.icon className="h-4 w-4 text-muted-foreground" />}
                         </CardHeader>
                         <CardContent>
                         <div className="text-2xl font-bold">{kpi.value}</div>
@@ -588,5 +617,3 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
-
-    
