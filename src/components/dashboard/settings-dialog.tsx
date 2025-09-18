@@ -15,21 +15,23 @@ import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Agent, UserProfile } from "@/types"
+import type { ActivityLog, Agent, UserProfile } from "@/types"
 import { useTheme } from "@/hooks/use-theme"
 import { Camera, User, Settings as SettingsIcon, MessageSquare, Bot, Link, Shield, Users, HelpCircle, Log, CreditCard, Puzzle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ScrollArea } from "../ui/scroll-area"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-import { Badge } from "../ui/badge"
 import { mockAgents } from "@/lib/mock-data"
 import { Textarea } from "../ui/textarea"
+import { getActivityLogs } from "@/app/actions"
+import { Skeleton } from "../ui/skeleton"
 
 type SettingsDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   user: UserProfile | null
+  onUserUpdate: (user: Partial<UserProfile>) => void
 }
 
 type SettingsSection = "profile" | "integrations" | "team" | "chatbot" | "help"
@@ -83,7 +85,7 @@ const ProfileSettings = ({ user }: { user: UserProfile }) => {
                             <AvatarImage src={user.avatar} alt={user.name} />
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <Button variant="ghost" size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-background/80 hover:bg-background">
+                          <Button variant="ghost" size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-background/80 hover:bg-background hidden">
                             <Camera className="h-4 w-4" />
                             <span className="sr-only">Change Photo</span>
                           </Button>
@@ -214,7 +216,65 @@ const IntegrationSettings = () => {
     );
 };
 
-const TeamSettings = () => (
+const ActivityLogsTab = ({ user }: { user: UserProfile | null }) => {
+    const [logs, setLogs] = React.useState<ActivityLog[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
+
+    React.useEffect(() => {
+        async function fetchLogs() {
+            if (user?.companyId) {
+                setIsLoading(true);
+                const fetchedLogs = await getActivityLogs(user.companyId);
+                setLogs(fetchedLogs);
+                setIsLoading(false);
+            }
+        }
+        fetchLogs();
+    }, [user]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Activity Logs</CardTitle>
+                <CardDescription>An audit trail of all actions within your company.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Agent</TableHead>
+                            <TableHead>Action</TableHead>
+                            <TableHead>Details</TableHead>
+                            <TableHead className="text-right">Timestamp</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-4 w-[150px] ml-auto" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : logs.map(log => (
+                            <TableRow key={log.id}>
+                                <TableCell>{log.agentName}</TableCell>
+                                <TableCell><Badge variant="secondary">{log.action}</Badge></TableCell>
+                                <TableCell>{log.details}</TableCell>
+                                <TableCell className="text-right">{new Date(log.timestamp).toLocaleString()}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+};
+
+
+const TeamSettings = ({ user }: { user: UserProfile | null }) => (
     <Tabs defaultValue="users">
         <TabsList className="mb-4">
             <TabsTrigger value="users">User Management</TabsTrigger>
@@ -264,7 +324,7 @@ const TeamSettings = () => (
             <p className="text-center text-muted-foreground p-8">Permission controls are coming soon.</p>
         </TabsContent>
         <TabsContent value="logs">
-             <p className="text-center text-muted-foreground p-8">Activity logs are coming soon.</p>
+            <ActivityLogsTab user={user} />
         </TabsContent>
     </Tabs>
 );
@@ -318,7 +378,7 @@ const HelpSettings = () => (
 );
 
 
-export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, user, onUserUpdate }: SettingsDialogProps) {
   const [activeSection, setActiveSection] = React.useState<SettingsSection>("profile");
 
   if (!user) return null
@@ -330,7 +390,7 @@ export function SettingsDialog({ open, onOpenChange, user }: SettingsDialogProps
           case 'integrations':
               return <IntegrationSettings />;
           case 'team':
-              return <TeamSettings />;
+              return <TeamSettings user={user} />;
           case 'chatbot':
               return <ChatbotSettings />;
           case 'help':
