@@ -70,18 +70,6 @@ const activityLogs = [
   { id: 'log5', timestamp: '2024-08-01 10:30:00', agent: 'Samuel Byalugaba', action: 'Logout', details: 'Session duration: 24m 46s' },
 ];
 
-const mostActiveAgents = [
-    { name: 'Sylvester Mayaya', conversations: 25, avatar: "https://picsum.photos/seed/sly/100/100" },
-    { name: 'Kelvin Malisa', conversations: 15, avatar: "https://picsum.photos/seed/kelvin/100/100" },
-    { name: 'Samuel Byalugaba', conversations: 12, avatar: "https://picsum.photos/seed/sam/100/100" },
-];
-
-const responseTimeData = [
-    { name: "Samuel B.", time: 105, fill: "hsl(var(--chart-1))" },
-    { name: "Kelvin M.", time: 90, fill: "hsl(var(--chart-2))" },
-    { name: "Sylvester M.", time: 130, fill: "hsl(var(--chart-3))" },
-    { name: "Linaliz R.", time: 185, fill: "hsl(var(--chart-4))" },
-];
 
 export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; user: UserProfile | null }) {
   const [agents, setAgents] = React.useState<Agent[]>([]);
@@ -108,12 +96,42 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
   
   const filteredAgents = React.useMemo(() => {
     return agents.filter(agent => {
-        const matchesSearch = agent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              agent.email.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === 'all' || agent.status === statusFilter;
+        const name = agent.name || '';
+        const email = agent.email || '';
+        const status = agent.status || 'Offline';
+
+        const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              email.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesStatus = statusFilter === 'all' || status === statusFilter;
         return matchesSearch && matchesStatus;
     });
   }, [agents, searchTerm, statusFilter]);
+
+  const mostActiveAgents = React.useMemo(() => {
+    return [...agents]
+        .sort((a, b) => (b.conversationsToday || 0) - (a.conversationsToday || 0))
+        .slice(0, 3);
+  }, [agents]);
+
+    const parseTimeToSeconds = (timeStr?: string): number => {
+        if (!timeStr) return 0;
+        let totalSeconds = 0;
+        const minMatch = timeStr.match(/(\d+)m/);
+        const secMatch = timeStr.match(/(\d+)s/);
+        if (minMatch) totalSeconds += parseInt(minMatch[1]) * 60;
+        if (secMatch) totalSeconds += parseInt(secMatch[1]);
+        return totalSeconds;
+    };
+
+  const responseTimeData = React.useMemo(() => {
+      const chartColors = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+      return agents.map((agent, index) => ({
+          name: agent.name.split(' ')[0],
+          time: parseTimeToSeconds(agent.avgResponseTime),
+          fill: chartColors[index % chartColors.length]
+      }));
+  }, [agents]);
+
 
   if (user?.role !== 'admin' && user?.role !== 'super_agent') {
       return (
@@ -277,18 +295,30 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                         <CardDescription>Agents with the most conversations today.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ul className="space-y-4">
-                            {mostActiveAgents.map(agent => (
-                                <li key={agent.name} className="flex items-center gap-4">
-                                    <Avatar>
-                                        <AvatarImage src={agent.avatar} alt={agent.name} />
-                                        <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1">{agent.name}</div>
-                                    <div className="font-bold">{agent.conversations}</div>
-                                </li>
-                            ))}
-                        </ul>
+                       {isLoading ? (
+                            <div className="space-y-4">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <div key={i} className="flex items-center gap-4">
+                                        <Skeleton className="h-10 w-10 rounded-full" />
+                                        <Skeleton className="h-4 flex-1" />
+                                        <Skeleton className="h-6 w-8" />
+                                    </div>
+                                ))}
+                            </div>
+                       ) : (
+                            <ul className="space-y-4">
+                                {mostActiveAgents.map(agent => (
+                                    <li key={agent.id} className="flex items-center gap-4">
+                                        <Avatar>
+                                            <AvatarImage src={agent.avatar} alt={agent.name} />
+                                            <AvatarFallback>{agent.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1">{agent.name}</div>
+                                        <div className="font-bold">{agent.conversationsToday || 0}</div>
+                                    </li>
+                                ))}
+                            </ul>
+                       )}
                     </CardContent>
                 </Card>
                 <Card className="lg:col-span-2">
@@ -297,18 +327,24 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                         <CardDescription>Average response time in seconds.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ChartContainer config={{}} className="h-64">
-                            <BarChart data={responseTimeData}>
-                                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                                <YAxis hide />
-                                <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                                <Bar dataKey="time" radius={4}>
-                                    {responseTimeData.map(entry => (
-                                        <Cell key={entry.name} fill={entry.fill} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ChartContainer>
+                       {isLoading ? (
+                            <div className="h-64 flex items-center justify-center">
+                                <Skeleton className="h-full w-full" />
+                            </div>
+                       ) : (
+                            <ChartContainer config={{}} className="h-64">
+                                <BarChart data={responseTimeData}>
+                                    <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                                    <YAxis hide />
+                                    <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                    <Bar dataKey="time" radius={4}>
+                                        {responseTimeData.map(entry => (
+                                            <Cell key={entry.name} fill={entry.fill} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ChartContainer>
+                       )}
                     </CardContent>
                 </Card>
             </div>
@@ -351,4 +387,5 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
       </main>
     </div>
   );
-}
+
+    
