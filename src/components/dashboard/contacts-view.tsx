@@ -21,7 +21,7 @@ import { Skeleton } from "../ui/skeleton";
 import { AddContactDialog } from "./add-contact-dialog";
 
 
-const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd, onAssign }: { 
+const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd, onAssign, onStartChat }: { 
     contact: ContactUser;
     agents: Agent[];
     chatHistory: Message[] | undefined;
@@ -29,6 +29,7 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
     user: UserProfile | null;
     onNoteAdd: (contactId: string, note: Note) => void;
     onAssign: (contactId: string, agentId: string) => void;
+    onStartChat: (contact: ContactUser) => void;
 }) => {
     const { toast } = useToast();
     const [note, setNote] = React.useState("");
@@ -87,7 +88,7 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
                        Last active: 2 hours ago
                     </CardDescription>
                 </div>
-                 <Button variant="outline"><MessageSquare className="h-4 w-4 mr-2" /> Message</Button>
+                 <Button variant="outline" onClick={() => onStartChat(contact)}><MessageSquare className="h-4 w-4 mr-2" /> Message</Button>
             </CardHeader>
             <CardContent className="flex-1 overflow-auto space-y-6 pt-0">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -201,9 +202,10 @@ const EmptyState = () => (
 type ContactsViewProps = {
   onMenuClick: () => void;
   user: UserProfile | null;
+  onNavigateToChat: (contact: ContactUser) => void;
 };
 
-export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
+export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsViewProps) {
   const [contacts, setContacts] = React.useState<ContactUser[]>([]);
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [chats, setChats] = React.useState<Chat[]>([]);
@@ -362,6 +364,7 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
                     user={user}
                     onNoteAdd={handleNoteAdd}
                     onAssign={handleAssignAgent}
+                    onStartChat={onNavigateToChat}
                 />
             ) : (
                 <EmptyState />

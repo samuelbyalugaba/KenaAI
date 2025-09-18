@@ -447,9 +447,10 @@ const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string;
 type ChatLayoutProps = {
   user: UserProfile | null;
   onMenuClick: () => void;
+  initialContact?: User | null;
 };
 
-export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
+export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProps) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [contacts, setContacts] = useState<User[]>([]);
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
@@ -472,6 +473,14 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
           ]);
           setChats(fetchedChats);
           setContacts(fetchedContacts);
+
+          if (initialContact) {
+            const chatToOpen = fetchedChats.find(c => c.user.id === initialContact.id);
+            if (chatToOpen) {
+              handleSelectChat(chatToOpen);
+            }
+          }
+
         } catch (error) {
           console.error("Failed to fetch chat data:", error);
           toast({ variant: 'destructive', title: "Error", description: "Failed to load chat data." });
@@ -480,7 +489,7 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
       }
     }
     fetchData();
-  }, [user, toast]);
+  }, [user, toast, initialContact]);
 
   const filteredChats = React.useMemo(() => {
     return chats.filter(chat => {
