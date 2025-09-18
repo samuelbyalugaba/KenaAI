@@ -55,7 +55,7 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
     const handleCreateCampaign = async (data: Partial<Campaign> & { scheduleType?: 'now' | 'later' }) => {
         if (!user?.companyId) return;
 
-        const result = await createCampaign(data, user.companyId);
+        const result = await createCampaign(data, user.companyId, user.id);
 
         if (result.success && result.campaign) {
             setCampaigns(prev => [result.campaign!, ...prev]);

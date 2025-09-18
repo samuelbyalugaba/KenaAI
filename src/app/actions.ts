@@ -776,9 +776,10 @@ export async function startNewChats(users: User[], message: string, companyId: s
     return newOrUpdatedChats;
 }
 
-export async function createCampaign(data: Partial<Campaign> & { scheduleType?: 'now' | 'later' }, companyId: string): Promise<{ success: boolean; message?: string; campaign?: Campaign; }> {
+export async function createCampaign(data: Partial<Campaign> & { scheduleType?: 'now' | 'later' }, companyId: string, agentId: string): Promise<{ success: boolean; message?: string; campaign?: Campaign; }> {
     try {
         const campaignsCollection = await getCampaignsCollection();
+        const contactsCollection = await getContactsCollection();
         
         let status: Campaign['status'] = 'Draft';
         let sentAt: string | undefined = undefined;
@@ -790,12 +791,23 @@ export async function createCampaign(data: Partial<Campaign> & { scheduleType?: 
             status = 'Completed';
             sentAt = new Date().toISOString();
             // Generate mock performance data for immediate campaigns
-            delivery = 95 + Math.random() * 5; // 95% - 100%
-            engagement = 10 + Math.random() * 15; // 10% - 25%
-            conversion = 2 + Math.random() * 8; // 2% - 10%
+            delivery = 95 + Math.random() * 5; 
+            engagement = 10 + Math.random() * 15;
+            conversion = 2 + Math.random() * 8; 
+
+            // Actually send the messages
+            if (data.audience && data.message) {
+                const audienceContacts = await contactsCollection.find({ _id: { $in: data.audience.map(id => new ObjectId(id)) } }).toArray();
+                const users = audienceContacts.map(c => ({
+                    ...c,
+                    id: c._id.toString(),
+                    _id: c._id.toString(),
+                })) as User[];
+
+                await startNewChats(users, data.message, companyId, agentId);
+            }
         } else if (data.scheduleType === 'later') {
             status = 'Scheduled';
-            // sentAt will be set when the scheduler runs
         }
 
         const newCampaign: Omit<Campaign, 'id' | '_id'> = {

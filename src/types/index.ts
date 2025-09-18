@@ -1,5 +1,4 @@
 
-
 export type User = {
     _id?: any;
     id: string;
@@ -121,7 +120,7 @@ export type User = {
     title: string;
     description?: string;
     type: "Broadcast" | "Scheduled" | "Automated";
-    audience: User[];
+    audience: string[]; // Store contact IDs
     message: string;
     status: "Draft" | "Scheduled" | "Sending" | "Completed" | "Failed";
     companyId: any;

@@ -31,10 +31,10 @@ export function CampaignReportDialog({ open, onOpenChange, campaign }: CampaignR
         });
         return;
     }
-    // In a real app, this would trigger a backend service to send the email.
+    
     toast({
-        title: "Report Sent!",
-        description: `A detailed report for "${campaign?.title}" has been sent to ${email}.`,
+        title: "Feature Not Implemented",
+        description: `This feature is for demonstration. In a real app, an email would be sent to ${email}.`,
     });
     setEmail("");
     onOpenChange(false);
@@ -113,4 +113,3 @@ export function CampaignReportDialog({ open, onOpenChange, campaign }: CampaignR
     </Dialog>
   );
 }
-

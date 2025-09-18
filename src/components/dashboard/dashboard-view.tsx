@@ -190,6 +190,20 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     toast({ title: "Action Required", description: "This functionality is under construction." });
   }
 
+  const handleExport = (type: 'PDF' | 'CSV') => {
+      toast({
+          title: "Feature Not Implemented",
+          description: `This feature is for demonstration. In a real app, a ${type} file would be downloaded.`,
+      });
+  }
+
+  const handleScheduleReport = () => {
+      toast({
+          title: "Feature Not Implemented",
+          description: `This feature is for demonstration. In a real app, an email report would be scheduled.`,
+      });
+  }
+
 
   if (user?.role !== 'admin') {
       return (
@@ -239,8 +253,8 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                 <DropdownMenuContent className="w-64" align="end">
                     <DropdownMenuLabel>Export Options</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem><File className="mr-2 h-4 w-4" /> Export as PDF</DropdownMenuItem>
-                    <DropdownMenuItem><Download className="mr-2 h-4 w-4" /> Export as CSV</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('PDF')}><File className="mr-2 h-4 w-4" /> Export as PDF</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('CSV')}><Download className="mr-2 h-4 w-4" /> Export as CSV</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                         <div className="px-2 py-1.5">
@@ -259,7 +273,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                                         <SelectItem value="monthly">Monthly</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <Button size="sm">Schedule</Button>
+                                <Button size="sm" onClick={handleScheduleReport}>Schedule</Button>
                             </div>
                         </div>
                     </DropdownMenuGroup>
@@ -273,8 +287,8 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                  <DropdownMenuContent className="w-64" align="end">
                     <DropdownMenuLabel>Export Options</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem><File className="mr-2 h-4 w-4" /> Export as PDF</DropdownMenuItem>
-                    <DropdownMenuItem><Download className="mr-2 h-4 w-4" /> Export as CSV</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('PDF')}><File className="mr-2 h-4 w-4" /> Export as PDF</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExport('CSV')}><Download className="mr-2 h-4 w-4" /> Export as CSV</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuGroup>
                         <div className="px-2 py-1.5">
@@ -293,7 +307,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                                         <SelectItem value="monthly">Monthly</SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <Button size="sm">Schedule</Button>
+                                <Button size="sm" onClick={handleScheduleReport}>Schedule</Button>
                             </div>
                         </div>
                     </DropdownMenuGroup>
@@ -381,8 +395,8 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-                                    <DropdownMenuItem>Export as PDF</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleExport('CSV')}>Export as CSV</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => handleExport('PDF')}>Export as PDF</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </CardHeader>
