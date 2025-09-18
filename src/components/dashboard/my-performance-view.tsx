@@ -96,26 +96,14 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
             { title: "CSAT Score" },
         ];
     }
-    // Simulated resolution rate
-    const resolutionRate = 85 + Math.floor(Math.random() * 10);
+    // All data is for "Today" as that's what the DB provides.
     const csatScore = ((agentData.csat || 0) / 100) * 5;
-
-    let conversations = agentData.conversationsToday || 0;
-    let trendPeriod = "yesterday";
-
-    if (timeRange === "This Week") {
-        conversations = conversations * 5 + Math.floor(Math.random() * 10);
-        trendPeriod = "last week";
-    } else if (timeRange === "This Month") {
-        conversations = conversations * 20 + Math.floor(Math.random() * 50);
-        trendPeriod = "last month";
-    }
 
     return [
       {
         title: "Conversations Handled",
-        value: conversations.toString(),
-        description: `conversations this ${timeRange.split(' ')[1]?.toLowerCase() || 'day'}`,
+        value: agentData.conversationsToday?.toString() || '0',
+        description: `conversations today`,
         trend: "+12%", // Mock trend
         trendDirection: "up" as const,
         icon: MessageSquare,
@@ -123,29 +111,29 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
       {
         title: "Avg. Response Time",
         value: agentData.avgResponseTime || 'N/A',
-        description: "on average ⏱️",
+        description: "today's average ⏱️",
         trend: "-3.5%", // Mock trend
         trendDirection: "down" as const,
         icon: Clock,
       },
       {
         title: "Resolution Rate",
-        value: `${resolutionRate}%`,
-        description: "conversations resolved ✅",
-        trend: "+2.1%", // Mock trend
+        value: 'N/A',
+        description: "data not available",
+        trend: "+0.0%",
         trendDirection: "up" as const,
         icon: CheckCircle,
       },
       {
         title: "CSAT Score",
-        value: `${csatScore.toFixed(1)}/5`,
-        description: `from ${Math.floor(conversations / 3)} ratings ⭐`,
+        value: agentData.csat ? `${csatScore.toFixed(1)}/5` : 'N/A',
+        description: `based on today's ratings ⭐`,
         trend: "+0.2", // Mock trend
         trendDirection: "up" as const,
         icon: Star,
       },
     ];
-  }, [agentData, timeRange]);
+  }, [agentData]);
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
@@ -162,8 +150,8 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
              <Button variant={timeRange === 'Today' ? 'default' : 'ghost'} size="sm" onClick={() => setTimeRange("Today")}>Today</Button>
-             <Button variant={timeRange === 'This Week' ? 'default' : 'ghost'} size="sm" onClick={() => setTimeRange("This Week")}>This Week</Button>
-             <Button variant={timeRange === 'This Month' ? 'default' : 'ghost'} size="sm" onClick={() => setTimeRange("This Month")}>This Month</Button>
+             <Button variant={timeRange === 'This Week' ? 'default' : 'ghost'} size="sm" onClick={() => setTimeRange("This Week")} disabled>This Week</Button>
+             <Button variant={timeRange === 'This Month' ? 'default' : 'ghost'} size="sm" onClick={() => setTimeRange("This Month")} disabled>This Month</Button>
         </div>
       </header>
       <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 space-y-8">
@@ -178,7 +166,7 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
         
         {/* Section 1: Key Metrics */}
         <div className="space-y-4">
-            <h2 className="text-xl font-bold">{timeRange}'s Stats</h2>
+            <h2 className="text-xl font-bold">Today's Stats</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {isLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
@@ -283,3 +271,5 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
     </div>
   );
 }
+
+    
