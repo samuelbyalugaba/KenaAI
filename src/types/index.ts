@@ -1,6 +1,7 @@
 
 
 export type User = {
+    _id?: any;
     id: string;
     name: string;
     avatar: string;
@@ -8,6 +9,8 @@ export type User = {
     phone?: string;
     assignedAgentId?: string;
     online?: boolean;
+    companyId?: any;
+    notes?: Note[];
   };
   
   export type Message = {
@@ -134,4 +137,12 @@ export type User = {
     details: string;
     timestamp: Date | string;
   };
+
+  export type Note = {
+    id: string;
+    agentId: string;
+    agentName: string;
+    text: string;
+    timestamp: string;
+}
 

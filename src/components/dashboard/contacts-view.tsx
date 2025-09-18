@@ -1,71 +1,72 @@
 
+
 "use client";
 
 import * as React from "react";
 import { User, Phone, Mail, Search, MessageSquare, ArrowLeft, PanelLeft, LogIn, UserCheck } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { User as ContactUser, Chat, Message, UserProfile, Agent } from "@/types";
+import type { User as ContactUser, Chat, Message, UserProfile, Agent, Note } from "@/types";
 import { cn } from "@/lib/utils";
 import { Textarea } from "../ui/textarea";
 import { Separator } from "../ui/separator";
-import { mockUsers as initialMockUsers, mockChats, mockAgents } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "../ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { getContactsByCompany, getAgentsByCompany, assignAgentToContact, addNoteToContact } from "@/app/actions";
+import { Skeleton } from "../ui/skeleton";
+import { mockChats } from "@/lib/mock-data";
 
 
-type Note = {
-    id: number;
-    agent: string;
-    text: string;
-    timestamp: string;
-}
-
-const exampleNotes: Note[] = [
-    { id: 1, agent: "Sylvester Mayaya", text: "Customer is interested in the enterprise plan. Follow up next week.", timestamp: "2024-07-29 10:30 AM" },
-    { id: 2, agent: "Samuel Byalugaba", text: "Had a difficult call regarding a billing issue. Offered a 10% discount on next month's invoice.", timestamp: "2024-07-28 02:45 PM" },
-    { id: 3, agent: "Sylvester Mayaya", text: "Called to confirm delivery address. Everything is correct.", timestamp: "2024-07-27 11:15 AM" },
-];
-
-
-const ContactProfile = ({ contact, onAssign, chatHistory, onBack, user }: { contact: ContactUser, onAssign: (contactId: string, agentId: string) => void, chatHistory: Message[] | undefined, onBack?: () => void, user: UserProfile | null }) => {
+const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd, onAssign }: { 
+    contact: ContactUser;
+    agents: Agent[];
+    chatHistory: Message[] | undefined;
+    onBack?: () => void;
+    user: UserProfile | null;
+    onNoteAdd: (contactId: string, note: Note) => void;
+    onAssign: (contactId: string, agentId: string) => void;
+}) => {
     const { toast } = useToast();
     const [note, setNote] = React.useState("");
-    const [notes, setNotes] = React.useState<Note[]>(exampleNotes);
-    const assignedAgent = mockAgents.find(a => a.id === contact.assignedAgentId);
+    const assignedAgent = agents.find(a => a.id === contact.assignedAgentId);
     
-    const handleSaveNote = () => {
-        if (!note.trim()) {
+    const handleSaveNote = async () => {
+        if (!note.trim() || !user) {
             toast({
                 variant: "destructive",
-                title: "Empty Note",
+                title: "Error",
                 description: "Cannot save an empty note.",
             })
             return;
         }
         
-        const newNote: Note = {
-            id: Date.now(),
-            agent: user?.name || "Current Agent",
-            text: note,
-            timestamp: new Date().toLocaleString(),
+        const result = await addNoteToContact(contact.id, user.id, user.name, note);
+
+        if (result.success && result.note) {
+            onNoteAdd(contact.id, result.note);
+            toast({
+                title: "Note Saved",
+                description: `Your note for ${contact.name} has been saved.`,
+            });
+            setNote("");
+        } else {
+            toast({ variant: 'destructive', title: "Failed to save note." });
         }
-
-        setNotes(prev => [newNote, ...prev]);
-
-        toast({
-            title: "Note Saved",
-            description: `Your note for ${contact.name} has been saved.`,
-        });
-        setNote("");
     }
     
     const handleAssignAgent = (agentId: string) => {
+        assignAgentToContact(contact.id, agentId);
         onAssign(contact.id, agentId);
+        
+        const agent = agents.find(a => a.id === agentId);
+        toast({
+          title: "Contact Assigned",
+          description: `${contact?.name} has been assigned to ${agent?.name || 'Unassigned'}.`,
+        });
     }
 
     return (
@@ -99,14 +100,14 @@ const ContactProfile = ({ contact, onAssign, chatHistory, onBack, user }: { cont
                     </div>
                      <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">Assigned Agent</h3>
-                         {user?.role === 'admin' ? (
+                         {(user?.role === 'admin' || user?.role === 'super_agent') ? (
                             <Select onValueChange={handleAssignAgent} defaultValue={assignedAgent?.id}>
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Unassigned" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="unassigned">Unassigned</SelectItem>
-                                    {mockAgents.map(agent => (
+                                    {agents.map(agent => (
                                         <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -147,10 +148,10 @@ const ContactProfile = ({ contact, onAssign, chatHistory, onBack, user }: { cont
                         </div>
                         <ScrollArea className="h-48">
                             <div className="space-y-4 pr-4">
-                                {notes.map(note => (
+                                {contact.notes && contact.notes.map(note => (
                                     <div key={note.id} className="text-sm border-l-2 pl-3">
                                         <p className="font-medium">{note.text}</p>
-                                        <p className="text-xs text-muted-foreground mt-1">- {note.agent} on {note.timestamp}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">- {note.agentName} on {new Date(note.timestamp).toLocaleString()}</p>
                                     </div>
                                 ))}
                             </div>
@@ -203,41 +204,55 @@ type ContactsViewProps = {
 };
 
 export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
-  const [contacts, setContacts] = React.useState<ContactUser[]>(initialMockUsers);
+  const [contacts, setContacts] = React.useState<ContactUser[]>([]);
+  const [agents, setAgents] = React.useState<Agent[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
-  const { toast } = useToast();
   
-  const filteredContacts = user ? contacts.filter(contact =>
+  React.useEffect(() => {
+    async function fetchData() {
+        if(user?.companyId) {
+            setIsLoading(true);
+            const [fetchedContacts, fetchedAgents] = await Promise.all([
+                getContactsByCompany(user.companyId),
+                getAgentsByCompany(user.companyId),
+            ]);
+            setContacts(fetchedContacts);
+            setAgents(fetchedAgents);
+
+            if (fetchedContacts.length > 0 && window.innerWidth >= 768) {
+                setSelectedContact(fetchedContacts[0]);
+            }
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, [user]);
+
+  const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     contact.phone?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) : [];
+  );
   
-  React.useEffect(() => {
-    if (user && window.innerWidth >= 768 && !selectedContact) {
-        setSelectedContact(contacts[0]);
-    } else if (!user) {
-        setSelectedContact(null);
-    }
-  }, [user, contacts])
-
   const handleAssignAgent = (contactId: string, agentId: string) => {
-    const updatedContacts = contacts.map(c => 
+    setContacts(prev => prev.map(c => 
         c.id === contactId ? { ...c, assignedAgentId: agentId } : c
-    );
-    setContacts(updatedContacts);
-    
+    ));
     if (selectedContact?.id === contactId) {
         setSelectedContact(prev => prev ? { ...prev, assignedAgentId: agentId } : null);
     }
-
-    const agent = mockAgents.find(a => a.id === agentId);
-    toast({
-      title: "Contact Assigned",
-      description: `${selectedContact?.name} has been assigned to ${agent?.name || 'Unassigned'}.`,
-    });
   };
+  
+  const handleNoteAdd = (contactId: string, note: Note) => {
+     setContacts(prev => prev.map(c => 
+        c.id === contactId ? { ...c, notes: [note, ...(c.notes || [])] } : c
+    ));
+    if (selectedContact?.id === contactId) {
+        setSelectedContact(prev => prev ? { ...prev, notes: [note, ...(prev.notes || [])] } : null);
+    }
+  }
 
   const selectedChatHistory = mockChats.find(chat => chat.user.email === selectedContact?.email)?.messages;
 
@@ -280,34 +295,40 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
         {/* Contact List */}
         <div className={cn("md:col-span-1 lg:col-span-1 border-r flex flex-col", selectedContact ? "hidden md:flex" : "flex")}>
             <ScrollArea className="flex-1">
-                <div className="flex flex-col gap-1 p-2">
-                {filteredContacts.map((contact) => (
-                    <Card 
-                        key={contact.email} 
-                        onClick={() => setSelectedContact(contact)}
-                        className={cn("cursor-pointer hover:bg-muted/50", selectedContact?.email === contact.email && "bg-muted/80")}
-                    >
-                        <CardHeader className="p-3">
-                            <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                    <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
-                                    <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 min-w-0">
-                                    <div className="font-medium truncate">{contact.name}</div>
-                                    <div className="text-xs text-muted-foreground truncate">{contact.email}</div>
+                {isLoading ? (
+                    <div className="p-2 space-y-1">
+                        {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-1 p-2">
+                    {filteredContacts.map((contact) => (
+                        <Card 
+                            key={contact.id} 
+                            onClick={() => setSelectedContact(contact)}
+                            className={cn("cursor-pointer hover:bg-muted/50", selectedContact?.id === contact.id && "bg-muted/80")}
+                        >
+                            <CardHeader className="p-3">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-10 w-10">
+                                        <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
+                                        <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium truncate">{contact.name}</div>
+                                        <div className="text-xs text-muted-foreground truncate">{contact.email}</div>
+                                    </div>
+                                    {contact.assignedAgentId && (
+                                        <Badge variant="secondary" className="h-5 text-xs">
+                                            <UserCheck className="h-3 w-3 mr-1" />
+                                            Assigned
+                                        </Badge>
+                                    )}
                                 </div>
-                                {contact.assignedAgentId && (
-                                    <Badge variant="secondary" className="h-5 text-xs">
-                                        <UserCheck className="h-3 w-3 mr-1" />
-                                        Assigned
-                                    </Badge>
-                                )}
-                            </div>
-                        </CardHeader>
-                    </Card>
-                ))}
-                </div>
+                            </CardHeader>
+                        </Card>
+                    ))}
+                    </div>
+                )}
             </ScrollArea>
         </div>
         
@@ -316,10 +337,12 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
             {selectedContact ? (
                 <ContactProfile 
                     contact={selectedContact}
-                    onAssign={handleAssignAgent}
+                    agents={agents}
                     chatHistory={selectedChatHistory} 
                     onBack={() => setSelectedContact(null)}
                     user={user}
+                    onNoteAdd={handleNoteAdd}
+                    onAssign={handleAssignAgent}
                 />
             ) : (
                 <EmptyState />
@@ -329,3 +352,4 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
     </div>
   );
 }
+

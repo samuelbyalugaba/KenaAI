@@ -1,9 +1,10 @@
 
+
 'use server';
 
 import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
-import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog } from "@/types";
+import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog, User, Note } from "@/types";
 import { Collection, Db, ObjectId } from "mongodb";
 
 async function getAgentsCollection(): Promise<Collection<Agent>> {
@@ -25,6 +26,12 @@ async function getActivityLogsCollection(): Promise<Collection<ActivityLog>> {
     const db: Db = await getDb();
     return db.collection<ActivityLog>('activity_logs');
 }
+
+async function getContactsCollection(): Promise<Collection<User>> {
+    const db: Db = await getDb();
+    return db.collection<User>('contacts');
+}
+
 
 async function logActivity(companyId: string | ObjectId, agentName: string, action: string, details: string) {
     try {
@@ -188,33 +195,19 @@ export async function updateAgentProfile(agentId: string, name: string, email: s
         if (updateResult.modifiedCount === 0 && updateResult.matchedCount === 0) {
             return { success: false, message: "Agent not found." };
         }
-        if (updateResult.modifiedCount === 0 && updateResult.matchedCount > 0) {
-            // No fields were actually changed
-            const updatedAgent = await agentsCollection.findOne({ _id: new ObjectId(agentId) });
-             if (updatedAgent) {
-                const { password, ...agentData } = updatedAgent;
-                const agentWithoutPassword: Agent = {
-                    ...agentData,
-                    _id: updatedAgent._id.toString(),
-                    id: updatedAgent._id.toString(),
-                    companyId: updatedAgent.companyId?.toString(),
-                };
-                 return { success: true, agent: agentWithoutPassword };
-            }
-        }
         
-        const updatedAgent = await agentsCollection.findOne({ _id: new ObjectId(agentId) });
+        const updatedAgentDoc = await agentsCollection.findOne({ _id: new ObjectId(agentId) });
 
-        if (updatedAgent) {
-            const { password, ...agentData } = updatedAgent;
-            const agentWithoutPassword: Agent = {
+        if (updatedAgentDoc) {
+            const { password, ...agentData } = updatedAgentDoc;
+            const updatedAgent: Agent = {
                 ...agentData,
-                _id: updatedAgent._id.toString(),
-                id: updatedAgent._id.toString(),
-                companyId: updatedAgent.companyId?.toString(),
+                _id: updatedAgentDoc._id.toString(),
+                id: updatedAgentDoc._id.toString(),
+                companyId: updatedAgentDoc.companyId?.toString(),
             };
-            await logActivity(companyId, agentWithoutPassword.name, 'Update Profile', `Updated profile details`);
-            return { success: true, agent: agentWithoutPassword };
+            await logActivity(companyId, updatedAgent.name, 'Update Profile', `Updated profile details`);
+            return { success: true, agent: updatedAgent };
         }
 
         return { success: false, message: "Failed to retrieve updated agent." };
@@ -257,20 +250,20 @@ export async function updateAgentPassword(agentId: string, currentPassword_unuse
 export async function handleLogin(email: string, password_unused: string): Promise<{ success: boolean; message?: string; agent?: Agent }> {
     try {
       const agentsCollection = await getAgentsCollection();
-      const agent = await agentsCollection.findOne({ email: email.toLowerCase() });
+      const agentDoc = await agentsCollection.findOne({ email: email.toLowerCase() });
 
-      if (agent && agent.password) {
-        const isPasswordValid = await verifyPassword(password_unused, agent.password);
+      if (agentDoc && agentDoc.password) {
+        const isPasswordValid = await verifyPassword(password_unused, agentDoc.password);
         if (isPasswordValid) {
-          const { password, ...agentData } = agent;
-          const agentWithoutPassword: Agent = {
+          const { password, ...agentData } = agentDoc;
+          const agent: Agent = {
             ...agentData,
-            _id: agent._id.toString(),
-            id: agent._id.toString(),
-            companyId: agent.companyId?.toString(),
+            _id: agentDoc._id.toString(),
+            id: agentDoc._id.toString(),
+            companyId: agentDoc.companyId?.toString(),
           };
           await logActivity(agent.companyId, agent.name, 'Login', `Logged in successfully`);
-          return { success: true, agent: agentWithoutPassword };
+          return { success: true, agent: agent };
         }
       }
       return { success: false, message: "Invalid email or password." };
@@ -305,17 +298,17 @@ export async function createAgent(name: string, email: string, password_unused: 
         const result = await agentsCollection.insertOne(agentToInsert as any);
 
         if (result.insertedId) {
-            const newAgent = await agentsCollection.findOne({ _id: result.insertedId });
-            if (newAgent) {
-                const { password, ...agentData } = newAgent;
-                const agentWithoutPassword: Agent = {
+            const newAgentDoc = await agentsCollection.findOne({ _id: result.insertedId });
+            if (newAgentDoc) {
+                const { password, ...agentData } = newAgentDoc;
+                const newAgent: Agent = {
                   ...agentData,
-                  _id: newAgent._id.toString(),
-                  id: newAgent._id.toString(),
-                  companyId: newAgent.companyId?.toString(),
+                  _id: newAgentDoc._id.toString(),
+                  id: newAgentDoc._id.toString(),
+                  companyId: newAgentDoc.companyId?.toString(),
                 };
                 await logActivity(companyId, createdBy, 'Create Agent', `Created agent: ${name}`);
-                return { success: true, agent: agentWithoutPassword };
+                return { success: true, agent: newAgent };
             }
         }
         return { success: false, message: "Failed to create agent." };
@@ -370,14 +363,14 @@ export async function handleSignUp(name: string, email: string, password_unused:
             
             await logActivity(companyId, name, 'Sign Up', `Created new company and admin account.`);
 
-            const newAgent = await agentsCollection.findOne({ _id: agentResult.insertedId }, { session });
-            if (newAgent) {
-                 const { password, ...agentData } = newAgent;
+            const newAgentDoc = await agentsCollection.findOne({ _id: agentResult.insertedId }, { session });
+            if (newAgentDoc) {
+                 const { password, ...agentData } = newAgentDoc;
                  newAgentResult = {
                     ...agentData,
-                    _id: newAgent._id.toString(),
-                    id: newAgent._id.toString(),
-                    companyId: newAgent.companyId?.toString()
+                    _id: newAgentDoc._id.toString(),
+                    id: newAgentDoc._id.toString(),
+                    companyId: newAgentDoc.companyId?.toString()
                 };
             }
         });
@@ -417,6 +410,82 @@ export async function getActivityLogs(companyId: string): Promise<ActivityLog[]>
         }));
     } catch (error) {
         console.error("Error fetching activity logs:", error);
+        return [];
+    }
+}
+
+export async function getContactsByCompany(companyId: string): Promise<User[]> {
+    try {
+        if (!companyId || !ObjectId.isValid(companyId)) {
+            return [];
+        }
+        const contactsCollection = await getContactsCollection();
+        const contacts = await contactsCollection.find({ companyId: new ObjectId(companyId) }).toArray();
+
+        return contacts.map(contact => ({
+            ...contact,
+            _id: contact._id.toString(),
+            id: contact._id.toString(),
+            companyId: contact.companyId?.toString(),
+            notes: contact.notes || []
+        }));
+    } catch (error) {
+        console.error("Error fetching contacts:", error);
+        return [];
+    }
+}
+
+export async function assignAgentToContact(contactId: string, agentId: string): Promise<{ success: boolean }> {
+    try {
+        const contactsCollection = await getContactsCollection();
+        await contactsCollection.updateOne(
+            { _id: new ObjectId(contactId) },
+            { $set: { assignedAgentId: agentId } }
+        );
+        return { success: true };
+    } catch (error) {
+        console.error("Error assigning agent:", error);
+        return { success: false };
+    }
+}
+
+export async function addNoteToContact(contactId: string, agentId: string, agentName: string, text: string): Promise<{ success: boolean; note?: Note }> {
+    try {
+        const contactsCollection = await getContactsCollection();
+        
+        const newNote: Note = {
+            id: new ObjectId().toString(),
+            agentId,
+            agentName,
+            text,
+            timestamp: new Date().toISOString()
+        };
+
+        const result = await contactsCollection.updateOne(
+            { _id: new ObjectId(contactId) },
+            { $push: { notes: { $each: [newNote], $position: 0 } } }
+        );
+        
+        if (result.modifiedCount > 0) {
+            return { success: true, note: newNote };
+        }
+        return { success: false };
+    } catch (error) {
+        console.error("Error adding note:", error);
+        return { success: false };
+    }
+}
+
+export async function getNotesForContact(contactId: string): Promise<Note[]> {
+     try {
+        if (!contactId || !ObjectId.isValid(contactId)) {
+            return [];
+        }
+        const contactsCollection = await getContactsCollection();
+        const contact = await contactsCollection.findOne({ _id: new ObjectId(contactId) });
+        return contact?.notes || [];
+    } catch (error) {
+        console.error("Error fetching notes:", error);
         return [];
     }
 }
