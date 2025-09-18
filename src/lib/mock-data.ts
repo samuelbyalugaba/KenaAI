@@ -1,6 +1,6 @@
 
 
-import type { Agent, Chat, User, AgentPerformance, UnansweredQuery } from "@/types";
+import type { Agent, Chat, User, UnansweredQuery } from "@/types";
 
 export const mockAdminUser: Agent = { 
     id: '1', 
@@ -59,13 +59,6 @@ export const mockAgents: Agent[] = [
     },
 ];
 
-export const mockAgentPerformance: AgentPerformance[] = [
-    { rank: 1, agent: mockAgents[0], conversations: 125, avgResponseTime: "1m 30s", resolutionRate: 95 },
-    { rank: 2, agent: mockAgents[1], conversations: 110, avgResponseTime: "1m 45s", resolutionRate: 92 },
-    { rank: 3, agent: mockAgents[2], conversations: 98, avgResponseTime: "2m 05s", resolutionRate: 88 },
-    { rank: 4, agent: { ...mockAgents[3], id: '5', name: "New Agent" }, conversations: 85, avgResponseTime: "2m 15s", resolutionRate: 85 },
-]
-
 export const mockUsers: User[] = [
   { id: 'user1', name: "Kelvin", avatar: "https://picsum.photos/seed/user-kelvin/100/100", email: "kelvin@example.com", phone: "+1-555-0101", assignedAgentId: '3' },
   { id: 'user2', name: "Sylvester", avatar: "https://picsum.photos/seed/user-sly/100/100", email: "sylvester@example.com", phone: "+1-555-0102" },
@@ -85,3 +78,5 @@ export const mockUnansweredQueries: UnansweredQuery[] = [
     { id: 'uq3', query: "What is the meaning of life?", timestamp: "1 day ago", status: 'resolved' },
     { id: 'uq4', query: "How do I reset my password if I forgot my email?", timestamp: "2 days ago", status: 'pending' },
 ];
+
+    

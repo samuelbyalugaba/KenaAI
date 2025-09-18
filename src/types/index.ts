@@ -1,4 +1,5 @@
 
+
 export type User = {
     _id?: any;
     id: string;
@@ -106,14 +107,6 @@ export type User = {
     companyId: any;
   };
 
-  export type AgentPerformance = {
-    rank: number;
-    agent: Agent;
-    conversations: number;
-    avgResponseTime: string;
-    resolutionRate: number;
-  };
-
   export type Campaign = {
     _id?: any;
     id: string;
@@ -155,3 +148,5 @@ export type User = {
     text: string;
     timestamp: string;
 };
+
+    

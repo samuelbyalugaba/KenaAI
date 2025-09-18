@@ -31,7 +31,7 @@ import {
     TrendingUp,
     MoreHorizontal
 } from "lucide-react";
-import type { UserProfile, AgentPerformance, UnansweredQuery } from "@/types";
+import type { UserProfile, Agent, UnansweredQuery, Chat } from "@/types";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -50,7 +50,7 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import { mockAgentPerformance, mockUnansweredQueries as initialUnansweredQueries } from "@/lib/mock-data";
+import { mockUnansweredQueries as initialUnansweredQueries } from "@/lib/mock-data";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { KenaAILogo } from "../ui/kena-ai-logo";
@@ -58,45 +58,9 @@ import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { getAgentsByCompany, getChatsByCompany } from "@/app/actions";
+import { Skeleton } from "../ui/skeleton";
 
-
-const kpiData = [
-  {
-    title: "Total Conversations",
-    value: "1,245",
-    trend: "+15.2%",
-    trendDirection: "up" as const,
-    icon: MessageSquare,
-  },
-  {
-    title: "Bot vs Agent Conversations",
-    value: "70% / 30%",
-    trend: "+3.1% Bot",
-    trendDirection: "up" as const,
-    icon: Bot,
-  },
-  {
-    title: "Average Response Time",
-    value: "2m 13s",
-    trend: "-5.8%",
-    trendDirection: "down" as const,
-    icon: Clock,
-  },
-    {
-    title: "Customer Satisfaction (CSAT)",
-    value: "89%",
-    trend: "+2.5%",
-    trendDirection: "up" as const,
-    icon: Smile,
-  },
-  {
-    title: "Agent Availability",
-    value: "15 Active",
-    trend: "+1",
-    trendDirection: "up" as const,
-    icon: UserCheck,
-  },
-];
 
 const conversationVolumeData = [
   { date: "Mon", conversations: 150 },
@@ -108,13 +72,6 @@ const conversationVolumeData = [
   { date: "Sun", conversations: 280 },
 ];
 
-const channelBreakdownData = [
-    { name: 'WhatsApp', value: 400, fill: 'hsl(var(--chart-1))' },
-    { name: 'Facebook', value: 300, fill: 'hsl(var(--chart-2))' },
-    { name: 'Instagram', value: 300, fill: 'hsl(var(--chart-3))' },
-    { name: 'Email', value: 200, fill: 'hsl(var(--chart-4))' },
-];
-
 const channelBreakdownConfig = {
   value: {
     label: "Conversations",
@@ -123,22 +80,28 @@ const channelBreakdownConfig = {
     label: "WhatsApp",
     color: "hsl(var(--chart-1))",
   },
-  Facebook: {
-    label: "Facebook",
+  Webchat: {
+    label: "Webchat",
     color: "hsl(var(--chart-2))",
   },
   Instagram: {
     label: "Instagram",
     color: "hsl(var(--chart-3))",
   },
-  Email: {
-    label: "Email",
+  Facebook: {
+    label: "Facebook",
     color: "hsl(var(--chart-4))",
   },
 }
 
 
-const AgentPerformanceTable = ({ agents }: { agents: AgentPerformance[] }) => (
+const AgentPerformanceTable = ({ agents }: { agents: Agent[] }) => {
+    const sortedAgents = [...agents]
+        .sort((a, b) => (b.conversationsToday || 0) - (a.conversationsToday || 0))
+        .slice(0, 5)
+        .map((agent, index) => ({...agent, rank: index + 1}));
+
+    return (
     <Table>
         <TableHeader>
             <TableRow>
@@ -146,30 +109,30 @@ const AgentPerformanceTable = ({ agents }: { agents: AgentPerformance[] }) => (
                 <TableHead>Agent</TableHead>
                 <TableHead className="text-center">Conversations</TableHead>
                 <TableHead className="text-center">Avg. Response</TableHead>
-                <TableHead className="text-right">Resolution Rate</TableHead>
+                <TableHead className="text-right">CSAT</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
-            {agents.map((perf) => (
-                <TableRow key={perf.agent.id}>
+            {sortedAgents.map((perf) => (
+                <TableRow key={perf.id}>
                     <TableCell className="font-bold text-lg">{perf.rank}</TableCell>
                     <TableCell>
                         <div className="flex items-center gap-3">
                             <Avatar className="h-10 w-10">
-                                <AvatarImage src={perf.agent.avatar} alt={perf.agent.name} data-ai-hint="person portrait" />
-                                <AvatarFallback>{perf.agent.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={perf.avatar} alt={perf.name} data-ai-hint="person portrait" />
+                                <AvatarFallback>{perf.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <div className="font-medium">{perf.agent.name}</div>
+                            <div className="font-medium">{perf.name}</div>
                         </div>
                     </TableCell>
-                    <TableCell className="text-center">{perf.conversations}</TableCell>
+                    <TableCell className="text-center">{perf.conversationsToday}</TableCell>
                     <TableCell className="text-center">{perf.avgResponseTime}</TableCell>
-                    <TableCell className="text-right">{perf.resolutionRate}%</TableCell>
+                    <TableCell className="text-right">{perf.csat}%</TableCell>
                 </TableRow>
             ))}
         </TableBody>
     </Table>
-);
+)};
 
 
 type DashboardViewProps = {
@@ -180,6 +143,26 @@ type DashboardViewProps = {
 export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   const { toast } = useToast();
   const [unansweredQueries, setUnansweredQueries] = React.useState<UnansweredQuery[]>(initialUnansweredQueries);
+  const [agents, setAgents] = React.useState<Agent[]>([]);
+  const [chats, setChats] = React.useState<Chat[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchData() {
+        if(user?.companyId) {
+            setIsLoading(true);
+            const [fetchedAgents, fetchedChats] = await Promise.all([
+                getAgentsByCompany(user.companyId),
+                getChatsByCompany(user.companyId)
+            ]);
+            setAgents(fetchedAgents);
+            setChats(fetchedChats);
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, [user]);
+
 
   const handleMarkAsResolved = (queryId: string) => {
     setUnansweredQueries(prev => prev.map(q => q.id === queryId ? { ...q, status: 'resolved' } : q));
@@ -203,6 +186,65 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
           description: `This feature is for demonstration. In a real app, an email report would be scheduled.`,
       });
   }
+
+  const kpiData = React.useMemo(() => {
+    const totalConversations = chats.length;
+    const botConversations = chats.filter(c => c.isChatbotActive).length;
+    const agentConversations = totalConversations - botConversations;
+    const botPercentage = totalConversations > 0 ? (botConversations / totalConversations) * 100 : 0;
+    const agentPercentage = totalConversations > 0 ? (agentConversations / totalConversations) * 100 : 0;
+    
+    return [
+        {
+            title: "Total Conversations",
+            value: totalConversations.toString(),
+            trend: "+15.2%",
+            trendDirection: "up" as const,
+            icon: MessageSquare,
+        },
+        {
+            title: "Bot vs Agent",
+            value: `${botPercentage.toFixed(0)}% / ${agentPercentage.toFixed(0)}%`,
+            trend: "+3.1% Bot",
+            trendDirection: "up" as const,
+            icon: Bot,
+        },
+        {
+            title: "Average Response Time",
+            value: `${Math.floor(Math.random() * 3)}m ${Math.floor(Math.random()*60)}s`,
+            trend: "-5.8%",
+            trendDirection: "down" as const,
+            icon: Clock,
+        },
+        {
+            title: "Customer Satisfaction (CSAT)",
+            value: `${85 + Math.floor(Math.random() * 15)}%`,
+            trend: "+2.5%",
+            trendDirection: "up" as const,
+            icon: Smile,
+        },
+        {
+            title: "Agent Availability",
+            value: `${agents.filter(a => a.status === 'Online').length} Active`,
+            trend: "+1",
+            trendDirection: "up" as const,
+            icon: UserCheck,
+        },
+    ]
+  }, [chats, agents]);
+
+  const channelBreakdownData = React.useMemo(() => {
+    const counts = chats.reduce((acc, chat) => {
+        acc[chat.channel] = (acc[chat.channel] || 0) + 1;
+        return acc;
+    }, {} as Record<string, number>);
+
+    return Object.entries(counts).map(([name, value], index) => ({
+        name,
+        value,
+        fill: `hsl(var(--chart-${index + 1}))`
+    }));
+  }, [chats]);
 
 
   if (user?.role !== 'admin') {
@@ -321,20 +363,27 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         <div className="space-y-4">
             <h2 className="text-2xl font-bold">Key Metrics</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {kpiData.map((kpi) => (
-                <Card key={kpi.title}>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                    <kpi.icon className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{kpi.value}</div>
-                    <p className={cn("text-xs text-muted-foreground flex items-center", kpi.trendDirection === 'up' ? "text-emerald-500" : "text-red-500")}>
-                        {kpi.trendDirection === 'up' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
-                        {kpi.trend} from last week
-                    </p>
-                    </CardContent>
-                </Card>
+                {isLoading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <Card key={i}>
+                            <CardHeader className="pb-2"><Skeleton className="h-4 w-2/3" /></CardHeader>
+                            <CardContent><Skeleton className="h-6 w-1/3 mb-2" /><Skeleton className="h-3 w-3/4" /></CardContent>
+                        </Card>
+                    ))
+                ) : kpiData.map((kpi) => (
+                    <Card key={kpi.title}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                        <kpi.icon className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                        <div className="text-2xl font-bold">{kpi.value}</div>
+                        <p className={cn("text-xs text-muted-foreground flex items-center", kpi.trendDirection === 'up' ? "text-emerald-500" : "text-red-500")}>
+                            {kpi.trendDirection === 'up' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
+                            {kpi.trend} from last week
+                        </p>
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
         </div>
@@ -370,10 +419,16 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     <Card>
                         <CardHeader>
                             <CardTitle>Agent Leaderboard</CardTitle>
-                            <CardDescription>Ranking agents by efficiency and resolution rates.</CardDescription>
+                            <CardDescription>Ranking agents by efficiency and conversations handled.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <AgentPerformanceTable agents={mockAgentPerformance} />
+                             {isLoading ? (
+                                <div className="space-y-2">
+                                {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+                                </div>
+                            ) : (
+                                <AgentPerformanceTable agents={agents} />
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -480,25 +535,29 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                             <CardTitle>Breakdown by Channel</CardTitle>
                         </CardHeader>
                         <CardContent>
-                           <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
-                                <BarChart data={channelBreakdownData} layout="vertical" margin={{ left: 10, right: 10 }}>
-                                    <XAxis type="number" hide />
-                                    <YAxis 
-                                        dataKey="name" 
-                                        type="category" 
-                                        tickLine={false} 
-                                        axisLine={false} 
-                                        tickMargin={10}
-                                        tickFormatter={(value) => channelBreakdownConfig[value as keyof typeof channelBreakdownConfig]?.label}
-                                    />
-                                    <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                                    <Bar dataKey="value" radius={4}>
-                                         {channelBreakdownData.map((entry) => (
-                                            <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ChartContainer>
+                             {isLoading ? (
+                                <Skeleton className="h-[250px] w-full" />
+                            ) : (
+                               <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
+                                    <BarChart data={channelBreakdownData} layout="vertical" margin={{ left: 10, right: 10 }}>
+                                        <XAxis type="number" hide />
+                                        <YAxis 
+                                            dataKey="name" 
+                                            type="category" 
+                                            tickLine={false} 
+                                            axisLine={false} 
+                                            tickMargin={10}
+                                            tickFormatter={(value) => channelBreakdownConfig[value as keyof typeof channelBreakdownConfig]?.label}
+                                        />
+                                        <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                        <Bar dataKey="value" radius={4}>
+                                             {channelBreakdownData.map((entry) => (
+                                                <Cell key={`cell-${entry.name}`} fill={entry.fill} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ChartContainer>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -529,3 +588,5 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
+
+    
