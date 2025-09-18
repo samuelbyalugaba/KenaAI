@@ -15,6 +15,7 @@ import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 import { AuthForm } from "@/components/dashboard/auth-form";
 import { handleLogin, handleSignUp } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import { LoadingScreen } from "@/components/dashboard/loading-screen";
 
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
@@ -28,7 +29,15 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
   const [initialContact, setInitialContact] = React.useState<User | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+        setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const onLogin = async (email: string, password_unused: string) => {
     const result = await handleLogin(email, password_unused);
@@ -117,6 +126,10 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
         return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} initialContact={initialContact} />;
     }
   };
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
 
   if (!currentUser) {
     return (
