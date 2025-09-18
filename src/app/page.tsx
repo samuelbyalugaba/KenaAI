@@ -14,8 +14,8 @@ import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 import { AuthForm } from "@/components/dashboard/auth-form";
-import { query } from "@/lib/db";
-import { verifyPassword } from "@/lib/auth";
+import { handleLogin } from "@/app/actions";
+
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
 
@@ -28,36 +28,26 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
-  const handleLogin = async (email: string, password_unused: string) => {
-    try {
-      const result = await query('SELECT * FROM agents WHERE email = $1', [email.toLowerCase()]);
-      const agent: Agent | undefined = result.rows[0];
+  const onLogin = async (email: string, password_unused: string) => {
+    const result = await handleLogin(email, password_unused);
+    if (result.success && result.agent) {
+      const agent = result.agent;
+       setCurrentUser({
+        name: agent.name,
+        avatar: agent.avatar,
+        role: agent.role,
+        email: agent.email,
+        phone: agent.phone
+      });
 
-      if (agent && agent.password) {
-        const isPasswordValid = await verifyPassword(password_unused, agent.password);
-        if (isPasswordValid) {
-           setCurrentUser({
-            name: agent.name,
-            avatar: agent.avatar,
-            role: agent.role,
-            email: agent.email,
-            phone: agent.phone
-          });
-
-          if (agent.role === 'admin') {
-            setActiveView('Dashboard');
-          } else {
-            setActiveView('Chat');
-          }
-          return { success: true };
-        }
+      if (agent.role === 'admin') {
+        setActiveView('Dashboard');
+      } else {
+        setActiveView('Chat');
       }
-      return { success: false, message: "Invalid email or password." };
-    } catch (error) {
-      console.error("Login error:", error);
-      return { success: false, message: "An unexpected error occurred." };
     }
-  };
+    return { success: result.success, message: result.message };
+  }
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -89,7 +79,7 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   if (!currentUser) {
     return (
       <main className="flex h-screen w-full items-center justify-center bg-background p-4 overflow-hidden auth-page-background">
-        <AuthForm onLogin={handleLogin} />
+        <AuthForm onLogin={onLogin} />
       </main>
     );
   }
@@ -112,3 +102,4 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
     </main>
   );
 }
+
