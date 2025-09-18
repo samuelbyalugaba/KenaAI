@@ -22,10 +22,10 @@ import { cn } from "@/lib/utils"
 import { ScrollArea } from "../ui/scroll-area"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
-import { mockAgents } from "@/lib/mock-data"
 import { Textarea } from "../ui/textarea"
 import { getActivityLogs } from "@/app/actions"
 import { Skeleton } from "../ui/skeleton"
+import { Badge } from "../ui/badge"
 
 type SettingsDialogProps = {
   open: boolean
@@ -288,35 +288,7 @@ const TeamSettings = ({ user }: { user: UserProfile | null }) => (
                     <CardDescription>Add, remove, and manage agent roles.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Role</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {mockAgents.map((agent: Agent) => (
-                                <TableRow key={agent.id}>
-                                    <TableCell className="font-medium">{agent.name}</TableCell>
-                                    <TableCell>{agent.email}</TableCell>
-                                    <TableCell>
-                                        <Select defaultValue={agent.role}>
-                                            <SelectTrigger className="w-32">
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="admin">Admin</SelectItem>
-                                                <SelectItem value="super_agent">Super Agent</SelectItem>
-                                                <SelectItem value="agent">Agent</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                    <p className="p-8 text-center text-muted-foreground">User management is handled on the "Agents" page.</p>
                 </CardContent>
             </Card>
         </TabsContent>
