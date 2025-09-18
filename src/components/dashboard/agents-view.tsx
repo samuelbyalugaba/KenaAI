@@ -48,12 +48,13 @@ import {
 } from "@/components/ui/select";
 import type { Agent, UserProfile, AgentPerformance } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
-import { mockAgents as initialMockAgents } from "@/lib/mock-data";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
+import { getAgentsByCompany } from "@/app/actions";
+import { Skeleton } from "../ui/skeleton";
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
     Online: "bg-emerald-500",
@@ -83,9 +84,23 @@ const responseTimeData = [
 ];
 
 export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; user: UserProfile | null }) {
-  const [agents, setAgents] = React.useState<Agent[]>(initialMockAgents);
+  const [agents, setAgents] = React.useState<Agent[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
+
+  React.useEffect(() => {
+    async function fetchAgents() {
+        if (user?.companyId) {
+            setIsLoading(true);
+            const fetchedAgents = await getAgentsByCompany(user.companyId);
+            setAgents(fetchedAgents);
+            setIsLoading(false);
+        }
+    }
+    fetchAgents();
+  }, [user]);
+
 
   const handleAgentAdd = (newAgent: Agent) => {
     setAgents((prev) => [newAgent, ...prev]);
@@ -185,7 +200,27 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAgents.map((agent) => (
+                {isLoading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell>
+                                <div className="flex items-center gap-3">
+                                    <Skeleton className="h-10 w-10 rounded-full" />
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-[150px]" />
+                                        <Skeleton className="h-3 w-[200px]" />
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                            <TableCell className="text-center"><Skeleton className="h-6 w-8 mx-auto" /></TableCell>
+                            <TableCell className="text-center"><Skeleton className="h-6 w-12 mx-auto" /></TableCell>
+                            <TableCell className="text-center"><Skeleton className="h-6 w-10 mx-auto" /></TableCell>
+                            <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                        </TableRow>
+                    ))
+                ) : filteredAgents.map((agent) => (
                   <TableRow key={agent.id}>
                     <TableCell>
                       <div className="flex items-center gap-3">
@@ -205,12 +240,12 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                     <TableCell>
                         <div className="flex items-center gap-2">
                            <span className={cn("h-2.5 w-2.5 rounded-full", statusVariantMap[agent.status || 'Offline'])}></span>
-                           <span>{agent.status}</span>
+                           <span>{agent.status || 'Offline'}</span>
                         </div>
                     </TableCell>
-                    <TableCell className="text-center">{agent.conversationsToday}</TableCell>
-                    <TableCell className="text-center">{agent.avgResponseTime}</TableCell>
-                    <TableCell className="text-center">{agent.csat}%</TableCell>
+                    <TableCell className="text-center">{agent.conversationsToday || 0}</TableCell>
+                    <TableCell className="text-center">{agent.avgResponseTime || 'N/A'}</TableCell>
+                    <TableCell className="text-center">{agent.csat ? `${agent.csat}%` : 'N/A'}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

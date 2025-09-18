@@ -16,6 +16,28 @@ async function getCompaniesCollection(): Promise<Collection> {
     return db.collection('companies');
 }
 
+export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
+    try {
+        if (!companyId || !ObjectId.isValid(companyId)) {
+            return [];
+        }
+        const agentsCollection = await getAgentsCollection();
+        const agents = await agentsCollection.find({ companyId: new ObjectId(companyId) }, { projection: { password: 0 } }).toArray();
+
+        // Convert ObjectId to string for client-side consumption
+        return agents.map(agent => ({
+            ...agent,
+            _id: agent._id.toString(),
+            id: agent._id.toString(),
+            companyId: agent.companyId?.toString(),
+        }));
+    } catch (error) {
+        console.error("Error fetching agents by company:", error);
+        return [];
+    }
+}
+
+
 export async function handleLogin(email: string, password_unused: string) {
     try {
       const agentsCollection = await getAgentsCollection();
@@ -72,6 +94,7 @@ export async function createAgent(name: string, email: string, password_unused: 
                 const agentWithoutPassword = {
                   _id: _id.toString(),
                   ...agentData,
+                  id: _id.toString(),
                   companyId: newAgent.companyId?.toString(),
                 };
                 return { success: true, agent: agentWithoutPassword };
@@ -135,6 +158,7 @@ export async function handleSignUp(name: string, email: string, password_unused:
                  newAgentResult = {
                     _id: _id.toString(),
                     ...agentData,
+                    id: _id.toString(),
                     companyId: newAgent.companyId?.toString()
                 };
             }
