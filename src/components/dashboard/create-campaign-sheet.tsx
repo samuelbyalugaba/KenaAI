@@ -35,7 +35,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import type { Campaign, User } from "@/types";
-import { ArrowLeft, ArrowRight, Bot, MessageSquare, Users, Calendar, Check, Search, Sparkles, UserPlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bot, MessageSquare, Users, Calendar, Check, Search, Sparkles } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { generateCampaignMessage } from "@/ai/flows/generate-campaign-message";
 import { ScrollArea } from "../ui/scroll-area";
@@ -402,14 +402,13 @@ type CreateCampaignSheetProps = {
   children: React.ReactNode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCampaignCreate: (data: Partial<Campaign>) => void;
+  onCampaignCreate: (data: Partial<Campaign> & { scheduleType?: 'now' | 'later' }) => void;
   contacts: User[];
 };
 
 export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCreate, contacts }: CreateCampaignSheetProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
-  const [campaignData, setCampaignData] = React.useState<Partial<Campaign>>({});
-
+  
   const form = useForm({
     resolver: zodResolver(validationSchemas[currentStep]),
     defaultValues: {
@@ -429,11 +428,8 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
   const goToPrevStep = () => setCurrentStep(prev => Math.max(0, prev - 1));
 
   async function processStep(data: any) {
-    const updatedData = {...campaignData, ...data};
-    setCampaignData(updatedData);
-
     if (currentStep === steps.length - 1) {
-        onCampaignCreate(updatedData);
+        onCampaignCreate(form.getValues());
     } else {
         goToNextStep();
     }
@@ -459,7 +455,7 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
                         <p><span className="font-semibold">Type:</span> {data.type}</p>
                         <p><span className="font-semibold">Audience:</span> {data.audience.length} contacts selected</p>
                         <p><span className="font-semibold">Message:</span> "{data.message}"</p>
-                        <p><span className="font-semibold">Schedule:</span> {data.scheduleType === 'now' ? 'Send immediately' : `Scheduled for ${format(data.scheduledAtDate!, 'PPP')} at ${data.scheduledAtTime}`}</p>
+                        <p><span className="font-semibold">Schedule:</span> {data.scheduleType === 'now' ? 'Send immediately' : `Scheduled for ${data.scheduledAtDate ? format(data.scheduledAtDate, 'PPP') : ''} at ${data.scheduledAtTime}`}</p>
                     </div>
                 </div>
             )
@@ -472,7 +468,6 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
     if (!open) {
         setTimeout(() => {
             setCurrentStep(0);
-            setCampaignData({});
             form.reset();
         }, 300);
     }

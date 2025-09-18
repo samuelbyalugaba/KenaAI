@@ -7,17 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import type { UserProfile, Campaign, User } from "@/types";
 import { CreateCampaignSheet } from "./create-campaign-sheet";
 import { getCampaignsByCompany, createCampaign, getContactsByCompany } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
+import { CampaignReportDialog } from "./campaign-report-dialog";
 
 
 const statusVariantMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     Completed: "default",
-    "In Progress": "secondary",
+    Sending: "secondary",
     Scheduled: "outline",
     Failed: "destructive",
     Draft: "outline"
@@ -33,7 +33,7 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
     const [contacts, setContacts] = React.useState<User[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [isCreateSheetOpen, setIsCreateSheetOpen] = React.useState(false);
-    const [showReportDialog, setShowReportDialog] = React.useState(false);
+    const [selectedCampaign, setSelectedCampaign] = React.useState<Campaign | null>(null);
     const { toast } = useToast();
 
     React.useEffect(() => {
@@ -52,7 +52,7 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
         fetchData();
     }, [user]);
 
-    const handleCreateCampaign = async (data: Partial<Campaign>) => {
+    const handleCreateCampaign = async (data: Partial<Campaign> & { scheduleType?: 'now' | 'later' }) => {
         if (!user?.companyId) return;
 
         const result = await createCampaign(data, user.companyId);
@@ -60,8 +60,8 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
         if (result.success && result.campaign) {
             setCampaigns(prev => [result.campaign!, ...prev]);
             toast({
-                title: "Campaign Created",
-                description: `Campaign "${result.campaign.title}" has been created as a draft.`,
+                title: "Campaign Created Successfully",
+                description: `Campaign "${result.campaign.title}" is now ${result.campaign.status.toLowerCase()}.`,
             });
             setIsCreateSheetOpen(false);
         } else {
@@ -81,18 +81,18 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
                 { title: "Campaigns Sent", value: "0", icon: Send },
                 { title: "Delivery Rate", value: "0%", icon: CheckCircle },
                 { title: "Engagement Rate", value: "0%", icon: Target },
-                { title: "Conversions", value: "0%", icon: BarChart },
+                { title: "Conversions", value: "0", icon: BarChart },
             ];
         }
         const avgDelivery = completedCampaigns.reduce((sum, c) => sum + (c.delivery || 0), 0) / total;
         const avgEngagement = completedCampaigns.reduce((sum, c) => sum + (c.engagement || 0), 0) / total;
-        const avgConversion = completedCampaigns.reduce((sum, c) => sum + (c.conversion || 0), 0) / total;
+        const totalConversions = completedCampaigns.reduce((sum, c) => sum + ((c.conversion/100) * c.audience.length), 0);
 
         return [
             { title: "Campaigns Sent", value: total.toString(), icon: Send },
-            { title: "Delivery Rate", value: `${avgDelivery.toFixed(1)}%`, icon: CheckCircle },
-            { title: "Engagement Rate", value: `${avgEngagement.toFixed(1)}%`, icon: Target },
-            { title: "Conversions", value: `${avgConversion.toFixed(1)}%`, icon: BarChart },
+            { title: "Avg. Delivery", value: `${avgDelivery.toFixed(1)}%`, icon: CheckCircle },
+            { title: "Avg. Engagement", value: `${avgEngagement.toFixed(1)}%`, icon: Target },
+            { title: "Total Conversions", value: Math.round(totalConversions).toString(), icon: BarChart },
         ];
     }, [campaigns]);
     
@@ -197,13 +197,18 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
                                 <TableCell className="font-medium">{campaign.title}</TableCell>
                                 <TableCell>{new Date(campaign.createdAt).toLocaleDateString()}</TableCell>
                                 <TableCell className="text-center">{campaign.audience.length}</TableCell>
-                                <TableCell className="text-center">{campaign.delivery || 0}%</TableCell>
-                                <TableCell className="text-center">{campaign.engagement || 0}%</TableCell>
+                                <TableCell className="text-center">{campaign.delivery.toFixed(1)}%</TableCell>
+                                <TableCell className="text-center">{campaign.engagement.toFixed(1)}%</TableCell>
                                 <TableCell className="text-center">
                                     <Badge variant={statusVariantMap[campaign.status]}>{campaign.status}</Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="outline" size="sm" onClick={() => setShowReportDialog(true)}>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => setSelectedCampaign(campaign)}
+                                        disabled={campaign.status === 'Draft' || campaign.status === 'Scheduled'}
+                                    >
                                         View Report
                                     </Button>
                                 </TableCell>
@@ -215,21 +220,11 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
         </Card>
       </main>
 
-       <Dialog open={showReportDialog} onOpenChange={setShowReportDialog}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Detailed Report</DialogTitle>
-                    <DialogDescription>
-                        Detailed campaign reports are coming soon!
-                    </DialogDescription>
-                </DialogHeader>
-                 <DialogFooter>
-                    <DialogClose asChild>
-                        <Button>Close</Button>
-                    </DialogClose>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+       <CampaignReportDialog
+            open={!!selectedCampaign}
+            onOpenChange={(isOpen) => !isOpen && setSelectedCampaign(null)}
+            campaign={selectedCampaign}
+       />
     </div>
   );
 }
