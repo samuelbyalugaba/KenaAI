@@ -1,8 +1,5 @@
 
 
-declare global {
-    var _pgPool: any;
-}
 export type User = {
     id: string;
     name: string;
@@ -56,7 +53,7 @@ export type User = {
     avatar: string;
     role: AgentRole;
     email?: string;
-    phone?: string;
+phone?: string;
   };
   
   export type AnnouncementCategory = "General" | "Urgent" | "Training";

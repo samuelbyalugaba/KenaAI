@@ -1,14 +1,20 @@
 
 'use server';
 
-import { query } from "@/lib/db";
+import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import type { Agent, AgentRole } from "@/types";
+import { Collection, Db } from "mongodb";
+
+async function getAgentsCollection(): Promise<Collection<Agent>> {
+    const db: Db = await getDb();
+    return db.collection<Agent>('agents');
+}
 
 export async function handleLogin(email: string, password_unused: string) {
     try {
-      const result = await query('SELECT * FROM agents WHERE email = $1', [email.toLowerCase()]);
-      const agent: Agent | undefined = result.rows[0];
+      const agentsCollection = await getAgentsCollection();
+      const agent = await agentsCollection.findOne({ email: email.toLowerCase() });
 
       if (agent && agent.password) {
         const isPasswordValid = await verifyPassword(password_unused, agent.password);
@@ -21,29 +27,38 @@ export async function handleLogin(email: string, password_unused: string) {
       return { success: false, message: "Invalid email or password." };
     } catch (error) {
       console.error("Login error:", error);
-      return { success: false, message: "Database connection error. Please check server logs and ensure the POSTGRES_URL is correctly configured in your .env file." };
+      return { success: false, message: "Database connection error. Please check server logs and ensure the MONGODB_URI is correctly configured in your .env file." };
     }
   };
 
 export async function createAgent(name: string, email: string, password_unused: string, role: AgentRole) {
     try {
-        const existingAgentResult = await query('SELECT * FROM agents WHERE email = $1', [email.toLowerCase()]);
-        if (existingAgentResult.rows.length > 0) {
+        const agentsCollection = await getAgentsCollection();
+        const existingAgent = await agentsCollection.findOne({ email: email.toLowerCase() });
+
+        if (existingAgent) {
             return { success: false, message: "An agent with this email already exists." };
         }
 
         const hashedPassword = await hashPassword(password_unused);
         const avatar = `https://picsum.photos/seed/${name}/100/100`;
 
-        const result = await query(
-            'INSERT INTO agents (name, email, password, role, avatar) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [name, email.toLowerCase(), hashedPassword, role, avatar]
-        );
-        const newAgent: Agent | undefined = result.rows[0];
+        const result = await agentsCollection.insertOne({
+            name,
+            email: email.toLowerCase(),
+            password: hashedPassword,
+            role,
+            avatar,
+            id: '', // id will be created by MongoDB
+            phone: '' // Add a default phone number
+        });
 
-        if (newAgent) {
-            const { password, ...agentWithoutPassword } = newAgent;
-            return { success: true, agent: agentWithoutPassword };
+        if (result.insertedId) {
+            const newAgent = await agentsCollection.findOne({ _id: result.insertedId });
+            if (newAgent) {
+                const { password, ...agentWithoutPassword } = newAgent;
+                return { success: true, agent: agentWithoutPassword };
+            }
         }
         return { success: false, message: "Failed to create agent." };
     } catch (error) {
@@ -53,5 +68,5 @@ export async function createAgent(name: string, email: string, password_unused: 
 }
 
 export async function handleSignUp(name: string, email: string, password_unused: string) {
-    return createAgent(name, email, password_unused, "agent");
+    return createAgent(name, email, password_unused, "admin");
 }
