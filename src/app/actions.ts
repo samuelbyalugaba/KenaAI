@@ -109,7 +109,7 @@ export async function createAnnouncement(data: { title: string; content: string;
         if (result.insertedId) {
             const createdAnnouncement: Announcement = {
                 ...(newAnnouncement as Announcement),
-                _id: result.insertedId,
+                _id: result.insertedId.toString(),
                 id: result.insertedId.toString(),
                 companyId: data.companyId,
             };
@@ -739,3 +739,6 @@ export async function startNewChats(users: User[], message: string, companyId: s
     return newChats;
 }
 
+
+
+    
