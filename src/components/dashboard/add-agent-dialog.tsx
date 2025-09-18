@@ -33,7 +33,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import type { Agent, AgentRole } from "@/types";
+import type { Agent, AgentRole, UserProfile } from "@/types";
+import { createAgent } from "@/app/actions";
 
 const agentFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -49,9 +50,10 @@ type AgentFormValues = z.infer<typeof agentFormSchema>;
 
 type AddAgentDialogProps = {
     onAgentAdd: (agent: Agent) => void;
+    user: UserProfile | null;
 };
 
-export function AddAgentDialog({ onAgentAdd }: AddAgentDialogProps) {
+export function AddAgentDialog({ onAgentAdd, user }: AddAgentDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
   const form = useForm<AgentFormValues>({
@@ -65,26 +67,44 @@ export function AddAgentDialog({ onAgentAdd }: AddAgentDialogProps) {
     },
   });
 
-  function onSubmit(data: AgentFormValues) {
-    const newAgent: Agent = {
-        id: new Date().toISOString(),
-        ...data,
-        avatar: `https://picsum.photos/seed/${data.name}/100/100`,
-        role: data.role as AgentRole,
-        status: "Offline",
-        conversationsToday: 0,
-        avgResponseTime: "N/A",
-        csat: 90 + Math.floor(Math.random() * 10), // Random high CSAT for new agent
-    };
-    onAgentAdd(newAgent);
+  async function onSubmit(data: AgentFormValues) {
+    if (!user?.companyId) {
+        toast({
+            variant: 'destructive',
+            title: "Error",
+            description: "Cannot add agent without a company context.",
+        });
+        return;
+    }
+    const result = await createAgent(data.name, data.email, data.password, data.role as AgentRole, user.companyId);
 
-    toast({
-      title: "Agent Created",
-      description: `New agent "${data.name}" has been added successfully.`,
-    });
-    
-    form.reset();
-    setOpen(false);
+    if (result.success && result.agent) {
+        const newAgent: Agent = {
+            id: result.agent._id!,
+            ...data,
+            avatar: `https://picsum.photos/seed/${data.name}/100/100`,
+            role: data.role as AgentRole,
+            status: "Offline",
+            conversationsToday: 0,
+            avgResponseTime: "N/A",
+            csat: 90 + Math.floor(Math.random() * 10), // Random high CSAT for new agent
+        };
+        onAgentAdd(newAgent);
+
+        toast({
+        title: "Agent Created",
+        description: `New agent "${data.name}" has been added successfully.`,
+        });
+        
+        form.reset();
+        setOpen(false);
+    } else {
+        toast({
+            variant: 'destructive',
+            title: "Failed to create agent",
+            description: result.message || "An unexpected error occurred.",
+        });
+    }
   }
 
   return (

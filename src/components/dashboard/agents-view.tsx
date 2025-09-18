@@ -158,7 +158,7 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                     <SelectItem value="Offline">Offline</SelectItem>
                 </SelectContent>
             </Select>
-            <AddAgentDialog onAgentAdd={handleAgentAdd} />
+            <AddAgentDialog onAgentAdd={handleAgentAdd} user={user} />
         </div>
       </header>
       <main className="flex-1 overflow-auto p-4 space-y-8">

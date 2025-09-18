@@ -649,7 +649,7 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
                       </NewChatDialog>
                     }
                      {canAddAgent && <div className="hidden md:flex">
-                         <AddAgentDialog onAgentAdd={handleAgentAdd} />
+                         <AddAgentDialog onAgentAdd={handleAgentAdd} user={user} />
                      </div>}
                  </div>
              </MainHeader>
@@ -683,9 +683,3 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
     </div>
   );
 }
-
-    
-
-    
-
-    

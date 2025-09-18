@@ -34,6 +34,13 @@ export type User = {
 
   export type AgentRole = "admin" | "agent" | "super_agent";
 
+  export type Company = {
+    _id?: any;
+    id: string;
+    name: string;
+    createdAt: Date;
+  };
+
   export type Agent = {
     _id?: any;
     id: string;
@@ -47,6 +54,7 @@ export type User = {
     conversationsToday?: number;
     avgResponseTime?: string;
     csat?: number;
+    companyId?: any;
   };
 
   export type UserProfile = {
@@ -54,7 +62,8 @@ export type User = {
     avatar: string;
     role: AgentRole;
     email?: string;
-phone?: string;
+    phone?: string;
+    companyId?: string;
   };
   
   export type AnnouncementCategory = "General" | "Urgent" | "Training";

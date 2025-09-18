@@ -37,7 +37,8 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
         avatar: agent.avatar,
         role: agent.role,
         email: agent.email,
-        phone: agent.phone
+        phone: agent.phone,
+        companyId: agent.companyId,
       });
 
       if (agent.role === 'admin') {
@@ -102,4 +103,3 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
     </main>
   );
 }
-
