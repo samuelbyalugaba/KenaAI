@@ -14,9 +14,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "../ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Mail } from "lucide-react";
 import { KenaAILogo } from "../ui/kena-ai-logo";
+import { handleSignUp } from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
 
 const signupSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -49,6 +51,7 @@ const GoogleIcon = () => (
 export function AuthForm({ onLogin }: AuthFormProps) {
   const [authMode, setAuthMode] = React.useState<'signin' | 'signup'>('signin');
   const [error, setError] = React.useState<string | null>(null);
+  const { toast } = useToast();
 
   const form = useForm<SignUpFormValues | LoginFormValues>({
     resolver: zodResolver(authMode === 'signup' ? signupSchema : loginSchema),
@@ -71,10 +74,18 @@ export function AuthForm({ onLogin }: AuthFormProps) {
             form.reset();
         }
     } else {
-        // Handle signup logic
-        console.log("Signup data:", data);
-        alert("Signup functionality is not implemented yet. Please use an existing agent account to log in.");
-        setAuthMode('signin');
+        const signupData = data as SignUpFormValues;
+        const result = await handleSignUp(`${signupData.firstName} ${signupData.lastName}`, signupData.email, signupData.password);
+        if (result.success) {
+            toast({
+                title: "Account Created!",
+                description: "You can now sign in with your new credentials.",
+            });
+            setAuthMode('signin');
+            form.reset();
+        } else {
+            setError(result.message || "An unexpected error occurred during sign up.");
+        }
     }
   }
 
