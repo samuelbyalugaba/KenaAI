@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { getContactsByCompany, getAgentsByCompany, assignAgentToContact, addNoteToContact } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { mockChats } from "@/lib/mock-data";
+import { AddContactDialog } from "./add-contact-dialog";
 
 
 const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd, onAssign }: { 
@@ -254,6 +255,11 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
     }
   }
 
+  const handleContactAdd = (newContact: ContactUser) => {
+    setContacts(prev => [newContact, ...prev]);
+  };
+
+
   const selectedChatHistory = mockChats.find(chat => chat.user.email === selectedContact?.email)?.messages;
 
   if (!user) {
@@ -288,7 +294,7 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
-            <Button>Add Contact</Button>
+            <AddContactDialog onContactAdd={handleContactAdd} user={user} />
         </div>
     </header>
     <main className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">

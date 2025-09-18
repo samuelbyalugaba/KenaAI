@@ -435,6 +435,47 @@ export async function getContactsByCompany(companyId: string): Promise<User[]> {
     }
 }
 
+export async function createContact(name: string, email: string, phone: string, companyId: string): Promise<{ success: boolean; message?: string; contact?: User }> {
+    try {
+        const contactsCollection = await getContactsCollection();
+        
+        const existingContact = await contactsCollection.findOne({ email: email.toLowerCase(), companyId: new ObjectId(companyId) });
+        if (existingContact) {
+            return { success: false, message: "A contact with this email already exists." };
+        }
+
+        const avatar = `https://picsum.photos/seed/${name.replace(/\s/g, '')}/100/100`;
+
+        const contactToInsert: Omit<User, 'id' | '_id'> = {
+            name,
+            email: email.toLowerCase(),
+            phone,
+            avatar,
+            companyId: new ObjectId(companyId),
+            notes: [],
+            online: false,
+        };
+
+        const result = await contactsCollection.insertOne(contactToInsert as any);
+        
+        if (result.insertedId) {
+            const newContact: User = {
+                ...contactToInsert,
+                _id: result.insertedId.toString(),
+                id: result.insertedId.toString(),
+            };
+            return { success: true, contact: newContact };
+        }
+
+        return { success: false, message: "Failed to create contact." };
+
+    } catch (error) {
+        console.error("Create contact error:", error);
+        return { success: false, message: "An unexpected error occurred." };
+    }
+}
+
+
 export async function assignAgentToContact(contactId: string, agentId: string): Promise<{ success: boolean }> {
     try {
         const contactsCollection = await getContactsCollection();
