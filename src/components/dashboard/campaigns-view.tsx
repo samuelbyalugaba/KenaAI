@@ -8,9 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import type { UserProfile, Campaign } from "@/types";
+import type { UserProfile, Campaign, User } from "@/types";
 import { CreateCampaignSheet } from "./create-campaign-sheet";
-import { getCampaignsByCompany, createCampaign } from "@/app/actions";
+import { getCampaignsByCompany, createCampaign, getContactsByCompany } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 
@@ -30,21 +30,26 @@ type CampaignsViewProps = {
 
 export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
     const [campaigns, setCampaigns] = React.useState<Campaign[]>([]);
+    const [contacts, setContacts] = React.useState<User[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
     const [isCreateSheetOpen, setIsCreateSheetOpen] = React.useState(false);
     const [showReportDialog, setShowReportDialog] = React.useState(false);
     const { toast } = useToast();
 
     React.useEffect(() => {
-        async function fetchCampaigns() {
+        async function fetchData() {
             if (user?.companyId) {
                 setIsLoading(true);
-                const fetchedCampaigns = await getCampaignsByCompany(user.companyId);
+                const [fetchedCampaigns, fetchedContacts] = await Promise.all([
+                    getCampaignsByCompany(user.companyId),
+                    getContactsByCompany(user.companyId)
+                ]);
                 setCampaigns(fetchedCampaigns);
+                setContacts(fetchedContacts);
                 setIsLoading(false);
             }
         }
-        fetchCampaigns();
+        fetchData();
     }, [user]);
 
     const handleCreateCampaign = async (data: Partial<Campaign>) => {
@@ -131,8 +136,9 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
             open={isCreateSheetOpen}
             onOpenChange={setIsCreateSheetOpen}
             onCampaignCreate={handleCreateCampaign}
+            contacts={contacts}
         >
-            <Button>
+            <Button onClick={() => setIsCreateSheetOpen(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Create New Campaign
             </Button>

@@ -14,7 +14,6 @@ import {
   SheetTitle,
   SheetTrigger,
   SheetFooter,
-  SheetClose,
 } from "@/components/ui/sheet";
 import {
   Form,
@@ -35,9 +34,20 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import type { Campaign } from "@/types";
-import { ArrowLeft, ArrowRight, Bot, MessageSquare, Users, Calendar, Check } from "lucide-react";
+import type { Campaign, User } from "@/types";
+import { ArrowLeft, ArrowRight, Bot, MessageSquare, Users, Calendar, Check, Search, Sparkles, UserPlus } from "lucide-react";
 import { Separator } from "../ui/separator";
+import { generateCampaignMessage } from "@/ai/flows/generate-campaign-message";
+import { ScrollArea } from "../ui/scroll-area";
+import { Checkbox } from "../ui/checkbox";
+import { Label } from "../ui/label";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { cn } from "@/lib/utils";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar as CalendarComponent } from "../ui/calendar";
 
 const steps = [
   { id: "details", name: "Details", icon: MessageSquare },
@@ -53,7 +63,42 @@ const campaignDetailsSchema = z.object({
   type: z.enum(["Broadcast", "Scheduled", "Automated"]),
 });
 
+const campaignAudienceSchema = z.object({
+    audience: z.array(z.string()).min(1, "Please select at least one contact."),
+});
+
+const campaignMessageSchema = z.object({
+    message: z.string().min(10, "Message must be at least 10 characters long."),
+});
+
+const campaignScheduleSchema = z.object({
+    scheduleType: z.enum(['now', 'later']),
+    scheduledAtDate: z.date().optional(),
+    scheduledAtTime: z.string().optional(),
+}).refine(data => {
+    if (data.scheduleType === 'later') {
+        return !!data.scheduledAtDate && !!data.scheduledAtTime;
+    }
+    return true;
+}, {
+    message: "Please select a date and time for scheduled sending.",
+    path: ["scheduledAtDate"],
+});
+
+
 type CampaignDetailsValues = z.infer<typeof campaignDetailsSchema>;
+type CampaignAudienceValues = z.infer<typeof campaignAudienceSchema>;
+type CampaignMessageValues = z.infer<typeof campaignMessageSchema>;
+type CampaignScheduleValues = z.infer<typeof campaignScheduleSchema>;
+
+
+const validationSchemas = [
+    campaignDetailsSchema,
+    campaignAudienceSchema,
+    campaignMessageSchema,
+    campaignScheduleSchema,
+    z.object({}) // No validation for review step
+]
 
 const StepDetails = ({ form }: { form: any }) => (
     <div className="space-y-4">
@@ -111,6 +156,220 @@ const StepDetails = ({ form }: { form: any }) => (
 );
 
 
+const StepAudience = ({ form, contacts }: { form: any, contacts: User[] }) => {
+    const [searchTerm, setSearchTerm] = React.useState("");
+    
+    const filteredContacts = contacts.filter(contact => 
+        contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contact.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return (
+        <FormField
+            control={form.control}
+            name="audience"
+            render={({ field }) => (
+                <FormItem className="h-full flex flex-col">
+                    <FormLabel className="text-lg font-medium">Select Audience</FormLabel>
+                    <FormDescription>Choose which contacts will receive this campaign.</FormDescription>
+                    <div className="relative pt-2">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search contacts..."
+                            className="pl-9"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <ScrollArea className="flex-1 my-4 border rounded-md">
+                         <div className="p-4 space-y-2">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox
+                                    id="select-all"
+                                    checked={field.value?.length === filteredContacts.length && filteredContacts.length > 0}
+                                    onCheckedChange={(checked) => {
+                                        const allContactIds = filteredContacts.map(c => c.id);
+                                        field.onChange(checked ? allContactIds : []);
+                                    }}
+                                />
+                                <Label htmlFor="select-all">Select all</Label>
+                            </div>
+                            <Separator />
+                            {filteredContacts.map(contact => (
+                                <div key={contact.id} className="flex items-center space-x-2">
+                                     <Checkbox
+                                        id={contact.id}
+                                        checked={field.value?.includes(contact.id)}
+                                        onCheckedChange={(checked) => {
+                                            return checked
+                                            ? field.onChange([...field.value, contact.id])
+                                            : field.onChange(field.value?.filter((id: string) => id !== contact.id))
+                                        }}
+                                    />
+                                    <Label htmlFor={contact.id} className="flex-1 flex items-center gap-3 cursor-pointer font-normal">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={contact.avatar} alt={contact.name} />
+                                            <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1">
+                                            <p>{contact.name}</p>
+                                            <p className="text-xs text-muted-foreground">{contact.email}</p>
+                                        </div>
+                                    </Label>
+                                </div>
+                            ))}
+                         </div>
+                    </ScrollArea>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+    );
+};
+
+const StepMessage = ({ form }: { form: any }) => {
+    const [isGenerating, setIsGenerating] = React.useState(false);
+    const { toast } = useToast();
+
+    const handleGenerateMessage = async () => {
+        const title = form.getValues("title");
+        if (!title) {
+            toast({
+                variant: 'destructive',
+                title: "Title is missing",
+                description: "Please provide a campaign title before generating a message."
+            });
+            return;
+        }
+        setIsGenerating(true);
+        try {
+            const result = await generateCampaignMessage({ campaignTitle: title });
+            form.setValue("message", result.message);
+        } catch (error) {
+            toast({
+                variant: 'destructive',
+                title: "AI Generation Failed",
+                description: "Could not generate a message. Please try again."
+            })
+        }
+        setIsGenerating(false);
+    }
+    
+    return (
+        <div className="space-y-4">
+             <FormField
+                control={form.control}
+                name="message"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Campaign Message</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Write your message here or generate one with AI..." {...field} rows={8}/>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <Button type="button" variant="outline" onClick={handleGenerateMessage} disabled={isGenerating}>
+                <Sparkles className="mr-2 h-4 w-4" />
+                {isGenerating ? "Generating..." : "Generate with AI"}
+            </Button>
+        </div>
+    )
+}
+
+const StepSchedule = ({ form }: { form: any }) => {
+     return (
+        <FormField
+            control={form.control}
+            name="scheduleType"
+            render={({ field }) => (
+                <FormItem className="space-y-3">
+                    <FormLabel className="text-lg font-medium">Schedule</FormLabel>
+                    <FormControl>
+                        <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="flex flex-col space-y-1"
+                        >
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                    <RadioGroupItem value="now" />
+                                </FormControl>
+                                <FormLabel className="font-normal">Send immediately</FormLabel>
+                            </FormItem>
+                            <FormItem className="flex items-center space-x-3 space-y-0">
+                                <FormControl>
+                                    <RadioGroupItem value="later" />
+                                </FormControl>
+                                <FormLabel className="font-normal">Schedule for later</FormLabel>
+                            </FormItem>
+                        </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+
+                     {form.watch("scheduleType") === 'later' && (
+                        <div className="grid grid-cols-2 gap-4 pt-4">
+                            <FormField
+                                control={form.control}
+                                name="scheduledAtDate"
+                                render={({ field }) => (
+                                <FormItem className="flex flex-col">
+                                    <FormLabel>Date</FormLabel>
+                                     <Popover>
+                                        <PopoverTrigger asChild>
+                                        <FormControl>
+                                            <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-full pl-3 text-left font-normal",
+                                                !field.value && "text-muted-foreground"
+                                            )}
+                                            >
+                                            {field.value ? (
+                                                format(field.value, "PPP")
+                                            ) : (
+                                                <span>Pick a date</span>
+                                            )}
+                                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            </Button>
+                                        </FormControl>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                        <CalendarComponent
+                                            mode="single"
+                                            selected={field.value}
+                                            onSelect={field.onChange}
+                                            disabled={(date) => date < new Date() || date < new Date("1900-01-01")}
+                                            initialFocus
+                                        />
+                                        </PopoverContent>
+                                    </Popover>
+                                    <FormMessage />
+                                </FormItem>
+                                )}
+                            />
+                             <FormField
+                                control={form.control}
+                                name="scheduledAtTime"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Time</FormLabel>
+                                        <FormControl>
+                                            <Input type="time" {...field} />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                    )}
+                </FormItem>
+            )}
+        />
+    )
+}
+
 const Stepper = ({ currentStep }: { currentStep: number }) => (
   <nav aria-label="Progress">
     <ol role="list" className="space-y-4 md:flex md:space-x-8 md:space-y-0">
@@ -144,31 +403,36 @@ type CreateCampaignSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onCampaignCreate: (data: Partial<Campaign>) => void;
+  contacts: User[];
 };
 
-export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCreate }: CreateCampaignSheetProps) {
+export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCreate, contacts }: CreateCampaignSheetProps) {
   const [currentStep, setCurrentStep] = React.useState(0);
   const [campaignData, setCampaignData] = React.useState<Partial<Campaign>>({});
-  const { toast } = useToast();
 
-  const form = useForm<CampaignDetailsValues>({
-    resolver: zodResolver(campaignDetailsSchema),
+  const form = useForm({
+    resolver: zodResolver(validationSchemas[currentStep]),
     defaultValues: {
       title: "",
       description: "",
       type: "Broadcast",
+      audience: [],
+      message: "",
+      scheduleType: "now",
+      scheduledAtDate: undefined,
+      scheduledAtTime: undefined,
     },
+    mode: "onChange"
   });
 
   const goToNextStep = () => setCurrentStep(prev => Math.min(steps.length - 1, prev + 1));
   const goToPrevStep = () => setCurrentStep(prev => Math.max(0, prev - 1));
 
-  async function processStep(data: CampaignDetailsValues) {
+  async function processStep(data: any) {
     const updatedData = {...campaignData, ...data};
     setCampaignData(updatedData);
 
     if (currentStep === steps.length - 1) {
-        // Final step: create campaign
         onCampaignCreate(updatedData);
     } else {
         goToNextStep();
@@ -179,15 +443,23 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
     switch (currentStep) {
         case 0:
             return <StepDetails form={form} />;
+        case 1:
+            return <StepAudience form={form} contacts={contacts} />;
+        case 2:
+            return <StepMessage form={form} />;
+        case 3:
+            return <StepSchedule form={form} />;
         case 4: // Review Step
+            const data = form.getValues();
             return (
                 <div className="space-y-4">
                     <h3 className="text-lg font-medium">Review Your Campaign</h3>
                     <div className="space-y-2 rounded-lg border p-4">
-                        <p><span className="font-semibold">Title:</span> {campaignData.title}</p>
-                        <p><span className="font-semibold">Type:</span> {campaignData.type}</p>
-                        <p><span className="font-semibold">Audience:</span> Under construction</p>
-                        <p><span className="font-semibold">Message:</span> Under construction</p>
+                        <p><span className="font-semibold">Title:</span> {data.title}</p>
+                        <p><span className="font-semibold">Type:</span> {data.type}</p>
+                        <p><span className="font-semibold">Audience:</span> {data.audience.length} contacts selected</p>
+                        <p><span className="font-semibold">Message:</span> "{data.message}"</p>
+                        <p><span className="font-semibold">Schedule:</span> {data.scheduleType === 'now' ? 'Send immediately' : `Scheduled for ${format(data.scheduledAtDate!, 'PPP')} at ${data.scheduledAtTime}`}</p>
                     </div>
                 </div>
             )
@@ -198,7 +470,6 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
   
   React.useEffect(() => {
     if (!open) {
-        // Reset state when sheet is closed
         setTimeout(() => {
             setCurrentStep(0);
             setCampaignData({});
@@ -225,7 +496,7 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
         
         <div className="flex-1 overflow-auto -mr-6 pr-6">
             <Form {...form}>
-                <form id="campaign-form" onSubmit={form.handleSubmit(processStep)} className="space-y-8 p-1">
+                <form id="campaign-form" onSubmit={form.handleSubmit(processStep)} className="space-y-8 p-1 h-full">
                     {renderStepContent()}
                 </form>
             </Form>
