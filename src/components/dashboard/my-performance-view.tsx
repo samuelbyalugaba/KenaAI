@@ -23,7 +23,7 @@ import {
     PieChart,
     Download
 } from "lucide-react";
-import type { UserProfile } from "@/types";
+import type { UserProfile, Agent } from "@/types";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -41,41 +41,9 @@ import {
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { KenaAILogo } from "../ui/kena-ai-logo";
+import { getAgentsByCompany } from "@/app/actions";
+import { Skeleton } from "../ui/skeleton";
 
-const kpiData = [
-  {
-    title: "Conversations Handled",
-    value: "52",
-    description: "conversations today",
-    trend: "+12%",
-    trendDirection: "up" as const,
-    icon: MessageSquare,
-  },
-  {
-    title: "Avg. Response Time",
-    value: "12s",
-    description: "on average ⏱️",
-    trend: "-3.5%",
-    trendDirection: "down" as const,
-    icon: Clock,
-  },
-  {
-    title: "Resolution Rate",
-    value: "88%",
-    description: "conversations resolved ✅",
-    trend: "+2.1%",
-    trendDirection: "up" as const,
-    icon: CheckCircle,
-  },
-  {
-    title: "CSAT Score",
-    value: "4.6/5",
-    description: "from 15 ratings ⭐",
-    trend: "+0.2",
-    trendDirection: "up" as const,
-    icon: Star,
-  },
-];
 
 const conversationData = [
   { date: "Mon", conversations: 8 },
@@ -101,6 +69,69 @@ type MyPerformanceViewProps = {
 };
 
 export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps) {
+  const [agentData, setAgentData] = React.useState<Agent | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchData() {
+        if (user?.companyId) {
+            setIsLoading(true);
+            const agents = await getAgentsByCompany(user.companyId);
+            const currentAgent = agents.find(a => a.id === user.id);
+            setAgentData(currentAgent || null);
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, [user]);
+
+  const kpiData = React.useMemo(() => {
+    if (!agentData) {
+        return [
+            { title: "Conversations Handled" },
+            { title: "Avg. Response Time" },
+            { title: "Resolution Rate" },
+            { title: "CSAT Score" },
+        ];
+    }
+    // Simulated resolution rate
+    const resolutionRate = 85 + Math.floor(Math.random() * 10);
+
+    return [
+      {
+        title: "Conversations Handled",
+        value: agentData.conversationsToday?.toString() || '0',
+        description: "conversations today",
+        trend: "+12%", // Mock trend
+        trendDirection: "up" as const,
+        icon: MessageSquare,
+      },
+      {
+        title: "Avg. Response Time",
+        value: agentData.avgResponseTime || 'N/A',
+        description: "on average ⏱️",
+        trend: "-3.5%", // Mock trend
+        trendDirection: "down" as const,
+        icon: Clock,
+      },
+      {
+        title: "Resolution Rate",
+        value: `${resolutionRate}%`,
+        description: "conversations resolved ✅",
+        trend: "+2.1%", // Mock trend
+        trendDirection: "up" as const,
+        icon: CheckCircle,
+      },
+      {
+        title: "CSAT Score",
+        value: `${agentData.csat || 0}%`,
+        description: "customer satisfaction ⭐",
+        trend: "+0.2", // Mock trend
+        trendDirection: "up" as const,
+        icon: Star,
+      },
+    ];
+  }, [agentData]);
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
@@ -135,11 +166,22 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
         <div className="space-y-4">
             <h2 className="text-xl font-bold">Today's Stats</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {kpiData.map((kpi) => (
+                {isLoading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                         <Card key={i}>
+                            <CardHeader className="pb-2"><Skeleton className="h-4 w-2/3" /></CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-7 w-1/4 mb-2" />
+                                <Skeleton className="h-3 w-1/2" />
+                                <Skeleton className="h-3 w-3/4 mt-2" />
+                            </CardContent>
+                        </Card>
+                    ))
+                ) : kpiData.map((kpi) => (
                 <Card key={kpi.title}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
-                    <kpi.icon className="h-4 w-4 text-muted-foreground" />
+                    {kpi.icon && <kpi.icon className="h-4 w-4 text-muted-foreground" />}
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{kpi.value}</div>
@@ -161,7 +203,7 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
                 <Card className="lg:col-span-3">
                     <CardHeader>
                         <CardTitle>Conversation Volume</CardTitle>
-                        <CardDescription>Your conversation volume over the last 7 days.</CardDescription>
+                        <CardDescription>Your conversation volume over the last 7 days. (Demo data)</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <ChartContainer config={{}} className="h-[250px] w-full">
@@ -177,7 +219,7 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
                 <Card className="lg:col-span-2">
                     <CardHeader>
                         <CardTitle>Response Speed by Channel</CardTitle>
-                        <CardDescription>Average response time (seconds).</CardDescription>
+                        <CardDescription>Average response time (seconds). (Demo data)</CardDescription>
                     </CardHeader>
                      <CardContent>
                            <ChartContainer config={{}} className="h-[250px] w-full">
@@ -227,3 +269,5 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
     </div>
   );
 }
+
+    
