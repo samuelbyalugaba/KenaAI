@@ -21,6 +21,7 @@ export async function handleLogin(email: string, password_unused: string) {
       return { success: false, message: "Invalid email or password." };
     } catch (error) {
       console.error("Login error:", error);
-      return { success: false, message: "An unexpected error occurred." };
+      return { success: false, message: "Database connection error. Please check server logs and ensure the POSTGRES_URL is correctly configured in your .env file." };
     }
   };
+
