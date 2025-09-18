@@ -3,7 +3,7 @@
 
 import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
-import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog, User, Note, Chat, Message, Channel } from "@/types";
+import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog, User, Note, Chat, Message, Channel, Campaign } from "@/types";
 import { Collection, Db, ObjectId } from "mongodb";
 
 async function getAgentsCollection(): Promise<Collection<Agent>> {
@@ -39,6 +39,11 @@ async function getChatsCollection(): Promise<Collection<Chat>> {
 async function getMessagesCollection(): Promise<Collection<Message>> {
     const db: Db = await getDb();
     return db.collection<Message>('messages');
+}
+
+async function getCampaignsCollection(): Promise<Collection<Campaign>> {
+    const db: Db = await getDb();
+    return db.collection<Campaign>('campaigns');
 }
 
 
@@ -771,7 +776,59 @@ export async function startNewChats(users: User[], message: string, companyId: s
     return newOrUpdatedChats;
 }
 
+export async function createCampaign(data: Partial<Campaign>, companyId: string): Promise<{ success: boolean; message?: string; campaign?: Campaign; }> {
+    try {
+        const campaignsCollection = await getCampaignsCollection();
+        const newCampaign: Omit<Campaign, 'id' | '_id'> = {
+            title: data.title!,
+            type: data.type || 'Broadcast',
+            status: 'Draft',
+            companyId: new ObjectId(companyId),
+            createdAt: new Date().toISOString(),
+            audience: [],
+            message: "",
+            delivery: 0,
+            engagement: 0,
+            conversion: 0,
+        };
 
+        const result = await campaignsCollection.insertOne(newCampaign as any);
+        if (result.insertedId) {
+            const createdCampaign: Campaign = {
+                ...newCampaign,
+                _id: result.insertedId.toString(),
+                id: result.insertedId.toString(),
+                companyId: new ObjectId(companyId).toString(),
+            };
+            return { success: true, campaign: createdCampaign };
+        }
+        return { success: false, message: "Failed to create campaign." };
+    } catch (error) {
+        console.error("Create campaign error:", error);
+        return { success: false, message: "An unexpected error occurred." };
+    }
+}
 
+export async function getCampaignsByCompany(companyId: string): Promise<Campaign[]> {
+    try {
+        if (!companyId || !ObjectId.isValid(companyId)) {
+            return [];
+        }
+        const campaignsCollection = await getCampaignsCollection();
+        const campaigns = await campaignsCollection.find({ companyId: new ObjectId(companyId) }).sort({ createdAt: -1 }).toArray();
+
+        return campaigns.map(campaign => ({
+            ...campaign,
+            _id: campaign._id.toString(),
+            id: campaign._id.toString(),
+            companyId: campaign.companyId.toString(),
+            createdAt: new Date(campaign.createdAt).toISOString(),
+            sentAt: campaign.sentAt ? new Date(campaign.sentAt).toISOString() : undefined,
+        }));
+    } catch (error) {
+        console.error("Error fetching campaigns:", error);
+        return [];
+    }
+}
     
     

@@ -116,6 +116,7 @@ export type User = {
   };
 
   export type Campaign = {
+    _id?: any;
     id: string;
     title: string;
     description?: string;
@@ -123,8 +124,12 @@ export type User = {
     audience: User[];
     message: string;
     status: "Draft" | "Scheduled" | "Sending" | "Completed" | "Failed";
+    companyId: any;
     createdAt: string;
     sentAt?: string;
+    delivery: number;
+    engagement: number;
+    conversion: number;
   };
 
   export type UnansweredQuery = {

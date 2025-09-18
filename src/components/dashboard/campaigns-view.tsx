@@ -8,8 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import type { UserProfile } from "@/types";
+import type { UserProfile, Campaign } from "@/types";
 import { CreateCampaignSheet } from "./create-campaign-sheet";
+import { getCampaignsByCompany, createCampaign } from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "../ui/skeleton";
 
 
 const overviewData = [
@@ -19,19 +22,12 @@ const overviewData = [
     { title: "Conversions", value: "2.3%", icon: BarChart },
 ];
 
-const mockCampaigns = [
-    { id: "cam1", name: "Back-to-School Promo", date: "2024-08-15", audience: 2500, delivery: 99.1, engagement: 25.3, conversion: 5.1, status: "Completed" },
-    { id: "cam2", name: "Q3 Newsletter", date: "2024-08-10", audience: 15000, delivery: 99.8, engagement: 12.1, conversion: 1.2, status: "Completed" },
-    { id: "cam3", name: "Flash Sale Alert", date: "2024-08-18", audience: 5000, delivery: 97.2, engagement: 35.7, conversion: 8.9, status: "In Progress" },
-    { id: "cam4", name: "Upcoming Webinar", date: "2024-08-25", audience: 8000, delivery: 0, engagement: 0, conversion: 0, status: "Scheduled" },
-    { id: "cam5", name: "Holiday Early Bird", date: "2024-07-30", audience: 12000, delivery: 98.9, engagement: 18.9, conversion: 4.5, status: "Completed" },
-];
-
 const statusVariantMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     Completed: "default",
     "In Progress": "secondary",
     Scheduled: "outline",
     Failed: "destructive",
+    Draft: "outline"
 };
 
 type CampaignsViewProps = {
@@ -40,13 +36,42 @@ type CampaignsViewProps = {
 };
 
 export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
+    const [campaigns, setCampaigns] = React.useState<Campaign[]>([]);
+    const [isLoading, setIsLoading] = React.useState(true);
     const [isCreateSheetOpen, setIsCreateSheetOpen] = React.useState(false);
     const [showReportDialog, setShowReportDialog] = React.useState(false);
+    const { toast } = useToast();
 
-    const handleCreateCampaign = (data: any) => {
-        console.log("New Campaign Data:", data);
-        // Here you would typically handle the campaign creation logic,
-        // like sending it to a backend service.
+    React.useEffect(() => {
+        async function fetchCampaigns() {
+            if (user?.companyId) {
+                setIsLoading(true);
+                const fetchedCampaigns = await getCampaignsByCompany(user.companyId);
+                setCampaigns(fetchedCampaigns);
+                setIsLoading(false);
+            }
+        }
+        fetchCampaigns();
+    }, [user]);
+
+    const handleCreateCampaign = async (data: Partial<Campaign>) => {
+        if (!user?.companyId) return;
+
+        const result = await createCampaign(data, user.companyId);
+
+        if (result.success && result.campaign) {
+            setCampaigns(prev => [result.campaign!, ...prev]);
+            toast({
+                title: "Campaign Created",
+                description: `Campaign "${result.campaign.title}" has been created as a draft.`,
+            });
+        } else {
+             toast({
+                variant: 'destructive',
+                title: "Failed to create campaign",
+                description: result.message || "An unexpected error occurred.",
+            });
+        }
     };
     
     if (user?.role !== 'admin' && user?.role !== 'super_agent') {
@@ -123,7 +148,7 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Campaign Name</TableHead>
-                            <TableHead>Date Sent</TableHead>
+                            <TableHead>Date Created</TableHead>
                             <TableHead className="text-center">Audience</TableHead>
                             <TableHead className="text-center">Delivery</TableHead>
                             <TableHead className="text-center">Engagement</TableHead>
@@ -132,13 +157,25 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {mockCampaigns.map(campaign => (
+                        {isLoading ? (
+                            Array.from({ length: 4 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                    <TableCell className="text-center"><Skeleton className="h-4 w-8 mx-auto" /></TableCell>
+                                    <TableCell className="text-center"><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+                                    <TableCell className="text-center"><Skeleton className="h-4 w-12 mx-auto" /></TableCell>
+                                    <TableCell className="text-center"><Skeleton className="h-6 w-20 mx-auto" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : campaigns.map(campaign => (
                             <TableRow key={campaign.id}>
-                                <TableCell className="font-medium">{campaign.name}</TableCell>
-                                <TableCell>{campaign.date}</TableCell>
-                                <TableCell className="text-center">{campaign.audience}</TableCell>
-                                <TableCell className="text-center">{campaign.delivery}%</TableCell>
-                                <TableCell className="text-center">{campaign.engagement}%</TableCell>
+                                <TableCell className="font-medium">{campaign.title}</TableCell>
+                                <TableCell>{new Date(campaign.createdAt).toLocaleDateString()}</TableCell>
+                                <TableCell className="text-center">{campaign.audience.length}</TableCell>
+                                <TableCell className="text-center">{campaign.delivery || 0}%</TableCell>
+                                <TableCell className="text-center">{campaign.engagement || 0}%</TableCell>
                                 <TableCell className="text-center">
                                     <Badge variant={statusVariantMap[campaign.status]}>{campaign.status}</Badge>
                                 </TableCell>
