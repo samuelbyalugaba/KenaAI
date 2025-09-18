@@ -15,13 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "../ui/skeleton";
 
 
-const overviewData = [
-    { title: "Campaigns Sent", value: "12", icon: Send },
-    { title: "Delivery Rate", value: "98.5%", icon: CheckCircle },
-    { title: "Engagement Rate", value: "15.2%", icon: Target },
-    { title: "Conversions", value: "2.3%", icon: BarChart },
-];
-
 const statusVariantMap: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     Completed: "default",
     "In Progress": "secondary",
@@ -65,6 +58,7 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
                 title: "Campaign Created",
                 description: `Campaign "${result.campaign.title}" has been created as a draft.`,
             });
+            setIsCreateSheetOpen(false);
         } else {
              toast({
                 variant: 'destructive',
@@ -73,6 +67,29 @@ export function CampaignsView({ onMenuClick, user }: CampaignsViewProps) {
             });
         }
     };
+
+    const overviewData = React.useMemo(() => {
+        const completedCampaigns = campaigns.filter(c => c.status === 'Completed');
+        const total = completedCampaigns.length;
+        if (total === 0) {
+            return [
+                { title: "Campaigns Sent", value: "0", icon: Send },
+                { title: "Delivery Rate", value: "0%", icon: CheckCircle },
+                { title: "Engagement Rate", value: "0%", icon: Target },
+                { title: "Conversions", value: "0%", icon: BarChart },
+            ];
+        }
+        const avgDelivery = completedCampaigns.reduce((sum, c) => sum + (c.delivery || 0), 0) / total;
+        const avgEngagement = completedCampaigns.reduce((sum, c) => sum + (c.engagement || 0), 0) / total;
+        const avgConversion = completedCampaigns.reduce((sum, c) => sum + (c.conversion || 0), 0) / total;
+
+        return [
+            { title: "Campaigns Sent", value: total.toString(), icon: Send },
+            { title: "Delivery Rate", value: `${avgDelivery.toFixed(1)}%`, icon: CheckCircle },
+            { title: "Engagement Rate", value: `${avgEngagement.toFixed(1)}%`, icon: Target },
+            { title: "Conversions", value: `${avgConversion.toFixed(1)}%`, icon: BarChart },
+        ];
+    }, [campaigns]);
     
     if (user?.role !== 'admin' && user?.role !== 'super_agent') {
       return (

@@ -164,16 +164,12 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
   const goToPrevStep = () => setCurrentStep(prev => Math.max(0, prev - 1));
 
   async function processStep(data: CampaignDetailsValues) {
-    setCampaignData(prev => ({...prev, ...data}));
+    const updatedData = {...campaignData, ...data};
+    setCampaignData(updatedData);
 
     if (currentStep === steps.length - 1) {
         // Final step: create campaign
-        onCampaignCreate(campaignData);
-        toast({
-            title: "Campaign Created!",
-            description: "Your new campaign has been successfully created.",
-        });
-        onOpenChange(false);
+        onCampaignCreate(updatedData);
     } else {
         goToNextStep();
     }
@@ -183,6 +179,18 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
     switch (currentStep) {
         case 0:
             return <StepDetails form={form} />;
+        case 4: // Review Step
+            return (
+                <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Review Your Campaign</h3>
+                    <div className="space-y-2 rounded-lg border p-4">
+                        <p><span className="font-semibold">Title:</span> {campaignData.title}</p>
+                        <p><span className="font-semibold">Type:</span> {campaignData.type}</p>
+                        <p><span className="font-semibold">Audience:</span> Under construction</p>
+                        <p><span className="font-semibold">Message:</span> Under construction</p>
+                    </div>
+                </div>
+            )
         default:
             return <div className="text-center p-8 text-muted-foreground">This step is under construction.</div>;
     }
@@ -217,7 +225,7 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
         
         <div className="flex-1 overflow-auto -mr-6 pr-6">
             <Form {...form}>
-                <form onSubmit={form.handleSubmit(processStep)} className="space-y-8 p-1">
+                <form id="campaign-form" onSubmit={form.handleSubmit(processStep)} className="space-y-8 p-1">
                     {renderStepContent()}
                 </form>
             </Form>
@@ -228,8 +236,8 @@ export function CreateCampaignSheet({ children, open, onOpenChange, onCampaignCr
                 <Button variant="outline" onClick={goToPrevStep} disabled={currentStep === 0}>
                     <ArrowLeft className="mr-2 h-4 w-4" /> Previous
                 </Button>
-                <Button onClick={form.handleSubmit(processStep)}>
-                    {currentStep === steps.length - 1 ? 'Finish' : 'Next'} <ArrowRight className="ml-2 h-4 w-4" />
+                <Button type="submit" form="campaign-form">
+                    {currentStep === steps.length - 1 ? 'Finish & Create' : 'Next'} <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
             </div>
         </SheetFooter>
