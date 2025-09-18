@@ -16,9 +16,8 @@ import { Separator } from "../ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "../ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { getContactsByCompany, getAgentsByCompany, assignAgentToContact, addNoteToContact } from "@/app/actions";
+import { getContactsByCompany, getAgentsByCompany, assignAgentToContact, addNoteToContact, getMessagesForChat, getChatsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
-import { mockChats } from "@/lib/mock-data";
 import { AddContactDialog } from "./add-contact-dialog";
 
 
@@ -207,29 +206,45 @@ type ContactsViewProps = {
 export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
   const [contacts, setContacts] = React.useState<ContactUser[]>([]);
   const [agents, setAgents] = React.useState<Agent[]>([]);
+  const [chats, setChats] = React.useState<Chat[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
+  const [selectedChatHistory, setSelectedChatHistory] = React.useState<Message[] | undefined>(undefined);
   
   React.useEffect(() => {
     async function fetchData() {
         if(user?.companyId) {
             setIsLoading(true);
-            const [fetchedContacts, fetchedAgents] = await Promise.all([
+            const [fetchedContacts, fetchedAgents, fetchedChats] = await Promise.all([
                 getContactsByCompany(user.companyId),
                 getAgentsByCompany(user.companyId),
+                getChatsByCompany(user.companyId),
             ]);
             setContacts(fetchedContacts);
             setAgents(fetchedAgents);
+            setChats(fetchedChats);
 
             if (fetchedContacts.length > 0 && window.innerWidth >= 768) {
-                setSelectedContact(fetchedContacts[0]);
+                handleSelectContact(fetchedContacts[0], fetchedChats);
             }
             setIsLoading(false);
         }
     }
     fetchData();
   }, [user]);
+  
+  const handleSelectContact = async (contact: ContactUser, allChats: Chat[]) => {
+    setSelectedContact(contact);
+    const relevantChat = allChats.find(chat => chat.user.id === contact.id);
+    if (relevantChat) {
+      const messages = await getMessagesForChat(relevantChat.id);
+      setSelectedChatHistory(messages);
+    } else {
+      setSelectedChatHistory([]);
+    }
+  }
+
 
   const filteredContacts = contacts.filter(contact =>
     contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -259,8 +274,6 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
     setContacts(prev => [newContact, ...prev]);
   };
 
-
-  const selectedChatHistory = mockChats.find(chat => chat.user.email === selectedContact?.email)?.messages;
 
   if (!user) {
       return (
@@ -310,7 +323,7 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
                     {filteredContacts.map((contact) => (
                         <Card 
                             key={contact.id} 
-                            onClick={() => setSelectedContact(contact)}
+                            onClick={() => handleSelectContact(contact, chats)}
                             className={cn("cursor-pointer hover:bg-muted/50", selectedContact?.id === contact.id && "bg-muted/80")}
                         >
                             <CardHeader className="p-3">
@@ -358,4 +371,3 @@ export function ContactsView({ onMenuClick, user }: ContactsViewProps) {
     </div>
   );
 }
-

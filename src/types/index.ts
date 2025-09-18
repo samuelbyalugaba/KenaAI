@@ -150,4 +150,4 @@ export type User = {
     agentName: string;
     text: string;
     timestamp: string;
-}
+};

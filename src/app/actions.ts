@@ -138,7 +138,10 @@ export async function getAnnouncementsByCompany(companyId: string): Promise<Anno
             id: announcement._id.toString(),
             companyId: announcement.companyId.toString(),
             readBy: announcement.readBy || [],
-            comments: announcement.comments || [],
+            comments: (announcement.comments || []).map((comment: Comment) => ({
+                ...comment,
+                timestamp: new Date(comment.timestamp).toISOString(),
+            })),
         }));
 
     } catch (error) {
@@ -439,7 +442,10 @@ export async function getContactsByCompany(companyId: string): Promise<User[]> {
                 _id: _id.toString(),
                 id: _id.toString(),
                 companyId: companyId?.toString(),
-                notes: contact.notes || []
+                notes: (contact.notes || []).map((note: Note) => ({
+                    ...note,
+                    timestamp: new Date(note.timestamp).toISOString(),
+                })),
             };
         });
     } catch (error) {
@@ -539,7 +545,10 @@ export async function getNotesForContact(contactId: string): Promise<Note[]> {
         }
         const contactsCollection = await getContactsCollection();
         const contact = await contactsCollection.findOne({ _id: new ObjectId(contactId) });
-        return contact?.notes || [];
+        return (contact?.notes || []).map((note: Note) => ({
+            ...note,
+            timestamp: new Date(note.timestamp).toISOString(),
+        }));
     } catch (error) {
         console.error("Error fetching notes:", error);
         return [];
@@ -579,7 +588,7 @@ export async function getChatsByCompany(companyId: string): Promise<Chat[]> {
                     ...chat.user,
                     _id: chat.user._id.toString(),
                     id: chat.user._id.toString(),
-                    companyId: chat.user.companyId.toString(),
+                    companyId: chat.user.companyId ? chat.user.companyId.toString() : undefined,
                 }
             };
         });
