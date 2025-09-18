@@ -35,6 +35,7 @@ export type User = {
   export type AgentRole = "admin" | "agent" | "super_agent";
 
   export type Agent = {
+    _id?: any;
     id: string;
     name: string;
     email: string;

@@ -4,7 +4,7 @@
 import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import type { Agent, AgentRole } from "@/types";
-import { Collection, Db } from "mongodb";
+import { Collection, Db, ObjectId } from "mongodb";
 
 async function getAgentsCollection(): Promise<Collection<Agent>> {
     const db: Db = await getDb();
@@ -19,8 +19,12 @@ export async function handleLogin(email: string, password_unused: string) {
       if (agent && agent.password) {
         const isPasswordValid = await verifyPassword(password_unused, agent.password);
         if (isPasswordValid) {
-          // Omit password from the object returned to the client
-          const { password, ...agentWithoutPassword } = agent;
+          // Omit password and convert to plain object before returning
+          const { password, _id, ...agentData } = agent;
+          const agentWithoutPassword = {
+            _id: _id.toString(),
+            ...agentData
+          };
           return { success: true, agent: agentWithoutPassword };
         }
       }
@@ -56,7 +60,12 @@ export async function createAgent(name: string, email: string, password_unused: 
         if (result.insertedId) {
             const newAgent = await agentsCollection.findOne({ _id: result.insertedId });
             if (newAgent) {
-                const { password, ...agentWithoutPassword } = newAgent;
+                // Omit password and convert to plain object before returning
+                const { password, _id, ...agentData } = newAgent;
+                const agentWithoutPassword = {
+                  _id: _id.toString(),
+                  ...agentData
+                };
                 return { success: true, agent: agentWithoutPassword };
             }
         }
