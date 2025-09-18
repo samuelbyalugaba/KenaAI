@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -15,7 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import type { User } from "@/types";
+import type { User, Chat } from "@/types";
 import { Search, UserPlus, ArrowLeft, Send } from "lucide-react";
 import { ScrollArea } from "../ui/scroll-area";
 import { Checkbox } from "../ui/checkbox";
@@ -28,7 +27,7 @@ import { Badge } from "../ui/badge";
 type NewChatDialogProps = {
   children: React.ReactNode;
   contacts: User[];
-  onStartChat: (users: User[], message: string) => void;
+  onStartChat: (users: User[], message: string) => Promise<Chat[]>;
 };
 
 export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialogProps) {
@@ -38,6 +37,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
   const [newContactInput, setNewContactInput] = React.useState("");
   const [view, setView] = React.useState<'select' | 'compose'>('select');
   const [message, setMessage] = React.useState('');
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const { toast } = useToast();
 
   const filteredContacts = contacts.filter(
@@ -75,7 +75,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
                 email: newContactInput.includes('@') ? newContactInput : undefined,
                 phone: !newContactInput.includes('@') ? newContactInput : undefined,
             }
-            // Avoid duplicates
+            // This is a temporary user object, the backend will create a proper one
             if (!allUsersToChat.some(u => u.email === newUser.email || u.phone === newUser.phone)) {
                  allUsersToChat.push(newUser);
             }
@@ -102,7 +102,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
     setView('compose');
   }
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (message.trim().length === 0) {
         toast({
             variant: 'destructive',
@@ -111,23 +111,27 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
         })
         return;
     }
-    onStartChat(selectedContacts, message);
+    setIsSubmitting(true);
+    await onStartChat(selectedContacts, message);
+    setIsSubmitting(false);
     resetState();
   }
 
   const resetState = () => {
     setOpen(false);
-    setView('select');
-    setSelectedContacts([]);
-    setNewContactInput("");
-    setSearchTerm("");
-    setMessage("");
+    // Delay reset to allow dialog to close gracefully
+    setTimeout(() => {
+        setView('select');
+        setSelectedContacts([]);
+        setNewContactInput("");
+        setSearchTerm("");
+        setMessage("");
+    }, 300);
   }
   
   React.useEffect(() => {
     if(!open) {
-        // Reset state when dialog is closed
-        setTimeout(resetState, 300);
+        resetState();
     }
   }, [open]);
 
@@ -251,9 +255,8 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
 
             <DialogFooter className="pt-4">
               <Button variant="outline" onClick={() => setView('select')}>Back</Button>
-              <Button onClick={handleSend} disabled={message.trim().length === 0}>
-                <Send className="mr-2 h-4 w-4" />
-                Send Message
+              <Button onClick={handleSend} disabled={message.trim().length === 0 || isSubmitting}>
+                {isSubmitting ? 'Sending...' : <><Send className="mr-2 h-4 w-4" /> Send Message</>}
               </Button>
             </DialogFooter>
           </>

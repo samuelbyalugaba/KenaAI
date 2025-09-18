@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowLeft,
   CheckCircle,
@@ -59,28 +59,30 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { intelligentChatSummary } from "@/ai/flows/intelligent-chat-summary";
-import { chatPrioritization } from "@/ai/flows/chat-prioritization";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { KenaAILogo } from "@/components/ui/kena-ai-logo";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NewChatDialog } from "./new-chat-dialog";
-import { mockUsers, mockChats as initialMockChats } from "@/lib/mock-data";
+import { getChatsByCompany, getMessagesForChat, sendMessage, setChatbotStatus, startNewChats, getContactsByCompany } from "@/app/actions";
+import { Skeleton } from "../ui/skeleton";
 
 
-const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], selectedChat: Chat | null, onSelectChat: (chat: Chat) => void }) => (
+const ChatList = ({ chats, selectedChat, onSelectChat, isLoading }: { chats: Chat[], selectedChat: Chat | null, onSelectChat: (chat: Chat) => void, isLoading: boolean }) => (
   <ScrollArea className="flex-grow">
     <div className="flex flex-col gap-2 p-4 pt-0">
-      {chats.map((chat) => (
+      {isLoading ? (
+         Array.from({ length: 7 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-3 p-2">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+          ))
+      ) : chats.map((chat) => (
         <button
           key={chat.id}
           className={cn(
@@ -100,7 +102,7 @@ const ChatList = ({ chats, selectedChat, onSelectChat }: { chats: Chat[], select
             </div>
             <div className="flex items-center justify-between mt-1">
               <p className="text-sm text-muted-foreground truncate flex-grow pr-2">
-                {chat.lastMessage.length > 15 ? `${chat.lastMessage.slice(0, 15)}...` : chat.lastMessage}
+                {chat.lastMessage}
               </p>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <TooltipProvider>
@@ -188,7 +190,7 @@ const Stats = ({ chats }: { chats: Chat[] }) => {
   );
 };
 
-const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; onBack: () => void; }) => {
+const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessages }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; onBack: () => void; isLoadingMessages: boolean; }) => {
     const scrollRef = React.useRef<HTMLDivElement>(null);
     
     React.useEffect(() => {
@@ -203,9 +205,15 @@ const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack }: { chat: Chat
             <Separator />
             <ScrollArea className="flex-1" ref={scrollRef}>
                 <div className="p-4 space-y-4">
-                    {chat.messages.map((message) => (
-                        <ChatMessage key={message.id} message={message} />
-                    ))}
+                    {isLoadingMessages ? (
+                        <div className="flex justify-center items-center h-full">
+                          <p>Loading messages...</p>
+                        </div>
+                    ) : (
+                      chat.messages.map((message) => (
+                          <ChatMessage key={message.id} message={message} />
+                      ))
+                    )}
                 </div>
             </ScrollArea>
             <Separator />
@@ -353,14 +361,15 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
 
 const ChatMessage = ({ message }: { message: Message }) => {
     const isMe = message.sender === 'me';
-    const sender = isMe ? null : message.sender as { name: string, avatar: string };
-    
+    // This is a temporary fix for rendering. The backend should return a proper User object.
+    const sender = isMe ? null : (typeof message.sender === 'object' ? message.sender as { name: string, avatar: string } : { name: 'User', avatar: '' });
+
     return (
         <div className={cn("flex items-end gap-2", isMe ? "justify-end" : "justify-start")}>
-            {!isMe && (
+            {!isMe && sender && (
                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={sender?.avatar} alt={sender?.name} data-ai-hint="person portrait" />
-                    <AvatarFallback>{sender?.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={sender.avatar} alt={sender.name} data-ai-hint="person portrait" />
+                    <AvatarFallback>{sender.name.charAt(0)}</AvatarFallback>
                 </Avatar>
             )}
              <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isMe ? "bg-primary text-primary-foreground" : "bg-secondary")}>
@@ -373,12 +382,15 @@ const ChatMessage = ({ message }: { message: Message }) => {
 
 const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string; isChatbotActive: boolean; onSendMessage: (chatId: string, message: string) => void; }) => {
     const [message, setMessage] = React.useState("");
+    const [isSending, setIsSending] = React.useState(false);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (message.trim()) {
-            onSendMessage(chatId, message.trim());
+            setIsSending(true);
+            await onSendMessage(chatId, message.trim());
             setMessage("");
+            setIsSending(false);
         }
     }
 
@@ -388,7 +400,7 @@ const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string;
                 <Textarea
                     placeholder={isChatbotActive ? "Chatbot is active. Turn off to send a message." : "Type a message..."}
                     className="pr-24 min-h-[48px] resize-none"
-                    disabled={isChatbotActive}
+                    disabled={isChatbotActive || isSending}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={(e) => {
@@ -402,18 +414,18 @@ const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string;
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive}><Paperclip className="h-5 w-5" /></Button>
+                                <Button type="button" variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive || isSending}><Paperclip className="h-5 w-5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent>Attach file</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button type="button" variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive}><Smile className="h-5 w-5" /></Button>
+                                <Button type="button" variant="ghost" size="icon" className="text-muted-foreground" disabled={isChatbotActive || isSending}><Smile className="h-5 w-5" /></Button>
                             </TooltipTrigger>
                             <TooltipContent>Add emoji</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                    <Button type="submit" size="icon" disabled={isChatbotActive}><Send className="h-5 w-5" /></Button>
+                    <Button type="submit" size="icon" disabled={isChatbotActive || isSending}><Send className="h-5 w-5" /></Button>
                 </div>
             </form>
         </div>
@@ -426,25 +438,37 @@ type ChatLayoutProps = {
 };
 
 export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
-  const [chats, setChats] = React.useState<Chat[]>(initialMockChats);
-  const [selectedChat, setSelectedChat] = React.useState<Chat | null>(null);
-  const [agents, setAgents] = React.useState<Agent[]>([]);
-  const [searchTerm, setSearchTerm] = React.useState("");
-  const [selectedChannel, setSelectedChannel] = React.useState<Channel | "all">("all");
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [contacts, setContacts] = useState<User[]>([]);
+  const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedChannel, setSelectedChannel] = useState<Channel | "all">("all");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const isMobile = useIsMobile();
+  const { toast } = useToast();
 
-
-  React.useEffect(() => {
-    if (user) {
-        const sortedChats = [...initialMockChats].sort((a, b) => {
-            const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
-            return priorityOrder[a.priority] - priorityOrder[b.priority];
-        });
-        setChats(sortedChats);
-    } else {
-        setChats([]);
+  useEffect(() => {
+    async function fetchData() {
+      if (user?.companyId) {
+        setIsLoading(true);
+        try {
+          const [fetchedChats, fetchedContacts] = await Promise.all([
+            getChatsByCompany(user.companyId),
+            getContactsByCompany(user.companyId),
+          ]);
+          setChats(fetchedChats);
+          setContacts(fetchedContacts);
+        } catch (error) {
+          console.error("Failed to fetch chat data:", error);
+          toast({ variant: 'destructive', title: "Error", description: "Failed to load chat data." });
+        }
+        setIsLoading(false);
+      }
     }
-  }, [user]);
+    fetchData();
+  }, [user, toast]);
 
   const filteredChats = React.useMemo(() => {
     return chats.filter(chat => {
@@ -452,58 +476,76 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
                               chat.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesChannel = selectedChannel === 'all' || chat.channel === selectedChannel;
         return matchesSearch && matchesChannel;
+    }).sort((a, b) => {
+      const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
   }, [chats, searchTerm, selectedChannel]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!user) {
         setSelectedChat(null);
-    } else if (isMobile) {
-        // On mobile, clear selection when switching back to chat list
-        // setSelectedChat(null);
     }
-  }, [user, isMobile]);
+  }, [user]);
 
-  const handleSelectChat = (chat: Chat) => {
+  const handleSelectChat = async (chat: Chat) => {
     setSelectedChat(chat);
+    if (!chat.messages || chat.messages.length === 0) {
+      setIsLoadingMessages(true);
+      const messages = await getMessagesForChat(chat.id);
+      
+      const updatedChat = { ...chat, messages };
+      setChats(prev => prev.map(c => c.id === chat.id ? updatedChat : c));
+      setSelectedChat(updatedChat);
+      setIsLoadingMessages(false);
+    }
   }
 
-  const handleChatbotToggle = (chatId: string, isActive: boolean) => {
-    const updatedChats = chats.map(c => 
-        c.id === chatId ? { ...c, isChatbotActive: isActive } : c
-    );
-    setChats(updatedChats);
-    if (selectedChat?.id === chatId) {
-        setSelectedChat(prev => prev ? { ...prev, isChatbotActive: isActive } : null);
+  const handleChatbotToggle = async (chatId: string, isActive: boolean) => {
+    const result = await setChatbotStatus(chatId, isActive);
+    if (result.success) {
+      const updatedChats = chats.map(c => 
+          c.id === chatId ? { ...c, isChatbotActive: isActive } : c
+      );
+      setChats(updatedChats);
+      if (selectedChat?.id === chatId) {
+          setSelectedChat(prev => prev ? { ...prev, isChatbotActive: isActive } : null);
+      }
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update chatbot status.' });
     }
   };
 
-  const handleSendMessage = (chatId: string, text: string) => {
-    const newMessage: Message = {
-      id: new Date().toISOString(),
-      sender: 'me',
-      text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+  const handleSendMessage = async (chatId: string, text: string) => {
+    if (!user) return;
+    
+    const result = await sendMessage(chatId, text, user.id);
 
-    const updatedChats = chats.map(chat => {
-      if (chat.id === chatId) {
-        return {
-          ...chat,
-          messages: [...chat.messages, newMessage],
+    if (result.success && result.newMessage) {
+      const newMessage = result.newMessage;
+      const updatedChats = chats.map(chat => {
+        if (chat.id === chatId) {
+          return {
+            ...chat,
+            messages: [...(chat.messages || []), newMessage],
+            lastMessage: text,
+            timestamp: newMessage.timestamp,
+          };
+        }
+        return chat;
+      });
+  
+      setChats(updatedChats);
+      if (selectedChat?.id === chatId) {
+        setSelectedChat(prev => prev ? { 
+          ...prev, 
+          messages: [...(prev.messages || []), newMessage],
           lastMessage: text,
-        };
+          timestamp: newMessage.timestamp,
+        } : null);
       }
-      return chat;
-    });
-
-    setChats(updatedChats);
-    if (selectedChat?.id === chatId) {
-      setSelectedChat(prev => prev ? { 
-        ...prev, 
-        messages: [...prev.messages, newMessage],
-        lastMessage: text 
-      } : null);
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to send message.' });
     }
   };
 
@@ -511,28 +553,20 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
     setAgents(prev => [...prev, newAgent]);
   }
 
-  const handleStartNewChats = (selectedUsers: User[], message: string) => {
-    const newChats: Chat[] = selectedUsers.map(user => ({
-      id: new Date().toISOString() + user.id,
-      user: user,
-      lastMessage: message,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      unreadCount: 0,
-      priority: 'normal',
-      channel: 'Webchat',
-      messages: [{
-        id: 'm-start',
-        sender: 'me',
-        text: message,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      }],
-      isChatbotActive: false,
-    }));
+  const handleStartNewChats = async (selectedUsers: User[], message: string): Promise<Chat[]> => {
+    if (!user) return [];
     
-    setChats(prev => [...newChats, ...prev]);
+    try {
+      const newChats = await startNewChats(selectedUsers, message, user.companyId, user.id);
+      setChats(prev => [...newChats, ...prev]);
 
-    if (newChats.length === 1) {
-      setSelectedChat(newChats[0]);
+      if (newChats.length === 1) {
+        handleSelectChat(newChats[0]);
+      }
+      return newChats;
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to start new chat(s).' });
+      return [];
     }
   }
 
@@ -554,7 +588,7 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
             <h1 className="text-xl font-bold">Chats</h1>
         </div>
         <div className="flex items-center gap-2">
-            <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
+            <NewChatDialog contacts={contacts} onStartChat={handleStartNewChats}>
               <Button variant="ghost" size="icon">
                   <PlusCircle className="h-5 w-5" />
                   <span className="sr-only">New Chat</span>
@@ -566,7 +600,6 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
   
   const renderMobileView = () => {
     if (!user) {
-        // In mobile, login is handled by the main page.tsx which shows LoginDialog full screen
         return null;
     }
     
@@ -577,6 +610,7 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
           onChatbotToggle={handleChatbotToggle} 
           onSendMessage={handleSendMessage}
           onBack={() => setSelectedChat(null)}
+          isLoadingMessages={isLoadingMessages}
         />
       );
     }
@@ -616,7 +650,7 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
           </div>
         </div>
         <h2 className="px-4 text-lg font-semibold tracking-tight">Recent Chats</h2>
-        <ChatList chats={filteredChats} selectedChat={selectedChat} onSelectChat={handleSelectChat} />
+        <ChatList chats={filteredChats} selectedChat={selectedChat} onSelectChat={handleSelectChat} isLoading={isLoading} />
     </div>
   );
 
@@ -642,7 +676,7 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
                  <div />
                  <div className="flex items-center gap-4">
                     {user && 
-                      <NewChatDialog contacts={mockUsers} onStartChat={handleStartNewChats}>
+                      <NewChatDialog contacts={contacts} onStartChat={handleStartNewChats}>
                         <Button variant="ghost" size="sm" className="gap-2">
                             <PlusCircle className="h-5 w-5" /> New Chat
                         </Button>
@@ -666,14 +700,21 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
                         onChatbotToggle={handleChatbotToggle} 
                         onSendMessage={handleSendMessage}
                         onBack={() => setSelectedChat(null)}
+                        isLoadingMessages={isLoadingMessages}
                     />
                 ) : (
                     <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
-                        <div className="rounded-full bg-primary/10 p-4">
-                            <MessageSquare className="h-12 w-12 text-primary"/>
-                        </div>
-                        <h2 className="text-2xl font-bold">No Chat Selected</h2>
-                        <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
+                      {isLoading ? (
+                        <p>Loading chats...</p>
+                      ) : (
+                        <>
+                          <div className="rounded-full bg-primary/10 p-4">
+                              <MessageSquare className="h-12 w-12 text-primary"/>
+                          </div>
+                          <h2 className="text-2xl font-bold">No Chat Selected</h2>
+                          <p className="text-muted-foreground">Select a chat from the sidebar to start messaging.</p>
+                        </>
+                      )}
                     </div>
                 )}
             </div>

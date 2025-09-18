@@ -4,7 +4,7 @@
 
 import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
-import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog, User, Note } from "@/types";
+import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog, User, Note, Chat, Message, Channel } from "@/types";
 import { Collection, Db, ObjectId } from "mongodb";
 
 async function getAgentsCollection(): Promise<Collection<Agent>> {
@@ -30,6 +30,16 @@ async function getActivityLogsCollection(): Promise<Collection<ActivityLog>> {
 async function getContactsCollection(): Promise<Collection<User>> {
     const db: Db = await getDb();
     return db.collection<User>('contacts');
+}
+
+async function getChatsCollection(): Promise<Collection<Chat>> {
+    const db: Db = await getDb();
+    return db.collection<Chat>('chats');
+}
+
+async function getMessagesCollection(): Promise<Collection<Message>> {
+    const db: Db = await getDb();
+    return db.collection<Message>('messages');
 }
 
 
@@ -423,7 +433,7 @@ export async function getContactsByCompany(companyId: string): Promise<User[]> {
         const contacts = await contactsCollection.find({ companyId: new ObjectId(companyId) }).toArray();
 
         return contacts.map(contact => {
-            const { _id, companyId, ...rest } = contact;
+            const { _id, companyId, ...rest } = contact as any;
             return {
                 ...rest,
                 _id: _id.toString(),
@@ -462,7 +472,7 @@ export async function createContact(name: string, email: string, phone: string, 
         const result = await contactsCollection.insertOne(contactToInsert as any);
         
         if (result.insertedId) {
-            const { _id, companyId: newCompanyId, ...rest } = contactToInsert;
+            const { _id, companyId: newCompanyId, ...rest } = contactToInsert as any;
             const newContact: User = {
                 ...rest,
                 _id: result.insertedId.toString(),
@@ -536,4 +546,179 @@ export async function getNotesForContact(contactId: string): Promise<Note[]> {
     }
 }
 
-    
+export async function getChatsByCompany(companyId: string): Promise<Chat[]> {
+    try {
+        if (!companyId || !ObjectId.isValid(companyId)) {
+            return [];
+        }
+        const chatsCollection = await getChatsCollection();
+        const chats = await chatsCollection.aggregate([
+            { $match: { companyId: new ObjectId(companyId) } },
+            { $sort: { timestamp: -1 } },
+            {
+                $lookup: {
+                    from: 'contacts',
+                    localField: 'userId',
+                    foreignField: '_id',
+                    as: 'user'
+                }
+            },
+            { $unwind: '$user' }
+        ]).toArray();
+
+        return chats.map(chat => {
+            const { _id, companyId, userId, ...rest } = chat as any;
+            return {
+                ...rest,
+                _id: _id.toString(),
+                id: _id.toString(),
+                companyId: companyId.toString(),
+                userId: userId.toString(),
+                messages: [], // Messages will be lazy-loaded
+                user: {
+                    ...chat.user,
+                    _id: chat.user._id.toString(),
+                    id: chat.user._id.toString(),
+                    companyId: chat.user.companyId.toString(),
+                }
+            };
+        });
+    } catch (error) {
+        console.error("Error fetching chats by company:", error);
+        return [];
+    }
+}
+
+export async function getMessagesForChat(chatId: string): Promise<Message[]> {
+    try {
+        if (!chatId || !ObjectId.isValid(chatId)) {
+            return [];
+        }
+        const messagesCollection = await getMessagesCollection();
+        // Also fetch sender details if it's a user, not an agent ('me')
+        const messages = await messagesCollection.aggregate([
+            { $match: { chatId: new ObjectId(chatId) } },
+            { $sort: { timestamp: 1 } },
+            {
+                $lookup: {
+                    from: 'contacts',
+                    localField: 'senderId',
+                    foreignField: '_id',
+                    as: 'senderInfo'
+                }
+            }
+        ]).toArray();
+
+        return messages.map(msg => {
+            const { _id, chatId, senderId, senderInfo, ...rest } = msg as any;
+            const sender = msg.sender === 'me' ? 'me' : (senderInfo[0] || null);
+
+            if (sender && sender !== 'me') {
+                sender.id = sender._id.toString();
+            }
+
+            return {
+                ...rest,
+                id: _id.toString(),
+                sender,
+            };
+        });
+    } catch (error) {
+        console.error("Error fetching messages:", error);
+        return [];
+    }
+}
+
+export async function sendMessage(chatId: string, text: string, agentId: string): Promise<{ success: boolean; newMessage?: Message }> {
+    try {
+        const messagesCollection = await getMessagesCollection();
+        const chatsCollection = await getChatsCollection();
+        
+        const timestamp = new Date();
+        const newMessage: Omit<Message, 'id' | '_id'> = {
+            chatId: new ObjectId(chatId),
+            sender: 'me', // 'me' denotes the agent
+            senderId: new ObjectId(agentId),
+            text,
+            timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+
+        const result = await messagesCollection.insertOne(newMessage as any);
+
+        if (result.insertedId) {
+            await chatsCollection.updateOne(
+                { _id: new ObjectId(chatId) },
+                { $set: { lastMessage: text, timestamp: newMessage.timestamp } }
+            );
+            
+            return { 
+                success: true, 
+                newMessage: { ...newMessage, id: result.insertedId.toString() } as Message
+            };
+        }
+        return { success: false };
+    } catch (error) {
+        console.error("Error sending message:", error);
+        return { success: false };
+    }
+}
+
+export async function setChatbotStatus(chatId: string, isActive: boolean): Promise<{ success: boolean }> {
+    try {
+        const chatsCollection = await getChatsCollection();
+        await chatsCollection.updateOne(
+            { _id: new ObjectId(chatId) },
+            { $set: { isChatbotActive: isActive } }
+        );
+        return { success: true };
+    } catch (error) {
+        console.error("Error setting chatbot status:", error);
+        return { success: false };
+    }
+}
+
+export async function startNewChats(users: User[], message: string, companyId: string, agentId: string): Promise<Chat[]> {
+    const chatsCollection = await getChatsCollection();
+    const contactsCollection = await getContactsCollection();
+    const newChats: Chat[] = [];
+
+    for (const user of users) {
+        let contact = user;
+        // If it's a new contact (id starts with 'new-'), create it first.
+        if (user.id.startsWith('new-')) {
+            const createResult = await createContact(user.name, user.email || '', user.phone || '', companyId);
+            if (createResult.success && createResult.contact) {
+                contact = createResult.contact;
+            } else {
+                console.error(`Failed to create new contact for ${user.name}`);
+                continue; // Skip this one
+            }
+        }
+        
+        const timestamp = new Date();
+        const newChat: Omit<Chat, 'id' | '_id'> = {
+            userId: new ObjectId(contact.id),
+            companyId: new ObjectId(companyId),
+            lastMessage: message,
+            timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            unreadCount: 0,
+            priority: 'normal',
+            channel: 'Webchat', // Default channel for new chats
+            isChatbotActive: false,
+            messages: []
+        };
+        const chatResult = await chatsCollection.insertOne(newChat as any);
+        
+        if (chatResult.insertedId) {
+            await sendMessage(chatResult.insertedId.toString(), message, agentId);
+            const createdChat = {
+                ...newChat,
+                id: chatResult.insertedId.toString(),
+                user: contact,
+                messages: [], // Messages loaded separately
+            } as Chat;
+            newChats.push(createdChat);
+        }
+    }
+    return newChats;
+}

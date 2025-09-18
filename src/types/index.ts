@@ -14,8 +14,11 @@ export type User = {
   };
   
   export type Message = {
+    _id?: any;
     id: string;
+    chatId?: any;
     sender: 'me' | User;
+    senderId?: any;
     text: string;
     timestamp: string;
   };
@@ -25,7 +28,9 @@ export type User = {
   export type Channel = "WhatsApp" | "Webchat" | "Instagram" | "Facebook";
   
   export type Chat = {
+    _id?: any;
     id: string;
+    userId?: any;
     user: User;
     lastMessage: string;
     timestamp: string;
@@ -34,6 +39,7 @@ export type User = {
     messages: Message[];
     isChatbotActive: boolean;
     channel: Channel;
+    companyId?: any;
   };
 
   export type AgentRole = "admin" | "agent" | "super_agent";
@@ -145,4 +151,3 @@ export type User = {
     text: string;
     timestamp: string;
 }
-
