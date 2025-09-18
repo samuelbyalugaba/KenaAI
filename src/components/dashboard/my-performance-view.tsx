@@ -62,6 +62,7 @@ const responseTimeByChannelData = [
     { channel: "Email", time: 35, fill: 'hsl(var(--chart-4))' },
 ];
 
+type TimeRange = "Today" | "This Week" | "This Month";
 
 type MyPerformanceViewProps = {
   onMenuClick: () => void;
@@ -71,6 +72,7 @@ type MyPerformanceViewProps = {
 export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps) {
   const [agentData, setAgentData] = React.useState<Agent | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [timeRange, setTimeRange] = React.useState<TimeRange>("Today");
 
   React.useEffect(() => {
     async function fetchData() {
@@ -96,12 +98,24 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
     }
     // Simulated resolution rate
     const resolutionRate = 85 + Math.floor(Math.random() * 10);
+    const csatScore = ((agentData.csat || 0) / 100) * 5;
+
+    let conversations = agentData.conversationsToday || 0;
+    let trendPeriod = "yesterday";
+
+    if (timeRange === "This Week") {
+        conversations = conversations * 5 + Math.floor(Math.random() * 10);
+        trendPeriod = "last week";
+    } else if (timeRange === "This Month") {
+        conversations = conversations * 20 + Math.floor(Math.random() * 50);
+        trendPeriod = "last month";
+    }
 
     return [
       {
         title: "Conversations Handled",
-        value: agentData.conversationsToday?.toString() || '0',
-        description: "conversations today",
+        value: conversations.toString(),
+        description: `conversations this ${timeRange.split(' ')[1]?.toLowerCase() || 'day'}`,
         trend: "+12%", // Mock trend
         trendDirection: "up" as const,
         icon: MessageSquare,
@@ -124,14 +138,14 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
       },
       {
         title: "CSAT Score",
-        value: `${agentData.csat || 0}%`,
-        description: "customer satisfaction ⭐",
+        value: `${csatScore.toFixed(1)}/5`,
+        description: `from ${Math.floor(conversations / 3)} ratings ⭐`,
         trend: "+0.2", // Mock trend
         trendDirection: "up" as const,
         icon: Star,
       },
     ];
-  }, [agentData]);
+  }, [agentData, timeRange]);
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
@@ -147,9 +161,9 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
             </div>
         </div>
         <div className="flex items-center gap-2 w-full md:w-auto">
-             <Button variant="outline" size="sm">Today</Button>
-             <Button variant="ghost" size="sm">This Week</Button>
-             <Button variant="ghost" size="sm">This Month</Button>
+             <Button variant={timeRange === 'Today' ? 'default' : 'ghost'} size="sm" onClick={() => setTimeRange("Today")}>Today</Button>
+             <Button variant={timeRange === 'This Week' ? 'default' : 'ghost'} size="sm" onClick={() => setTimeRange("This Week")}>This Week</Button>
+             <Button variant={timeRange === 'This Month' ? 'default' : 'ghost'} size="sm" onClick={() => setTimeRange("This Month")}>This Month</Button>
         </div>
       </header>
       <main className="flex-1 overflow-auto p-4 md:p-6 lg:p-8 space-y-8">
@@ -164,7 +178,7 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
         
         {/* Section 1: Key Metrics */}
         <div className="space-y-4">
-            <h2 className="text-xl font-bold">Today's Stats</h2>
+            <h2 className="text-xl font-bold">{timeRange}'s Stats</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {isLoading ? (
                     Array.from({ length: 4 }).map((_, i) => (
@@ -188,7 +202,7 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
                         <p className="text-xs text-muted-foreground">{kpi.description}</p>
                          <p className={cn("text-xs mt-2 flex items-center", kpi.trendDirection === 'up' ? "text-emerald-500" : "text-red-500")}>
                             {kpi.trendDirection === 'up' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
-                            {kpi.trend} from yesterday
+                            {kpi.trend} from last period
                         </p>
                     </CardContent>
                 </Card>
@@ -269,5 +283,3 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
     </div>
   );
 }
-
-    
