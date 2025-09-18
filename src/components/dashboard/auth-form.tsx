@@ -37,6 +37,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 type AuthFormProps = {
     onLogin: (email: string, password_unused: string) => Promise<{success: boolean, message?: string}>;
+    onSignUp: (name: string, email: string, password_unused: string) => Promise<{success: boolean, message?: string}>;
 };
 
 const GoogleIcon = () => (
@@ -48,7 +49,7 @@ const GoogleIcon = () => (
     </svg>
 );
 
-export function AuthForm({ onLogin }: AuthFormProps) {
+export function AuthForm({ onLogin, onSignUp }: AuthFormProps) {
   const [authMode, setAuthMode] = React.useState<'signin' | 'signup'>('signin');
   const [error, setError] = React.useState<string | null>(null);
   const { toast } = useToast();
@@ -75,12 +76,9 @@ export function AuthForm({ onLogin }: AuthFormProps) {
         }
     } else {
         const signupData = data as SignUpFormValues;
-        const result = await handleSignUp(`${signupData.firstName} ${signupData.lastName}`, signupData.email, signupData.password);
+        const result = await onSignUp(`${signupData.firstName} ${signupData.lastName}`, signupData.email, signupData.password);
         if (result.success) {
-            toast({
-                title: "Account Created!",
-                description: "You can now sign in with your new credentials.",
-            });
+            // Toast is now handled in page.tsx after successful user state update
             setAuthMode('signin');
             form.reset();
         } else {

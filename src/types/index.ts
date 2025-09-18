@@ -58,24 +58,31 @@ export type User = {
   };
 
   export type UserProfile = {
+    id: string;
     name: string;
     avatar: string;
     role: AgentRole;
-    email?: string;
-    phone?: string;
-    companyId?: string;
+    email: string;
+    phone: string;
+    companyId: string;
   };
   
   export type AnnouncementCategory = "General" | "Urgent" | "Training";
 
   export type Announcement = {
+    _id?: any;
     id: string;
     title: string;
-    author: Agent;
+    author: {
+      id: string;
+      name: string;
+      avatar: string;
+    };
     date: string;
     category: AnnouncementCategory;
     content: string;
-    readBy: Agent[];
+    readBy: string[]; // Store agent IDs
+    companyId: any;
   };
 
   export type AgentPerformance = {

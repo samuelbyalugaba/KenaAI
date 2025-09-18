@@ -9,12 +9,12 @@ import { AgentsView } from "@/components/dashboard/agents-view";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
 import type { Agent, UserProfile } from "@/types";
 import { AnnouncementsView } from "@/components/dashboard/announcements-view";
-import { mockAgents } from "@/lib/mock-data";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 import { AuthForm } from "@/components/dashboard/auth-form";
-import { handleLogin } from "@/app/actions";
+import { handleLogin, handleSignUp } from "@/app/actions";
+import { useToast } from "@/hooks/use-toast";
 
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
@@ -27,19 +27,21 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   const [isNavOpen, setIsNavOpen] = React.useState(false);
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
+  const { toast } = useToast();
 
   const onLogin = async (email: string, password_unused: string) => {
     const result = await handleLogin(email, password_unused);
     if (result.success && result.agent) {
-      const agent = result.agent;
+      const agent = result.agent as Agent;
        setCurrentUser({
+        id: agent.id,
         name: agent.name,
         avatar: agent.avatar,
         role: agent.role,
         email: agent.email,
         phone: agent.phone,
         companyId: agent.companyId,
-      });
+      } as UserProfile);
 
       if (agent.role === 'admin') {
         setActiveView('Dashboard');
@@ -49,11 +51,42 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
     }
     return { success: result.success, message: result.message };
   }
+  
+  const onSignUp = async (name: string, email: string, password_unused: string) => {
+    const result = await handleSignUp(name, email, password_unused);
+    if (result.success && result.agent) {
+        toast({
+            title: "Account Created!",
+            description: "You can now sign in with your new credentials.",
+        });
+        const agent = result.agent as Agent;
+         setCurrentUser({
+          id: agent.id,
+          name: agent.name,
+          avatar: agent.avatar,
+          role: agent.role,
+          email: agent.email,
+          phone: agent.phone,
+          companyId: agent.companyId,
+        } as UserProfile);
+
+        if (agent.role === 'admin') {
+          setActiveView('Dashboard');
+        } else {
+          setActiveView('Chat');
+        }
+    }
+    return result;
+  }
 
   const handleLogout = () => {
     setCurrentUser(null);
     setActiveView('Chat');
   };
+  
+  const handleUpdateUser = (updatedUser: Partial<UserProfile>) => {
+    setCurrentUser(prev => prev ? { ...prev, ...updatedUser } : null);
+  }
 
   const renderView = () => {
     const props = { onMenuClick: () => setIsNavOpen(true), user: currentUser };
@@ -80,14 +113,19 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   if (!currentUser) {
     return (
       <main className="flex h-screen w-full items-center justify-center bg-background p-4 overflow-hidden auth-page-background">
-        <AuthForm onLogin={onLogin} />
+        <AuthForm onLogin={onLogin} onSignUp={onSignUp} />
       </main>
     );
   }
 
   return (
     <main className="flex h-screen bg-background">
-      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} user={currentUser} />
+      <SettingsDialog 
+        open={isSettingsOpen} 
+        onOpenChange={setIsSettingsOpen} 
+        user={currentUser}
+        onUserUpdate={handleUpdateUser}
+      />
       <VerticalNav 
           activeView={activeView} 
           setActiveView={setActiveView} 
