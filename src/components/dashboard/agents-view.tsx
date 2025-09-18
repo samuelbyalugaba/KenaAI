@@ -62,15 +62,6 @@ const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-s
     Offline: "bg-slate-400",
 };
 
-const activityLogs = [
-  { id: 'log1', timestamp: '2024-08-01 10:05:14', agent: 'Samuel Byalugaba', action: 'Login', details: 'Logged in from IP 192.168.1.10' },
-  { id: 'log2', timestamp: '2024-08-01 10:07:21', agent: 'Sylvester Mayaya', action: 'Conversation Assigned', details: 'Assigned chat with Kelvin (#1)' },
-  { id: 'log3', timestamp: '2024-08-01 10:15:03', agent: 'Kelvin Malisa', action: 'Role Change', details: 'Role changed from Agent to Super Agent' },
-  { id: 'log4', timestamp: '2024-08-01 10:22:45', agent: 'Linaliz Ready', action: 'Message Sent', details: 'Sent message in chat with Diana' },
-  { id: 'log5', timestamp: '2024-08-01 10:30:00', agent: 'Samuel Byalugaba', action: 'Logout', details: 'Session duration: 24m 46s' },
-];
-
-
 export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; user: UserProfile | null }) {
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -349,41 +340,6 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                 </Card>
             </div>
         </div>
-
-        <Card>
-            <Accordion type="single" collapsible>
-                <AccordionItem value="activity-logs">
-                    <AccordionTrigger className="px-6">
-                        <div className="flex flex-col items-start">
-                            <CardTitle>Activity Logs</CardTitle>
-                            <CardDescription>An audit trail of all agent actions.</CardDescription>
-                        </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Timestamp</TableHead>
-                                    <TableHead>Agent</TableHead>
-                                    <TableHead>Action</TableHead>
-                                    <TableHead>Details</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {activityLogs.map(log => (
-                                    <TableRow key={log.id}>
-                                        <TableCell>{log.timestamp}</TableCell>
-                                        <TableCell>{log.agent}</TableCell>
-                                        <TableCell><Badge variant="secondary">{log.action}</Badge></TableCell>
-                                        <TableCell>{log.details}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </AccordionContent>
-                </AccordionItem>
-            </Accordion>
-        </Card>
       </main>
     </div>
   );
