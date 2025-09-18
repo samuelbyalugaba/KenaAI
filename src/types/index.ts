@@ -7,6 +7,7 @@ export type User = {
     email?: string;
     phone?: string;
     assignedAgentId?: string;
+    online?: boolean;
   };
   
   export type Message = {
@@ -133,3 +134,4 @@ export type User = {
     details: string;
     timestamp: Date | string;
   };
+
