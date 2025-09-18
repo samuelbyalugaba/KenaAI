@@ -25,7 +25,7 @@ import {
   Bot,
 } from "lucide-react";
 
-import type { Chat, Message, Priority, UserProfile, Agent, User, Channel } from "@/types";
+import type { Chat, Message, Priority, UserProfile, Agent, User, Channel, Note } from "@/types";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -65,7 +65,7 @@ import { Label } from "@/components/ui/label";
 import { KenaAILogo } from "@/components/ui/kena-ai-logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NewChatDialog } from "./new-chat-dialog";
-import { getChatsByCompany, getMessagesForChat, sendMessage, setChatbotStatus, startNewChats, getContactsByCompany } from "@/app/actions";
+import { getChatsByCompany, getMessagesForChat, sendMessage, setChatbotStatus, startNewChats, getContactsByCompany, addNoteToContact } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 
 
@@ -190,7 +190,7 @@ const Stats = ({ chats }: { chats: Chat[] }) => {
   );
 };
 
-const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessages }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; onBack: () => void; isLoadingMessages: boolean; }) => {
+const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessages, onNoteAdded, currentUser }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; onBack: () => void; isLoadingMessages: boolean; onNoteAdded: (contactId: string, note: Note) => void; currentUser: UserProfile | null; }) => {
     const scrollRef = React.useRef<HTMLDivElement>(null);
     
     React.useEffect(() => {
@@ -201,7 +201,7 @@ const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessa
   
     return (
         <div className="flex flex-1 flex-col h-full">
-            <ChatHeader chat={chat} onChatbotToggle={onChatbotToggle} onBack={onBack}/>
+            <ChatHeader chat={chat} onChatbotToggle={onChatbotToggle} onBack={onBack} onNoteAdded={onNoteAdded} currentUser={currentUser} />
             <Separator />
             <ScrollArea className="flex-1" ref={scrollRef}>
                 <div className="p-4 space-y-4">
@@ -226,7 +226,7 @@ const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessa
     );
 };
 
-const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onBack: () => void }) => {
+const ChatHeader = ({ chat, onChatbotToggle, onBack, onNoteAdded, currentUser }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onBack: () => void; onNoteAdded: (contactId: string, note: Note) => void; currentUser: UserProfile | null; }) => {
     const [summary, setSummary] = React.useState<string | null>(null);
     const [isLoadingSummary, setIsLoadingSummary] = React.useState(false);
     const [isNotesOpen, setIsNotesOpen] = React.useState(false);
@@ -251,8 +251,8 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
         setIsLoadingSummary(false);
     }
 
-    const handleSaveNote = () => {
-        if (!note.trim()) {
+    const handleSaveNote = async () => {
+        if (!note.trim() || !currentUser) {
             toast({
                 variant: "destructive",
                 title: "Empty Note",
@@ -260,15 +260,18 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack }: { chat: Chat; onChatbotTo
             })
             return;
         }
-        // In a real app, you would save the note to a database.
-        // For now, we just show a confirmation toast.
-        console.log("Saving note for", chat.user.name, ":", note);
-        toast({
-            title: "Note Saved",
-            description: `Your note for ${chat.user.name} has been saved.`,
-        });
-        setNote("");
-        setIsNotesOpen(false);
+        const result = await addNoteToContact(chat.user.id, currentUser.id, currentUser.name, note);
+        if (result.success && result.note) {
+            onNoteAdded(chat.user.id, result.note);
+            toast({
+                title: "Note Saved",
+                description: `Your note for ${chat.user.name} has been saved.`,
+            });
+            setNote("");
+            setIsNotesOpen(false);
+        } else {
+             toast({ variant: 'destructive', title: "Failed to save note." });
+        }
     }
 
     const isActionSheetOpen = !!summary || isLoadingSummary;
@@ -557,17 +560,45 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
     if (!user) return [];
     
     try {
-      const newChats = await startNewChats(selectedUsers, message, user.companyId, user.id);
-      setChats(prev => [...newChats, ...prev]);
+      const newOrUpdatedChats = await startNewChats(selectedUsers, message, user.companyId, user.id);
+      
+      const newChats = newOrUpdatedChats.filter(c => !chats.some(existing => existing.id === c.id));
+      const updatedChats = newOrUpdatedChats.filter(c => chats.some(existing => existing.id === c.id));
 
-      if (newChats.length === 1) {
-        handleSelectChat(newChats[0]);
+      setChats(prev => {
+          let updatedState = [...prev];
+          // Add new chats
+          updatedState = [...newChats, ...updatedState];
+          // Update existing chats
+          updatedChats.forEach(updatedChat => {
+              const index = updatedState.findIndex(c => c.id === updatedChat.id);
+              if (index !== -1) {
+                  updatedState[index] = {
+                      ...updatedState[index],
+                      lastMessage: updatedChat.lastMessage,
+                      timestamp: updatedChat.timestamp,
+                  };
+              }
+          });
+          return updatedState;
+      });
+
+      if (newOrUpdatedChats.length === 1) {
+          handleSelectChat(newOrUpdatedChats[0]);
       }
-      return newChats;
+
+      return newOrUpdatedChats;
+
     } catch (error) {
       toast({ variant: 'destructive', title: 'Error', description: 'Failed to start new chat(s).' });
       return [];
     }
+  }
+
+  const handleNoteAdded = (contactId: string, note: Note) => {
+      setContacts(prev => prev.map(c => 
+          c.id === contactId ? { ...c, notes: [note, ...(c.notes || [])] } : c
+      ));
   }
 
   const canAddAgent = user?.role === 'admin' || user?.role === 'super_agent';
@@ -611,6 +642,8 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
           onSendMessage={handleSendMessage}
           onBack={() => setSelectedChat(null)}
           isLoadingMessages={isLoadingMessages}
+          onNoteAdded={handleNoteAdded}
+          currentUser={user}
         />
       );
     }
@@ -701,6 +734,8 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
                         onSendMessage={handleSendMessage}
                         onBack={() => setSelectedChat(null)}
                         isLoadingMessages={isLoadingMessages}
+                        onNoteAdded={handleNoteAdded}
+                        currentUser={user}
                     />
                 ) : (
                     <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
@@ -724,3 +759,5 @@ export function ChatLayout({ user, onMenuClick }: ChatLayoutProps) {
     </div>
   );
 }
+
+    

@@ -111,7 +111,7 @@ export async function createAnnouncement(data: { title: string; content: string;
                 ...(newAnnouncement as Announcement),
                 _id: result.insertedId.toString(),
                 id: result.insertedId.toString(),
-                companyId: data.companyId,
+                companyId: new ObjectId(data.companyId).toString(),
             };
             return { success: true, announcement: createdAnnouncement };
         }
@@ -477,9 +477,8 @@ export async function createContact(name: string, email: string, phone: string, 
         const result = await contactsCollection.insertOne(contactToInsert as any);
         
         if (result.insertedId) {
-            const { _id, companyId: newCompanyId, ...rest } = contactToInsert as any;
             const newContact: User = {
-                ...rest,
+                ...(contactToInsert as Omit<User, '_id'|'id'>),
                 _id: result.insertedId.toString(),
                 id: result.insertedId.toString(),
                 companyId: new ObjectId(companyId).toString(),
@@ -660,8 +659,8 @@ export async function sendMessage(chatId: string, text: string, agentId: string)
             );
             
             const finalNewMessage: Message = {
-                ...newMessageToInsert,
-                _id: result.insertedId,
+                ...(newMessageToInsert as Omit<Message, '_id'|'id'>),
+                _id: result.insertedId.toString(),
                 id: result.insertedId.toString(),
                 chatId: newMessageToInsert.chatId.toString(),
                 senderId: newMessageToInsert.senderId.toString(),
@@ -695,50 +694,62 @@ export async function setChatbotStatus(chatId: string, isActive: boolean): Promi
 
 export async function startNewChats(users: User[], message: string, companyId: string, agentId: string): Promise<Chat[]> {
     const chatsCollection = await getChatsCollection();
-    const contactsCollection = await getContactsCollection();
-    const newChats: Chat[] = [];
+    const newOrUpdatedChats: Chat[] = [];
 
     for (const user of users) {
-        let contact = user;
-        // If it's a new contact (id starts with 'new-'), create it first.
-        if (user.id.startsWith('new-')) {
-            const createResult = await createContact(user.name, user.email || '', user.phone || '', companyId);
-            if (createResult.success && createResult.contact) {
-                contact = createResult.contact;
-            } else {
-                console.error(`Failed to create new contact for ${user.name}`);
-                continue; // Skip this one
+        // Find existing chat
+        const existingChat = await chatsCollection.findOne({
+            userId: new ObjectId(user.id),
+            companyId: new ObjectId(companyId)
+        });
+
+        if (existingChat) {
+            // If chat exists, just send a message
+            await sendMessage(existingChat._id.toString(), message, agentId);
+            
+            const updatedChat: Chat = {
+                ...existingChat,
+                id: existingChat._id.toString(),
+                lastMessage: message,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                user: user,
+                messages: [], // Not fetching all messages here for performance
+            } as Chat;
+            newOrUpdatedChats.push(updatedChat);
+
+        } else {
+             // If chat does not exist, create a new one
+            const timestamp = new Date();
+            const newChatData: Omit<Chat, 'id' | '_id'> = {
+                userId: new ObjectId(user.id),
+                companyId: new ObjectId(companyId),
+                lastMessage: message,
+                timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                unreadCount: 0,
+                priority: 'normal',
+                channel: 'Webchat', // Default channel for new chats
+                isChatbotActive: false,
+                messages: []
+            };
+            const chatResult = await chatsCollection.insertOne(newChatData as any);
+            
+            if (chatResult.insertedId) {
+                await sendMessage(chatResult.insertedId.toString(), message, agentId);
+                const createdChat = {
+                    ...newChatData,
+                    id: chatResult.insertedId.toString(),
+                    _id: chatResult.insertedId.toString(),
+                    user: user,
+                    messages: [], // Messages loaded separately
+                } as Chat;
+                newOrUpdatedChats.push(createdChat);
             }
         }
-        
-        const timestamp = new Date();
-        const newChat: Omit<Chat, 'id' | '_id'> = {
-            userId: new ObjectId(contact.id),
-            companyId: new ObjectId(companyId),
-            lastMessage: message,
-            timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            unreadCount: 0,
-            priority: 'normal',
-            channel: 'Webchat', // Default channel for new chats
-            isChatbotActive: false,
-            messages: []
-        };
-        const chatResult = await chatsCollection.insertOne(newChat as any);
-        
-        if (chatResult.insertedId) {
-            await sendMessage(chatResult.insertedId.toString(), message, agentId);
-            const createdChat = {
-                ...newChat,
-                id: chatResult.insertedId.toString(),
-                user: contact,
-                messages: [], // Messages loaded separately
-            } as Chat;
-            newChats.push(createdChat);
-        }
     }
-    return newChats;
+    return newOrUpdatedChats;
 }
 
 
 
+    
     
