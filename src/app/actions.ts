@@ -422,13 +422,16 @@ export async function getContactsByCompany(companyId: string): Promise<User[]> {
         const contactsCollection = await getContactsCollection();
         const contacts = await contactsCollection.find({ companyId: new ObjectId(companyId) }).toArray();
 
-        return contacts.map(contact => ({
-            ...contact,
-            _id: contact._id.toString(),
-            id: contact._id.toString(),
-            companyId: contact.companyId?.toString(),
-            notes: contact.notes || []
-        }));
+        return contacts.map(contact => {
+            const { _id, companyId, ...rest } = contact;
+            return {
+                ...rest,
+                _id: _id.toString(),
+                id: _id.toString(),
+                companyId: companyId?.toString(),
+                notes: contact.notes || []
+            };
+        });
     } catch (error) {
         console.error("Error fetching contacts:", error);
         return [];
@@ -459,10 +462,12 @@ export async function createContact(name: string, email: string, phone: string, 
         const result = await contactsCollection.insertOne(contactToInsert as any);
         
         if (result.insertedId) {
+            const { _id, companyId: newCompanyId, ...rest } = contactToInsert;
             const newContact: User = {
-                ...contactToInsert,
+                ...rest,
                 _id: result.insertedId.toString(),
                 id: result.insertedId.toString(),
+                companyId: new ObjectId(companyId).toString(),
             };
             return { success: true, contact: newContact };
         }
@@ -530,3 +535,5 @@ export async function getNotesForContact(contactId: string): Promise<Note[]> {
         return [];
     }
 }
+
+    
