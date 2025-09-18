@@ -697,28 +697,28 @@ export async function startNewChats(users: User[], message: string, companyId: s
     const newOrUpdatedChats: Chat[] = [];
 
     for (const user of users) {
-        // Find existing chat
-        const existingChat = await chatsCollection.findOne({
+        const existingChatDoc = await chatsCollection.findOne({
             userId: new ObjectId(user.id),
             companyId: new ObjectId(companyId)
         });
 
-        if (existingChat) {
-            // If chat exists, just send a message
-            await sendMessage(existingChat._id.toString(), message, agentId);
+        if (existingChatDoc) {
+            await sendMessage(existingChatDoc._id.toString(), message, agentId);
             
             const updatedChat: Chat = {
-                ...existingChat,
-                id: existingChat._id.toString(),
+                ...existingChatDoc,
+                _id: existingChatDoc._id.toString(),
+                id: existingChatDoc._id.toString(),
+                userId: existingChatDoc.userId.toString(),
+                companyId: existingChatDoc.companyId.toString(),
                 lastMessage: message,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 user: user,
-                messages: [], // Not fetching all messages here for performance
+                messages: [],
             } as Chat;
             newOrUpdatedChats.push(updatedChat);
 
         } else {
-             // If chat does not exist, create a new one
             const timestamp = new Date();
             const newChatData: Omit<Chat, 'id' | '_id'> = {
                 userId: new ObjectId(user.id),
@@ -727,7 +727,7 @@ export async function startNewChats(users: User[], message: string, companyId: s
                 timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 unreadCount: 0,
                 priority: 'normal',
-                channel: 'Webchat', // Default channel for new chats
+                channel: 'Webchat',
                 isChatbotActive: false,
                 messages: []
             };
@@ -737,10 +737,12 @@ export async function startNewChats(users: User[], message: string, companyId: s
                 await sendMessage(chatResult.insertedId.toString(), message, agentId);
                 const createdChat = {
                     ...newChatData,
-                    id: chatResult.insertedId.toString(),
                     _id: chatResult.insertedId.toString(),
+                    id: chatResult.insertedId.toString(),
+                    userId: newChatData.userId.toString(),
+                    companyId: newChatData.companyId.toString(),
                     user: user,
-                    messages: [], // Messages loaded separately
+                    messages: [],
                 } as Chat;
                 newOrUpdatedChats.push(createdChat);
             }
