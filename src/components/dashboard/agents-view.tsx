@@ -55,6 +55,7 @@ import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
 import { getAgentsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
     Online: "bg-emerald-500",
@@ -67,6 +68,7 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const { toast } = useToast();
 
   React.useEffect(() => {
     async function fetchAgents() {
@@ -83,6 +85,13 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
 
   const handleAgentAdd = (newAgent: Agent) => {
     setAgents((prev) => [newAgent, ...prev]);
+  };
+
+  const handleActionClick = (action: 'Edit' | 'Remove') => {
+      toast({
+          title: `Action: ${action}`,
+          description: "This feature is currently under construction.",
+      });
   };
   
   const filteredAgents = React.useMemo(() => {
@@ -265,8 +274,8 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>Remove</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleActionClick('Edit')}>Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleActionClick('Remove')}>Remove</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -345,3 +354,4 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
   );
 
     
+
