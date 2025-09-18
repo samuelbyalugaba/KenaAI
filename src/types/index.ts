@@ -1,5 +1,8 @@
 
 
+declare global {
+    var _pgPool: any;
+}
 export type User = {
     id: string;
     name: string;

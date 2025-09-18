@@ -7,13 +7,15 @@ import { VerticalNav } from "@/components/dashboard/vertical-nav";
 import { ContactsView } from "@/components/dashboard/contacts-view";
 import { AgentsView } from "@/components/dashboard/agents-view";
 import { DashboardView } from "@/components/dashboard/dashboard-view";
-import type { UserProfile } from "@/types";
+import type { Agent, UserProfile } from "@/types";
 import { AnnouncementsView } from "@/components/dashboard/announcements-view";
 import { mockAgents } from "@/lib/mock-data";
 import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 import { AuthForm } from "@/components/dashboard/auth-form";
+import { query } from "@/lib/db";
+import { verifyPassword } from "@/lib/auth";
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
 
@@ -26,27 +28,35 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   const [currentUser, setCurrentUser] = React.useState<UserProfile | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
-  const handleLogin = (email: string, password_unused: string) => {
-    // In a real app, you'd verify the password. Here, we'll just find the user by email.
-    const agent = mockAgents.find(a => a.email.toLowerCase() === email.toLowerCase());
-    if (agent) {
-      setCurrentUser({
-        name: agent.name,
-        avatar: agent.avatar,
-        role: agent.role,
-        email: agent.email,
-        phone: agent.phone
-      });
+  const handleLogin = async (email: string, password_unused: string) => {
+    try {
+      const result = await query('SELECT * FROM agents WHERE email = $1', [email.toLowerCase()]);
+      const agent: Agent | undefined = result.rows[0];
 
-      if (agent.role === 'admin') {
-        setActiveView('Dashboard');
-      } else {
-        setActiveView('Chat');
+      if (agent && agent.password) {
+        const isPasswordValid = await verifyPassword(password_unused, agent.password);
+        if (isPasswordValid) {
+           setCurrentUser({
+            name: agent.name,
+            avatar: agent.avatar,
+            role: agent.role,
+            email: agent.email,
+            phone: agent.phone
+          });
+
+          if (agent.role === 'admin') {
+            setActiveView('Dashboard');
+          } else {
+            setActiveView('Chat');
+          }
+          return { success: true };
+        }
       }
-
-      return true;
+      return { success: false, message: "Invalid email or password." };
+    } catch (error) {
+      console.error("Login error:", error);
+      return { success: false, message: "An unexpected error occurred." };
     }
-    return false;
   };
 
   const handleLogout = () => {
