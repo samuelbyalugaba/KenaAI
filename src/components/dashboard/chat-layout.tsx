@@ -165,12 +165,19 @@ const Stats = ({ chats }: { chats: Chat[] }) => {
   const closedChats = totalChats - openChats;
   const pendingChats = chats.filter(c => c.isChatbotActive).length;
 
+  const avgResponseTime = React.useMemo(() => {
+    // This is a mock calculation. In a real app, you'd calculate this from message timestamps.
+    const minutes = Math.floor(Math.random() * 5);
+    const seconds = Math.floor(Math.random() * 60);
+    return `${minutes}m ${seconds}s`;
+  }, [chats]);
+
   const stats = [
     { title: "Total Chats", value: totalChats.toString(), icon: MessageSquare },
     { title: "Open", value: openChats.toString(), icon: Users },
     { title: "Closed", value: closedChats.toString(), icon: CheckCircle },
     { title: "Pending", value: pendingChats.toString(), icon: Clock },
-    { title: "Avg. Response", value: "1m 2s", icon: Clock },
+    { title: "Avg. Response", value: avgResponseTime, icon: Clock },
   ];
 
   return (
