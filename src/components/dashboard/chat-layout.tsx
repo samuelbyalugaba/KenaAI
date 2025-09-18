@@ -23,6 +23,7 @@ import {
   User as UserIcon,
   X,
   Bot,
+  UserCheck,
 } from "lucide-react";
 
 import type { Chat, Message, Priority, UserProfile, Agent, User, Channel, Note } from "@/types";
@@ -65,7 +66,7 @@ import { Label } from "@/components/ui/label";
 import { KenaAILogo } from "@/components/ui/kena-ai-logo";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { NewChatDialog } from "./new-chat-dialog";
-import { getChatsByCompany, getMessagesForChat, sendMessage, setChatbotStatus, startNewChats, getContactsByCompany, addNoteToContact } from "@/app/actions";
+import { getChatsByCompany, getMessagesForChat, sendMessage, setChatbotStatus, startNewChats, getContactsByCompany, addNoteToContact, assignAgentToContact, getAgentsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 
 
@@ -199,7 +200,7 @@ const Stats = ({ chats }: { chats: Chat[] }) => {
   );
 };
 
-const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessages, onNoteAdded, currentUser }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; onBack: () => void; isLoadingMessages: boolean; onNoteAdded: (contactId: string, note: Note) => void; currentUser: UserProfile | null; }) => {
+const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessages, onNoteAdded, currentUser, agents, onAssignAgent }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onSendMessage: (chatId: string, message: string) => void; onBack: () => void; isLoadingMessages: boolean; onNoteAdded: (contactId: string, note: Note) => void; currentUser: UserProfile | null; agents: Agent[]; onAssignAgent: (contactId: string, agentId: string) => void; }) => {
     const scrollRef = React.useRef<HTMLDivElement>(null);
     
     React.useEffect(() => {
@@ -210,7 +211,7 @@ const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessa
   
     return (
         <div className="flex flex-1 flex-col h-full">
-            <ChatHeader chat={chat} onChatbotToggle={onChatbotToggle} onBack={onBack} onNoteAdded={onNoteAdded} currentUser={currentUser} />
+            <ChatHeader chat={chat} onChatbotToggle={onChatbotToggle} onBack={onBack} onNoteAdded={onNoteAdded} currentUser={currentUser} agents={agents} onAssignAgent={onAssignAgent} />
             <Separator />
             <ScrollArea className="flex-1" ref={scrollRef}>
                 <div className="p-4 space-y-4">
@@ -235,12 +236,25 @@ const ChatArea = ({ chat, onChatbotToggle, onSendMessage, onBack, isLoadingMessa
     );
 };
 
-const ChatHeader = ({ chat, onChatbotToggle, onBack, onNoteAdded, currentUser }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onBack: () => void; onNoteAdded: (contactId: string, note: Note) => void; currentUser: UserProfile | null; }) => {
+const ChatHeader = ({ chat, onChatbotToggle, onBack, onNoteAdded, currentUser, agents, onAssignAgent }: { chat: Chat; onChatbotToggle: (chatId: string, isActive: boolean) => void; onBack: () => void; onNoteAdded: (contactId: string, note: Note) => void; currentUser: UserProfile | null; agents: Agent[]; onAssignAgent: (contactId: string, agentId: string) => void; }) => {
     const [summary, setSummary] = React.useState<string | null>(null);
     const [isLoadingSummary, setIsLoadingSummary] = React.useState(false);
     const [isNotesOpen, setIsNotesOpen] = React.useState(false);
     const [note, setNote] = React.useState("");
     const { toast } = useToast();
+    
+    const assignedAgent = agents.find(a => a.id === chat.user.assignedAgentId);
+
+    const handleAssignAgent = (agentId: string) => {
+        assignAgentToContact(chat.user.id, agentId);
+        onAssignAgent(chat.user.id, agentId);
+        
+        const agent = agents.find(a => a.id === agentId);
+        toast({
+          title: "Contact Assigned",
+          description: `${chat.user.name} has been assigned to ${agent?.name || 'Unassigned'}.`,
+        });
+    }
 
     const handleSummarize = async () => {
         setIsLoadingSummary(true);
@@ -290,6 +304,9 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack, onNoteAdded, currentUser }:
         }
     }
 
+    const canAssignAgent = currentUser?.role === 'admin' || currentUser?.role === 'super_agent';
+
+
     return (
         <div className="flex items-center p-2 px-4 gap-2 h-[61px] flex-shrink-0">
             <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
@@ -307,6 +324,32 @@ const ChatHeader = ({ chat, onChatbotToggle, onBack, onNoteAdded, currentUser }:
                 </div>
             </div>
             <div className="ml-auto flex items-center gap-1 sm:gap-2">
+                 {canAssignAgent ? (
+                    <Select onValueChange={handleAssignAgent} defaultValue={assignedAgent?.id}>
+                        <SelectTrigger className="w-fit gap-2 h-9 text-xs pl-2 pr-1 hidden sm:flex">
+                           <UserCheck className="h-4 w-4 text-muted-foreground" />
+                           <SelectValue placeholder="Unassigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="unassigned">Unassigned</SelectItem>
+                            {agents.map(agent => (
+                                <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                 ) : assignedAgent && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Avatar className="h-8 w-8 hidden sm:flex">
+                            <AvatarImage src={assignedAgent.avatar} />
+                            <AvatarFallback>{assignedAgent.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                        </TooltipTrigger>
+                        <TooltipContent><p>Assigned to {assignedAgent.name}</p></TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                 )}
                 <div className="flex items-center space-x-2">
                     <Switch id="chatbot-mode" checked={chat.isChatbotActive} onCheckedChange={(isActive) => onChatbotToggle(chat.id, isActive)} />
                     <Label htmlFor="chatbot-mode" className="hidden sm:block text-sm">{chat.isChatbotActive ? "Bot Mode" : "Manual Mode"}</Label>
@@ -467,12 +510,14 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
       if (user?.companyId) {
         setIsLoading(true);
         try {
-          const [fetchedChats, fetchedContacts] = await Promise.all([
+          const [fetchedChats, fetchedContacts, fetchedAgents] = await Promise.all([
             getChatsByCompany(user.companyId),
             getContactsByCompany(user.companyId),
+            getAgentsByCompany(user.companyId),
           ]);
           setChats(fetchedChats);
           setContacts(fetchedContacts);
+          setAgents(fetchedAgents);
 
           if (initialContact) {
             const chatToOpen = fetchedChats.find(c => c.user.id === initialContact.id);
@@ -510,12 +555,15 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
   }, [user]);
 
   const handleSelectChat = async (chat: Chat) => {
-    setSelectedChat(chat);
+    const contactForChat = contacts.find(c => c.id === chat.user.id);
+    const chatWithFullContact = { ...chat, user: { ...chat.user, assignedAgentId: contactForChat?.assignedAgentId } };
+
+    setSelectedChat(chatWithFullContact);
     if (!chat.messages || chat.messages.length === 0) {
       setIsLoadingMessages(true);
       const messages = await getMessagesForChat(chat.id);
       
-      const updatedChat = { ...chat, messages };
+      const updatedChat = { ...chatWithFullContact, messages };
       setChats(prev => prev.map(c => c.id === chat.id ? updatedChat : c));
       setSelectedChat(updatedChat);
       setIsLoadingMessages(false);
@@ -619,6 +667,13 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
       ));
   }
 
+  const handleAssignAgent = (contactId: string, agentId: string) => {
+    setContacts(prev => prev.map(c => c.id === contactId ? { ...c, assignedAgentId: agentId } : c));
+    if (selectedChat?.user.id === contactId) {
+      setSelectedChat(prev => prev ? { ...prev, user: { ...prev.user, assignedAgentId: agentId } } : null);
+    }
+  }
+
   const canAddAgent = user?.role === 'admin' || user?.role === 'super_agent';
 
   const MainHeader = ({ children }: { children: React.ReactNode }) => (
@@ -662,6 +717,8 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
           isLoadingMessages={isLoadingMessages}
           onNoteAdded={handleNoteAdded}
           currentUser={user}
+          agents={agents}
+          onAssignAgent={handleAssignAgent}
         />
       );
     }
@@ -754,6 +811,8 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
                         isLoadingMessages={isLoadingMessages}
                         onNoteAdded={handleNoteAdded}
                         currentUser={user}
+                        agents={agents}
+                        onAssignAgent={handleAssignAgent}
                     />
                 ) : (
                     <div className="hidden md:flex flex-1 flex-col items-center justify-center gap-4 text-center p-8">
@@ -777,5 +836,6 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
     </div>
   );
 }
+
 
 
