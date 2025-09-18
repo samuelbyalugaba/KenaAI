@@ -36,7 +36,7 @@ export type User = {
 
   export type Company = {
     _id?: any;
-    id: string;
+    id?: string;
     name: string;
     createdAt: Date;
   };
@@ -69,6 +69,17 @@ export type User = {
   
   export type AnnouncementCategory = "General" | "Urgent" | "Training";
 
+  export type Comment = {
+    id: string;
+    author: {
+        id: string;
+        name: string;
+        avatar: string;
+    };
+    content: string;
+    timestamp: string;
+  };
+
   export type Announcement = {
     _id?: any;
     id: string;
@@ -82,6 +93,7 @@ export type User = {
     category: AnnouncementCategory;
     content: string;
     readBy: string[]; // Store agent IDs
+    comments: Comment[];
     companyId: any;
   };
 
@@ -110,4 +122,14 @@ export type User = {
     query: string;
     timestamp: string;
     status: 'pending' | 'resolved';
+  };
+  
+  export type ActivityLog = {
+    _id?: any;
+    id?: string;
+    companyId: any;
+    agentName: string;
+    action: string;
+    details: string;
+    timestamp: Date | string;
   };
