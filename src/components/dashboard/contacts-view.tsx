@@ -343,11 +343,11 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
           phone: findHeaderIndex(headers, ['phone 1 - value', 'phone', 'phone number']),
       };
 
-      if ((headerMap.name === -1 && headerMap.givenName === -1) || headerMap.email === -1 || headerMap.phone === -1) {
+      if ((headerMap.name === -1 && headerMap.givenName === -1)) {
         toast({
             variant: "destructive",
             title: "Invalid CSV format",
-            description: "Could not find required columns (Name, Email, Phone).",
+            description: "Could not find a required 'Name' column.",
         });
         setIsImporting(false);
         return;
@@ -365,7 +365,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         const email = row[headerMap.email] || '';
         const phone = row[headerMap.phone] || '';
 
-        if (!name || !email || !phone) return null;
+        if (!name) return null;
 
         return { name, email, phone };
       }).filter(Boolean) as { name: string; email: string; phone: string }[];
