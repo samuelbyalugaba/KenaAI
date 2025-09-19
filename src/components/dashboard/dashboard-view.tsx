@@ -90,7 +90,7 @@ const AgentPerformanceTable = ({ agents }: { agents: Agent[] }) => {
         .slice(0, 5)
         .map((agent, index) => ({...agent, rank: index + 1}));
 
-    if (sortedAgents.length === 0) {
+    if (sortedAgents.length === 0 || sortedAgents.every(a => (a.conversationsToday || 0) === 0)) {
         return <p className="text-center text-muted-foreground p-8">No agent data available.</p>;
     }
 
@@ -492,23 +492,12 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
 
                  {/* Smart Alerts */}
                 <div>
-                <h2 className="text-2xl font-bold mb-4">Smart Alerts</h2>
-                <div className="space-y-3">
-                    <Alert variant="destructive">
-                        <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>Spike in Negative Sentiment!</AlertTitle>
-                        <AlertDescription>
-                            Negative customer sentiment has increased by 35% in the last hour.
-                        </AlertDescription>
-                    </Alert>
-                    <Alert>
-                        <Clock className="h-4 w-4" />
-                        <AlertTitle>Response Times Exceeding SLA</AlertTitle>
-                        <AlertDescription>
-                        Average response time is currently 5m 42s, exceeding the 3m target.
-                        </AlertDescription>
-                    </Alert>
-                </div>
+                    <h2 className="text-2xl font-bold mb-4">Smart Alerts</h2>
+                    <Card>
+                        <CardContent className="pt-6">
+                            <p className="text-center text-muted-foreground p-8">Real-time smart alerts feature coming soon.</p>
+                        </CardContent>
+                    </Card>
                 </div>
 
                 {/* Conversation Breakdown */}
@@ -533,7 +522,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                                             tickMargin={10}
                                             tickFormatter={(value) => channelBreakdownConfig[value as keyof typeof channelBreakdownConfig]?.label}
                                         />
-                                        <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                        <Tooltip cursor={false} content={<ChartTooltipContent />} />
                                         <Bar dataKey="value" radius={4}>
                                              {channelBreakdownData.map((entry) => (
                                                 <Cell key={`cell-${entry.name}`} fill={entry.fill} />
