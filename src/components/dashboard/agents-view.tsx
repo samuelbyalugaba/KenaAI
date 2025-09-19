@@ -4,13 +4,7 @@
 import * as React from "react";
 import {
     MoreHorizontal,
-    PlusCircle,
     Search,
-    User,
-    Mail,
-    Phone,
-    ArrowDown,
-    ArrowUp,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -46,16 +40,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import type { Agent, UserProfile, AgentPerformance } from "@/types";
+import type { Agent, UserProfile } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
-import { Bar, BarChart, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { BarChart, Cell, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
-import { getAgentsByCompany } from "@/app/actions";
+import { deleteAgent, getAgentsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
+import { EditAgentDialog } from "./edit-agent-dialog";
+
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
     Online: "bg-emerald-500",
@@ -68,6 +64,7 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [editingAgent, setEditingAgent] = React.useState<Agent | null>(null);
   const { toast } = useToast();
 
   React.useEffect(() => {
@@ -87,12 +84,26 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
     setAgents((prev) => [newAgent, ...prev]);
   };
 
-  const handleActionClick = (action: 'Edit' | 'Remove') => {
-      toast({
-          title: `Action: ${action}`,
-          description: "This feature is currently under construction.",
-      });
-  };
+  const handleAgentUpdate = (updatedAgent: Agent) => {
+    setAgents(prev => prev.map(a => a.id === updatedAgent.id ? updatedAgent : a));
+  }
+
+  const handleRemoveAgent = async (agentId: string, agentName: string) => {
+      const result = await deleteAgent(agentId, user?.companyId, user?.name);
+      if (result.success) {
+          setAgents(prev => prev.filter(a => a.id !== agentId));
+          toast({
+              title: "Agent Removed",
+              description: `Agent "${agentName}" has been removed.`,
+          });
+      } else {
+           toast({
+              variant: 'destructive',
+              title: "Failed to remove agent",
+              description: result.message,
+           });
+      }
+  }
   
   const filteredAgents = React.useMemo(() => {
     return agents.filter(agent => {
@@ -265,19 +276,42 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                     <TableCell className="text-center">{agent.avgResponseTime || 'N/A'}</TableCell>
                     <TableCell className="text-center">{agent.csat ? `${agent.csat}%` : 'N/A'}</TableCell>
                     <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleActionClick('Edit')}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleActionClick('Remove')}>Remove</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <AlertDialog>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Toggle menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => setEditingAgent(agent)}>Edit</DropdownMenuItem>
+                             <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive focus:text-destructive">Remove</DropdownMenuItem>
+                             </AlertDialogTrigger>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently remove the agent "{agent.name}" and their associated data.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                    onClick={() => handleRemoveAgent(agent.id, agent.name)}
+                                    className={cn(
+                                        "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    )}
+                                >
+                                    Yes, remove agent
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -337,11 +371,11 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                                     <XAxis dataKey="name" tickLine={false} axisLine={false} />
                                     <YAxis hide />
                                     <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                                    <Bar dataKey="time" radius={4}>
+                                    <BarChart dataKey="time" radius={4}>
                                         {responseTimeData.map(entry => (
                                             <Cell key={entry.name} fill={entry.fill} />
                                         ))}
-                                    </Bar>
+                                    </BarChart>
                                 </BarChart>
                             </ChartContainer>
                        )}
@@ -350,8 +384,16 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
             </div>
         </div>
       </main>
+      {editingAgent && (
+        <EditAgentDialog 
+            agent={editingAgent} 
+            open={!!editingAgent} 
+            onOpenChange={(isOpen) => !isOpen && setEditingAgent(null)}
+            onAgentUpdate={handleAgentUpdate}
+        />
+      )}
     </div>
   );
+}
 
     
-

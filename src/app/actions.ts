@@ -256,17 +256,12 @@ export async function updateAgentProfile(agentId: string, name: string, email: s
             return { success: false, message: "Agent not found." };
         }
         
-        const updatedAgentDoc = await agentsCollection.findOne({ _id: new ObjectId(agentId) });
+        const agentWithStats = await getAgentsByCompany(companyId);
+        const updatedAgent = agentWithStats.find(a => a.id === agentId);
 
-        if (updatedAgentDoc) {
-            const { password, ...agentData } = updatedAgentDoc;
-            const updatedAgent: Agent = {
-                ...agentData,
-                _id: updatedAgentDoc._id.toString(),
-                id: updatedAgentDoc._id.toString(),
-                companyId: updatedAgentDoc.companyId?.toString(),
-            };
-            await logActivity(companyId, updatedAgent.name, 'Update Profile', `Updated profile details`);
+
+        if (updatedAgent) {
+            await logActivity(companyId, updatedAgent.name, 'Update Profile', `Updated agent profile for ${name}`);
             return { success: true, agent: updatedAgent };
         }
 
@@ -358,15 +353,10 @@ export async function createAgent(name: string, email: string, password_unused: 
         const result = await agentsCollection.insertOne(agentToInsert as any);
 
         if (result.insertedId) {
-            const newAgentDoc = await agentsCollection.findOne({ _id: result.insertedId });
-            if (newAgentDoc) {
-                const { password, ...agentData } = newAgentDoc;
-                const newAgent: Agent = {
-                  ...agentData,
-                  _id: newAgentDoc._id.toString(),
-                  id: newAgentDoc._id.toString(),
-                  companyId: newAgentDoc.companyId?.toString(),
-                };
+            const agentsWithStats = await getAgentsByCompany(companyId);
+            const newAgent = agentsWithStats.find(a => a.id === result.insertedId.toString());
+
+            if (newAgent) {
                 await logActivity(companyId, createdBy, 'Create Agent', `Created agent: ${name}`);
                 return { success: true, agent: newAgent };
             }
@@ -377,6 +367,44 @@ export async function createAgent(name: string, email: string, password_unused: 
         return { success: false, message: "An unexpected error occurred while creating the agent." };
     }
 }
+
+export async function deleteAgent(agentId: string, companyId?: string, deletedBy?: string): Promise<{ success: boolean, message?: string }> {
+    try {
+        const agentsCollection = await getAgentsCollection();
+
+        if (!agentId || !ObjectId.isValid(agentId)) {
+            return { success: false, message: "Invalid agent ID." };
+        }
+
+        const agentToDelete = await agentsCollection.findOne({ _id: new ObjectId(agentId) });
+        if (!agentToDelete) {
+            return { success: false, message: "Agent not found." };
+        }
+
+        // Prevent deleting the last admin
+        if (agentToDelete.role === 'admin') {
+            const adminCount = await agentsCollection.countDocuments({ companyId: agentToDelete.companyId, role: 'admin' });
+            if (adminCount <= 1) {
+                return { success: false, message: "Cannot remove the last administrator." };
+            }
+        }
+        
+        const result = await agentsCollection.deleteOne({ _id: new ObjectId(agentId) });
+
+        if (result.deletedCount === 1) {
+            if (companyId && deletedBy) {
+                await logActivity(companyId, deletedBy, 'Delete Agent', `Removed agent: ${agentToDelete.name}`);
+            }
+            return { success: true };
+        }
+
+        return { success: false, message: "Failed to remove agent." };
+    } catch (error) {
+        console.error("Delete agent error:", error);
+        return { success: false, message: "An unexpected error occurred." };
+    }
+}
+
 
 export async function handleSignUp(name: string, email: string, password_unused: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
     const db = await getDb();
@@ -885,5 +913,5 @@ export async function getCampaignsByCompany(companyId: string): Promise<Campaign
         return [];
     }
 }
-    
+
     
