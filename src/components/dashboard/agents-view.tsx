@@ -44,13 +44,14 @@ import type { Agent, UserProfile, ActivityLog } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BarChart as BarChartIcon, Cell, XAxis, YAxis, Tooltip as RechartsTooltip, Bar } from "recharts";
+import { Bar, Cell, XAxis, YAxis, BarChart as BarChartIcon, Tooltip as RechartsTooltip } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
 import { deleteAgent, getAgentsByCompany, getActivityLogs } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { EditAgentDialog } from "./edit-agent-dialog";
+import { ScrollArea } from "../ui/scroll-area";
 
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
@@ -395,35 +396,37 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                 <CardDescription>An audit trail of actions taken by agents.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Agent</TableHead>
-                            <TableHead>Action</TableHead>
-                            <TableHead>Details</TableHead>
-                            <TableHead className="text-right">Timestamp</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-                            Array.from({ length: 5 }).map((_, i) => (
-                                <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                                    <TableCell className="text-right"><Skeleton className="h-4 w-[150px] ml-auto" /></TableCell>
-                                </TableRow>
-                            ))
-                        ) : activityLogs.map(log => (
-                            <TableRow key={log.id}>
-                                <TableCell>{log.agentName}</TableCell>
-                                <TableCell><Badge variant="secondary">{log.action}</Badge></TableCell>
-                                <TableCell>{log.details}</TableCell>
-                                <TableCell className="text-right">{new Date(log.timestamp).toLocaleString()}</TableCell>
+                <ScrollArea className="h-72">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Agent</TableHead>
+                                <TableHead>Action</TableHead>
+                                <TableHead>Details</TableHead>
+                                <TableHead className="text-right">Timestamp</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                        <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                                        <TableCell className="text-right"><Skeleton className="h-4 w-[150px] ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))
+                            ) : activityLogs.map(log => (
+                                <TableRow key={log.id}>
+                                    <TableCell>{log.agentName}</TableCell>
+                                    <TableCell><Badge variant="secondary">{log.action}</Badge></TableCell>
+                                    <TableCell>{log.details}</TableCell>
+                                    <TableCell className="text-right">{new Date(log.timestamp).toLocaleString()}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
             </CardContent>
         </Card>
       </main>
@@ -440,6 +443,8 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
 }
 
     
+    
+
     
 
     
