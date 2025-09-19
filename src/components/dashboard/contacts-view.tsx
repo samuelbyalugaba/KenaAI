@@ -292,50 +292,70 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     event.target.value = '';
   };
 
+  // Robust CSV parser function
+  const csvToArray = (text: string) => {
+      let p = '', row: string[] = [''], ret: string[][] = [row], i = 0, r = 0, s = !0, l;
+      for (l of text) {
+          if ('"' === l) {
+              if (s && l === p) row[i] += l;
+              s = !s;
+          } else if (',' === l && s) l = row[++i] = '';
+          else if ('\n' === l && s) {
+              if ('\r' === p) row[i] = row[i].slice(0, -1);
+              ret.push(row = []);
+              i = 0;
+          } else row[i] += l;
+          p = l;
+      }
+      if ('' === p) row.pop();
+      if (row.length === 1 && row[0] === '') ret.pop();
+      return ret;
+  };
+
   const parseCSV = (file: File) => {
     setIsImporting(true);
     const reader = new FileReader();
     reader.onload = async (e) => {
       const text = e.target?.result as string;
-      const lines = text.split(/\r\n|\n/);
-      const rawHeaders = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
-      const headerMap: { [key: string]: number } = {};
-      rawHeaders.forEach((h, i) => {
-          const lowerH = h.toLowerCase();
-          if (lowerH.includes('given name') && !('givenName' in headerMap)) headerMap['givenName'] = i;
-          else if (lowerH.includes('family name') && !('familyName' in headerMap)) headerMap['familyName'] = i;
-          else if (lowerH.includes('name') && !('name' in headerMap)) headerMap['name'] = i;
-          else if ((lowerH.includes('e-mail') || lowerH.includes('email')) && !('email' in headerMap)) headerMap['email'] = i;
-          else if (lowerH.includes('phone') && !('phone' in headerMap)) headerMap['phone'] = i;
-      });
+      const data = csvToArray(text);
+      if (data.length < 2) {
+          toast({ variant: "destructive", title: "Invalid CSV", description: "File is empty or not formatted correctly." });
+          setIsImporting(false);
+          return;
+      }
 
-      if (!((headerMap.name !== undefined || (headerMap.givenName !== undefined && headerMap.familyName !== undefined)) && headerMap.email !== undefined && headerMap.phone !== undefined)) {
+      const headers = data[0].map(h => h.trim().toLowerCase());
+      const rows = data.slice(1);
+      
+      const headerMap = {
+          name: headers.indexOf('name'),
+          givenName: headers.indexOf('given name'),
+          familyName: headers.indexOf('family name'),
+          email: headers.findIndex(h => h.startsWith('e-mail 1 - value')),
+          phone: headers.findIndex(h => h.startsWith('phone 1 - value')),
+      };
+
+      if (!((headerMap.name !== -1 || (headerMap.givenName !== -1)) && headerMap.email !== -1 && headerMap.phone !== -1)) {
         toast({
             variant: "destructive",
             title: "Invalid CSV format",
-            description: "CSV must include columns for name, email, and phone.",
+            description: "Could not find required columns (Name, Email, Phone).",
         });
         setIsImporting(false);
         return;
       }
       
-      const contactsData = lines.slice(1).map(line => {
-        const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
-        
-        let name: string;
-        if (headerMap.name !== undefined) {
-            name = values[headerMap.name];
-        } else if (headerMap.givenName !== undefined && headerMap.familyName !== undefined) {
-            name = `${values[headerMap.givenName]} ${values[headerMap.familyName]}`.trim();
-        } else if (headerMap.givenName !== undefined) {
-            name = values[headerMap.givenName];
-        } else {
-            return null; // Not enough name info
+      const contactsData = rows.map(row => {
+        let name = '';
+        if (headerMap.name !== -1 && row[headerMap.name]) {
+            name = row[headerMap.name];
+        } else if (headerMap.givenName !== -1) {
+            name = `${row[headerMap.givenName]} ${row[headerMap.familyName] || ''}`.trim();
         }
 
-        const email = values[headerMap.email];
-        const phone = values[headerMap.phone];
+        const email = row[headerMap.email] || '';
+        const phone = row[headerMap.phone] || '';
 
         if (!name || !email || !phone) return null;
 
@@ -478,4 +498,3 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     </div>
   );
 }
-
