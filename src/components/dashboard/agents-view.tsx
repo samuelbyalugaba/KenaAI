@@ -1,10 +1,10 @@
+
 "use client";
 
 import * as React from "react";
 import {
     MoreHorizontal,
     Search,
-    Log,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -44,14 +44,13 @@ import type { Agent, UserProfile, ActivityLog } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BarChart, Cell, XAxis, YAxis } from "recharts";
+import { BarChart as BarChartIcon, Cell, XAxis, YAxis, Tooltip as RechartsTooltip, Bar } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
 import { deleteAgent, getAgentsByCompany, getActivityLogs } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { EditAgentDialog } from "./edit-agent-dialog";
-import { Tooltip } from "@radix-ui/react-tooltip";
 
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
@@ -373,16 +372,16 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                             </div>
                        ) : (
                             <ChartContainer config={{}} className="h-64">
-                                <BarChart data={responseTimeData}>
+                                <BarChartIcon data={responseTimeData}>
                                     <XAxis dataKey="name" tickLine={false} axisLine={false} />
                                     <YAxis hide />
-                                    <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                                    <BarChart dataKey="time" radius={4}>
+                                    <RechartsTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                                    <Bar dataKey="time" radius={4}>
                                         {responseTimeData.map(entry => (
                                             <Cell key={entry.name} fill={entry.fill} />
                                         ))}
-                                    </BarChart>
-                                </BarChart>
+                                    </Bar>
+                                </BarChartIcon>
                             </ChartContainer>
                        )}
                     </CardContent>
@@ -441,4 +440,6 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
 }
 
     
+    
+
     
