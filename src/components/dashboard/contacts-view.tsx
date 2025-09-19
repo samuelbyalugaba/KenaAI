@@ -292,27 +292,26 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
   };
 
   const csvToArray = (text: string) => {
-      let p = '', row: string[] = [''], ret: string[][] = [row], i = 0, r = 0, s = !0, l;
-      for (l of text) {
-          if ('"' === l) {
-              if (s && l === p) row[i] += l;
-              s = !s;
-          } else if (',' === l && s) l = row[++i] = '';
-          else if ('\n' === l && s) {
-              if ('\r' === p) row[i] = row[i].slice(0, -1);
-              ret.push(row = []);
-              i = 0;
-          } else row[i] += l;
-          p = l;
-      }
-      if ('' === p) row.pop();
-      if (row.length === 1 && row[0] === '') ret.pop();
-      return ret;
+    let p = '', row: string[] = [''], ret: string[][] = [row], i = 0, r = 0, s = !0, l;
+    for (l of text) {
+        if ('"' === l) {
+            if (s && l === p) row[i] += l;
+            s = !s;
+        } else if (',' === l && s) l = row[++i] = '';
+        else if ('\n' === l && s) {
+            if ('\r' === p) row[i] = row[i].slice(0, -1);
+            ret.push(row = []);
+            i = 0;
+        } else row[i] += l;
+        p = l;
+    }
+    if (row.length === 1 && row[0] === '') ret.pop();
+    return ret;
   };
-
+  
   const findHeaderIndex = (headers: string[], possibleNames: string[]): number => {
     for (const name of possibleNames) {
-        const index = headers.indexOf(name.toLowerCase());
+        const index = headers.findIndex(h => h.toLowerCase().trim() === name.toLowerCase());
         if (index !== -1) {
             return index;
         }
@@ -343,11 +342,13 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
           phone: findHeaderIndex(headers, ['phone 1 - value', 'phone', 'phone number']),
       };
 
-      if ((headerMap.name === -1 && headerMap.givenName === -1)) {
+      const requiredColumnsFound = headerMap.name !== -1 || (headerMap.givenName !== -1 || headerMap.familyName !== -1);
+
+      if (!requiredColumnsFound) {
         toast({
             variant: "destructive",
             title: "Invalid CSV format",
-            description: "Could not find a required 'Name' column.",
+            description: "Could not find a required 'Name' column (or 'Given Name'/'Family Name').",
         });
         setIsImporting(false);
         return;
@@ -358,13 +359,15 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         let name = '';
         if (headerMap.name !== -1 && row[headerMap.name]) {
             name = row[headerMap.name];
-        } else if (headerMap.givenName !== -1) {
-            name = `${row[headerMap.givenName]} ${row[headerMap.familyName] || ''}`.trim();
+        } else if (headerMap.givenName !== -1 || headerMap.familyName !==-1) {
+            const firstName = (headerMap.givenName !== -1 && row[headerMap.givenName]) ? row[headerMap.givenName] : '';
+            const lastName = (headerMap.familyName !== -1 && row[headerMap.familyName]) ? row[headerMap.familyName] : '';
+            name = `${firstName} ${lastName}`.trim();
         }
 
-        const email = row[headerMap.email] || '';
-        const phone = row[headerMap.phone] || '';
-
+        const email = (headerMap.email !== -1 && row[headerMap.email]) ? row[headerMap.email] : '';
+        const phone = (headerMap.phone !== -1 && row[headerMap.phone]) ? row[headerMap.phone] : '';
+        
         if (!name) return null;
 
         return { name, email, phone };
