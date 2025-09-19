@@ -164,27 +164,19 @@ const PriorityBadge = ({ priority }: { priority: Priority }) => {
 
 const Stats = ({ chats }: { chats: Chat[] }) => {
   const totalChats = chats.length;
-  const openChats = chats.filter(c => c.unreadCount > 0).length;
-  const closedChats = totalChats - openChats;
-  const pendingChats = chats.filter(c => c.isChatbotActive).length;
-
-  const avgResponseTime = React.useMemo(() => {
-    // This is a mock calculation. In a real app, you'd calculate this from message timestamps.
-    const minutes = Math.floor(Math.random() * 5);
-    const seconds = Math.floor(Math.random() * 60);
-    return `${minutes}m ${seconds}s`;
-  }, [chats]);
+  const botHandled = chats.filter(c => c.isChatbotActive).length;
+  const agentHandled = totalChats - botHandled;
+  const pendingInquiries = chats.filter(c => c.unreadCount > 0).length;
 
   const stats = [
     { title: "Total Chats", value: totalChats.toString(), icon: MessageSquare },
-    { title: "Open", value: openChats.toString(), icon: Users },
-    { title: "Closed", value: closedChats.toString(), icon: CheckCircle },
-    { title: "Pending", value: pendingChats.toString(), icon: Clock },
-    { title: "Avg. Response", value: avgResponseTime, icon: Clock },
+    { title: "Bot-Handled", value: botHandled.toString(), icon: Bot },
+    { title: "Agent-Handled", value: agentHandled.toString(), icon: UserCheck },
+    { title: "Pending Inquiries", value: pendingInquiries.toString(), icon: Clock },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5 p-4">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 p-4">
       {stats.map((stat) => (
         <Card key={stat.title}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -836,6 +828,7 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
     </div>
   );
 }
+
 
 
 
