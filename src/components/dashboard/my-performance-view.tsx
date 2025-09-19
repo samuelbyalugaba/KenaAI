@@ -106,32 +106,24 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
         title: "Conversations Handled",
         value: conversations.toString(),
         description: `conversations ${timeRange.toLowerCase()}`,
-        trend: "+12%", // Mock trend
-        trendDirection: "up" as const,
         icon: MessageSquare,
       },
       {
         title: "Avg. Response Time",
         value: responseTime,
         description: `${timeRange.toLowerCase()}'s average ⏱️`,
-        trend: "-3.5%", // Mock trend
-        trendDirection: "down" as const,
         icon: Clock,
       },
       {
         title: "Resolution Rate",
         value: resolutionRate,
         description: "data not available",
-        trend: "+0.0%",
-        trendDirection: "up" as const,
         icon: CheckCircle,
       },
       {
         title: "CSAT Score",
         value: csat > 0 ? `${csatScore.toFixed(1)}/5` : 'N/A',
         description: `based on ${timeRange.toLowerCase()}'s ratings ⭐`,
-        trend: "+0.2", // Mock trend
-        trendDirection: "up" as const,
         icon: Star,
       },
     ];
@@ -190,10 +182,6 @@ export function MyPerformanceView({ onMenuClick, user }: MyPerformanceViewProps)
                     <CardContent>
                         <div className="text-2xl font-bold">{kpi.value}</div>
                         <p className="text-xs text-muted-foreground">{kpi.description}</p>
-                         <p className={cn("text-xs mt-2 flex items-center", kpi.trendDirection === 'up' ? "text-emerald-500" : "text-red-500")}>
-                            {kpi.trendDirection === 'up' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
-                            {kpi.trend} from last period
-                        </p>
                     </CardContent>
                 </Card>
                 ))}

@@ -216,36 +216,26 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         {
             title: "Total Conversations",
             value: totalConversations.toString(),
-            trend: "+15.2%",
-            trendDirection: "up" as const,
             icon: MessageSquare,
         },
         {
             title: "Bot vs Agent",
             value: `${botPercentage.toFixed(0)}% / ${agentPercentage.toFixed(0)}%`,
-            trend: "+3.1% Bot",
-            trendDirection: "up" as const,
             icon: Bot,
         },
         {
             title: "Average Response Time",
             value: avgResponseTimeText,
-            trend: "-5.8%",
-            trendDirection: "down" as const,
             icon: Clock,
         },
         {
             title: "Customer Satisfaction (CSAT)",
             value: avgCsatText,
-            trend: "+2.5%",
-            trendDirection: "up" as const,
             icon: Smile,
         },
         {
             title: "Agent Availability",
             value: `${agents.filter(a => a.status === 'Online').length} Active`,
-            trend: "+1",
-            trendDirection: "up" as const,
             icon: UserCheck,
         },
     ]
@@ -411,10 +401,6 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                         </CardHeader>
                         <CardContent>
                         <div className="text-2xl font-bold">{kpi.value}</div>
-                        <p className={cn("text-xs text-muted-foreground flex items-center", kpi.trendDirection === 'up' ? "text-emerald-500" : "text-red-500")}>
-                            {kpi.trendDirection === 'up' ? <ArrowUp className="h-3 w-3 mr-1" /> : <ArrowDown className="h-3 w-3 mr-1" />}
-                            {kpi.trend} from last week
-                        </p>
                         </CardContent>
                     </Card>
                 ))}
