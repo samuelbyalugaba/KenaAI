@@ -50,4 +50,4 @@ export const KenaAILogo: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 </svg>
 );
 
-
+    
