@@ -765,7 +765,7 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
           <div className="md:w-80 lg:w-96 border-r h-full flex flex-col">
             <MainHeader>
                  <div className="flex items-center flex-1">
-                    <KenaAILogo className="h-10" />
+                    <KenaAILogo className="h-8" />
                 </div>
             </MainHeader>
             { user ? <SidebarContent /> : null }
@@ -833,3 +833,6 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
 
 
 
+
+
+    
