@@ -924,10 +924,13 @@ export async function importContactsFromCSV(contactsData: { name: string; email:
         const companyObjId = new ObjectId(companyId);
 
         for (const contact of contactsData) {
-            const existingContact = await contactsCollection.findOne({
-                email: contact.email.toLowerCase(),
-                companyId: companyObjId
-            });
+            let existingContact = null;
+            if (contact.email) {
+                existingContact = await contactsCollection.findOne({
+                    email: contact.email.toLowerCase(),
+                    companyId: companyObjId
+                });
+            }
 
             if (existingContact) {
                 skippedCount++;
