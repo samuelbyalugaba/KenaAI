@@ -50,7 +50,6 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
-import { mockUnansweredQueries as initialUnansweredQueries } from "@/lib/mock-data";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { KenaAILogo } from "../ui/kena-ai-logo";
@@ -61,16 +60,6 @@ import { useToast } from "@/hooks/use-toast";
 import { getAgentsByCompany, getChatsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 
-
-const conversationVolumeData = [
-  { date: "Mon", conversations: 150 },
-  { date: "Tue", conversations: 210 },
-  { date: "Wed", conversations: 180 },
-  { date: "Thu", conversations: 250 },
-  { date: "Fri", conversations: 220 },
-  { date: "Sat", conversations: 300 },
-  { date: "Sun", conversations: 280 },
-];
 
 const channelBreakdownConfig = {
   value: {
@@ -101,6 +90,10 @@ const AgentPerformanceTable = ({ agents }: { agents: Agent[] }) => {
         .slice(0, 5)
         .map((agent, index) => ({...agent, rank: index + 1}));
 
+    if (sortedAgents.length === 0) {
+        return <p className="text-center text-muted-foreground p-8">No agent data available.</p>;
+    }
+
     return (
     <Table>
         <TableHeader>
@@ -125,9 +118,9 @@ const AgentPerformanceTable = ({ agents }: { agents: Agent[] }) => {
                             <div className="font-medium">{perf.name}</div>
                         </div>
                     </TableCell>
-                    <TableCell className="text-center">{perf.conversationsToday}</TableCell>
-                    <TableCell className="text-center">{perf.avgResponseTime}</TableCell>
-                    <TableCell className="text-right">{perf.csat}%</TableCell>
+                    <TableCell className="text-center">{perf.conversationsToday || 0}</TableCell>
+                    <TableCell className="text-center">{perf.avgResponseTime || 'N/A'}</TableCell>
+                    <TableCell className="text-right">{perf.csat ? `${perf.csat}%` : 'N/A'}</TableCell>
                 </TableRow>
             ))}
         </TableBody>
@@ -142,7 +135,6 @@ type DashboardViewProps = {
 
 export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   const { toast } = useToast();
-  const [unansweredQueries, setUnansweredQueries] = React.useState<UnansweredQuery[]>(initialUnansweredQueries);
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -162,16 +154,6 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     }
     fetchData();
   }, [user]);
-
-
-  const handleMarkAsResolved = (queryId: string) => {
-    setUnansweredQueries(prev => prev.map(q => q.id === queryId ? { ...q, status: 'resolved' } : q));
-    toast({ title: "Query Updated", description: "Marked as resolved." });
-  }
-
-  const handleAddToKB = () => {
-    toast({ title: "Action Required", description: "This functionality is under construction." });
-  }
 
   const handleExport = (type: 'PDF' | 'CSV') => {
       toast({
@@ -196,32 +178,39 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     const botPercentage = totalConversations > 0 ? (botConversations / totalConversations) * 100 : 0;
     const agentPercentage = totalConversations > 0 ? (agentConversations / totalConversations) * 100 : 0;
     
-    let totalSeconds = 0;
-    let validAgentsForTime = 0;
-    agents.forEach(agent => {
-        if (agent.avgResponseTime && agent.avgResponseTime !== 'N/A') {
-            const minMatch = agent.avgResponseTime.match(/(\d+)m/);
-            const secMatch = agent.avgResponseTime.match(/(\d+)s/);
-            let seconds = 0;
-            if (minMatch) seconds += parseInt(minMatch[1]) * 60;
-            if (secMatch) seconds += parseInt(secMatch[1]);
-            totalSeconds += seconds;
-            validAgentsForTime++;
-        }
-    });
-    const avgSeconds = validAgentsForTime > 0 ? totalSeconds / validAgentsForTime : 0;
-    const avgMinutes = Math.floor(avgSeconds / 60);
-    const remainingSeconds = Math.round(avgSeconds % 60);
+    let avgResponseTimeText = "N/A";
+    let avgCsatText = "N/A";
 
-    let totalCsat = 0;
-    let validAgentsForCsat = 0;
-    agents.forEach(agent => {
-        if (agent.csat) {
-            totalCsat += agent.csat;
-            validAgentsForCsat++;
-        }
-    });
-    const avgCsat = validAgentsForCsat > 0 ? totalCsat / validAgentsForCsat : 0;
+    if (totalConversations > 0) {
+        let totalSeconds = 0;
+        let validAgentsForTime = 0;
+        agents.forEach(agent => {
+            if (agent.avgResponseTime && agent.avgResponseTime !== 'N/A' && agent.conversationsToday && agent.conversationsToday > 0) {
+                const minMatch = agent.avgResponseTime.match(/(\d+)m/);
+                const secMatch = agent.avgResponseTime.match(/(\d+)s/);
+                let seconds = 0;
+                if (minMatch) seconds += parseInt(minMatch[1]) * 60;
+                if (secMatch) seconds += parseInt(secMatch[1]);
+                totalSeconds += seconds;
+                validAgentsForTime++;
+            }
+        });
+        const avgSeconds = validAgentsForTime > 0 ? totalSeconds / validAgentsForTime : 0;
+        const avgMinutes = Math.floor(avgSeconds / 60);
+        const remainingSeconds = Math.round(avgSeconds % 60);
+        avgResponseTimeText = avgSeconds > 0 ? `${avgMinutes}m ${remainingSeconds}s` : "N/A";
+
+        let totalCsat = 0;
+        let validAgentsForCsat = 0;
+        agents.forEach(agent => {
+            if (agent.csat && agent.conversationsToday && agent.conversationsToday > 0) {
+                totalCsat += agent.csat;
+                validAgentsForCsat++;
+            }
+        });
+        const avgCsat = validAgentsForCsat > 0 ? totalCsat / validAgentsForCsat : 0;
+        avgCsatText = avgCsat > 0 ? `${avgCsat.toFixed(1)}%` : "N/A";
+    }
 
     return [
         {
@@ -240,14 +229,14 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         },
         {
             title: "Average Response Time",
-            value: `${avgMinutes}m ${remainingSeconds}s`,
+            value: avgResponseTimeText,
             trend: "-5.8%",
             trendDirection: "down" as const,
             icon: Clock,
         },
         {
             title: "Customer Satisfaction (CSAT)",
-            value: `${avgCsat.toFixed(1)}%`,
+            value: avgCsatText,
             trend: "+2.5%",
             trendDirection: "up" as const,
             icon: Smile,
@@ -263,6 +252,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   }, [chats, agents, isLoading]);
 
   const channelBreakdownData = React.useMemo(() => {
+    if (chats.length === 0) return [];
     const counts = chats.reduce((acc, chat) => {
         acc[chat.channel] = (acc[chat.channel] || 0) + 1;
         return acc;
@@ -273,6 +263,20 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         value,
         fill: `hsl(var(--chart-${index + 1}))`
     }));
+  }, [chats]);
+  
+  const conversationVolumeData = React.useMemo(() => {
+      // This remains mock data as historical logging is not implemented.
+      if (chats.length === 0) return [];
+      return [
+        { date: "Mon", conversations: 150 },
+        { date: "Tue", conversations: 210 },
+        { date: "Wed", conversations: 180 },
+        { date: "Thu", conversations: 250 },
+        { date: "Fri", conversations: 220 },
+        { date: "Sat", conversations: 300 },
+        { date: "Sun", conversations: 280 },
+      ];
   }, [chats]);
 
 
@@ -427,17 +431,21 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     <Card>
                         <CardHeader>
                             <CardTitle>Conversation Volume</CardTitle>
-                            <CardDescription>Volume of conversations over the last 7 days.</CardDescription>
+                            <CardDescription>Volume of conversations over the last 7 days. (Demo data)</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ChartContainer config={{}} className="h-[300px] w-full">
-                                <LineChart data={conversationVolumeData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                                <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                                <YAxis tickLine={false} axisLine={false} />
-                                <Tooltip content={<ChartTooltipContent />} />
-                                <Line type="monotone" dataKey="conversations" stroke="hsl(var(--primary))" strokeWidth={2} dot={true} />
-                            </LineChart>
-                        </ChartContainer>
+                                {isLoading || conversationVolumeData.length === 0 ? (
+                                    <div className="flex h-full items-center justify-center text-muted-foreground">No conversation data available.</div>
+                                ) : (
+                                    <LineChart data={conversationVolumeData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                        <XAxis dataKey="date" tickLine={false} axisLine={false} />
+                                        <YAxis tickLine={false} axisLine={false} />
+                                        <Tooltip content={<ChartTooltipContent />} />
+                                        <Line type="monotone" dataKey="conversations" stroke="hsl(var(--primary))" strokeWidth={2} dot={true} />
+                                    </LineChart>
+                                )}
+                            </ChartContainer>
                         </CardContent>
                     </Card>
                 </div>
@@ -471,62 +479,9 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                                 <CardTitle>Unanswered Queries</CardTitle>
                                 <CardDescription>Log of queries the chatbot could not resolve.</CardDescription>
                             </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" className="ml-auto gap-1">
-                                        Export
-                                        <Download className="h-3 w-3" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => handleExport('CSV')}>Export as CSV</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => handleExport('PDF')}>Export as PDF</DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Query</TableHead>
-                                        <TableHead>Timestamp</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {unansweredQueries.map((item) => (
-                                        <TableRow key={item.id}>
-                                            <TableCell className="font-medium">{item.query}</TableCell>
-                                            <TableCell>{item.timestamp}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={item.status === 'resolved' ? 'default' : 'secondary'}>
-                                                    {item.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <Button size="icon" variant="ghost">
-                                                            <MoreHorizontal className="h-4 w-4" />
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={handleAddToKB}>
-                                                            Add to Knowledge Base
-                                                        </DropdownMenuItem>
-                                                        {item.status === 'pending' && (
-                                                            <DropdownMenuItem onClick={() => handleMarkAsResolved(item.id)}>
-                                                                Mark as Resolved
-                                                            </DropdownMenuItem>
-                                                        )}
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                            <p className="text-center text-muted-foreground p-8">Unanswered query tracking feature coming soon.</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -564,8 +519,8 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                             <CardTitle>Breakdown by Channel</CardTitle>
                         </CardHeader>
                         <CardContent>
-                             {isLoading ? (
-                                <Skeleton className="h-[250px] w-full" />
+                             {isLoading || channelBreakdownData.length === 0 ? (
+                                <div className="flex h-[250px] items-center justify-center text-muted-foreground">No channel data available.</div>
                             ) : (
                                <ChartContainer config={channelBreakdownConfig} className="h-[250px] w-full">
                                     <BarChart data={channelBreakdownData} layout="vertical" margin={{ left: 10, right: 10 }}>
@@ -599,14 +554,20 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                             <CardTitle>New vs Returning</CardTitle>
                         </CardHeader>
                         <CardContent className="flex justify-around items-center">
-                            <div className="text-center">
-                                <p className="text-3xl font-bold">350</p>
-                                <p className="text-sm text-muted-foreground">New</p>
-                            </div>
-                            <div className="text-center">
-                                <p className="text-3xl font-bold">895</p>
-                                <p className="text-sm text-muted-foreground">Returning</p>
-                            </div>
+                             {chats.length === 0 ? (
+                                <div className="text-center text-muted-foreground p-4">No data</div>
+                             ) : (
+                                <>
+                                    <div className="text-center">
+                                        <p className="text-3xl font-bold">350</p>
+                                        <p className="text-sm text-muted-foreground">New</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-3xl font-bold">895</p>
+                                        <p className="text-sm text-muted-foreground">Returning</p>
+                                    </div>
+                                </>
+                             )}
                         </CardContent>
                     </Card>
                 </div>
@@ -617,3 +578,5 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
+
+    
