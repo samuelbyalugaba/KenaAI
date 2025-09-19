@@ -288,11 +288,9 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     if (file) {
       parseCSV(file);
     }
-    // Reset file input to allow re-uploading the same file
     event.target.value = '';
   };
 
-  // Robust CSV parser function
   const csvToArray = (text: string) => {
       let p = '', row: string[] = [''], ret: string[][] = [row], i = 0, r = 0, s = !0, l;
       for (l of text) {
@@ -312,6 +310,16 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
       return ret;
   };
 
+  const findHeaderIndex = (headers: string[], possibleNames: string[]): number => {
+    for (const name of possibleNames) {
+        const index = headers.indexOf(name.toLowerCase());
+        if (index !== -1) {
+            return index;
+        }
+    }
+    return -1;
+  };
+
   const parseCSV = (file: File) => {
     setIsImporting(true);
     const reader = new FileReader();
@@ -326,17 +334,16 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
       }
 
       const headers = data[0].map(h => h.trim().toLowerCase());
-      const rows = data.slice(1);
       
       const headerMap = {
-          name: headers.indexOf('name'),
-          givenName: headers.indexOf('given name'),
-          familyName: headers.indexOf('family name'),
-          email: headers.findIndex(h => h.startsWith('e-mail 1 - value')),
-          phone: headers.findIndex(h => h.startsWith('phone 1 - value')),
+          name: findHeaderIndex(headers, ['name']),
+          givenName: findHeaderIndex(headers, ['given name']),
+          familyName: findHeaderIndex(headers, ['family name']),
+          email: findHeaderIndex(headers, ['e-mail 1 - value', 'email', 'email address']),
+          phone: findHeaderIndex(headers, ['phone 1 - value', 'phone', 'phone number']),
       };
 
-      if (!((headerMap.name !== -1 || (headerMap.givenName !== -1)) && headerMap.email !== -1 && headerMap.phone !== -1)) {
+      if ((headerMap.name === -1 && headerMap.givenName === -1) || headerMap.email === -1 || headerMap.phone === -1) {
         toast({
             variant: "destructive",
             title: "Invalid CSV format",
@@ -346,6 +353,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         return;
       }
       
+      const rows = data.slice(1);
       const contactsData = rows.map(row => {
         let name = '';
         if (headerMap.name !== -1 && row[headerMap.name]) {
