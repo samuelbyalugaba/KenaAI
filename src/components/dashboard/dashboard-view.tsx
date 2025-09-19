@@ -352,7 +352,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                 <PanelLeft className="h-5 w-5" />
                 <span className="sr-only">Open Menu</span>
             </Button>
-            <KenaAILogo className="h-10 hidden sm:block" />
+            <KenaAILogo className="h-13 hidden sm:block" />
             <h1 className="text-xl sm:text-2xl font-bold">Analytics Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">

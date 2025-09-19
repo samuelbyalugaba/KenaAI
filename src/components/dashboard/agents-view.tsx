@@ -1,10 +1,10 @@
-
 "use client";
 
 import * as React from "react";
 import {
     MoreHorizontal,
     Search,
+    Log,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -40,17 +40,18 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import type { Agent, UserProfile } from "@/types";
+import type { Agent, UserProfile, ActivityLog } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BarChart, Cell, XAxis, YAxis, Tooltip } from "recharts";
+import { BarChart, Cell, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
-import { deleteAgent, getAgentsByCompany } from "@/app/actions";
+import { deleteAgent, getAgentsByCompany, getActivityLogs } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { EditAgentDialog } from "./edit-agent-dialog";
+import { Tooltip } from "@radix-ui/react-tooltip";
 
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
@@ -61,6 +62,7 @@ const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-s
 
 export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; user: UserProfile | null }) {
   const [agents, setAgents] = React.useState<Agent[]>([]);
+  const [activityLogs, setActivityLogs] = React.useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
@@ -68,15 +70,19 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
   const { toast } = useToast();
 
   React.useEffect(() => {
-    async function fetchAgents() {
+    async function fetchData() {
         if (user?.companyId) {
             setIsLoading(true);
-            const fetchedAgents = await getAgentsByCompany(user.companyId);
+            const [fetchedAgents, fetchedLogs] = await Promise.all([
+                getAgentsByCompany(user.companyId),
+                getActivityLogs(user.companyId)
+            ]);
             setAgents(fetchedAgents);
+            setActivityLogs(fetchedLogs);
             setIsLoading(false);
         }
     }
-    fetchAgents();
+    fetchData();
   }, [user]);
 
 
@@ -178,7 +184,7 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                 <PanelLeft className="h-5 w-5" />
                 <span className="sr-only">Open Menu</span>
             </Button>
-            <h1 className="text-2xl font-bold">Agents & Team Management</h1>
+            <h1 className="text-2xl font-bold">Agents &amp; Team Management</h1>
         </div>
         <div className="flex items-center gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:flex-initial">
@@ -383,6 +389,44 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
                 </Card>
             </div>
         </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Recent Team Activity</CardTitle>
+                <CardDescription>An audit trail of actions taken by agents.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Agent</TableHead>
+                            <TableHead>Action</TableHead>
+                            <TableHead>Details</TableHead>
+                            <TableHead className="text-right">Timestamp</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {isLoading ? (
+                            Array.from({ length: 5 }).map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
+                                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-4 w-[150px] ml-auto" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : activityLogs.map(log => (
+                            <TableRow key={log.id}>
+                                <TableCell>{log.agentName}</TableCell>
+                                <TableCell><Badge variant="secondary">{log.action}</Badge></TableCell>
+                                <TableCell>{log.details}</TableCell>
+                                <TableCell className="text-right">{new Date(log.timestamp).toLocaleString()}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
       </main>
       {editingAgent && (
         <EditAgentDialog 

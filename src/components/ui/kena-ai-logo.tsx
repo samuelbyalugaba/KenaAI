@@ -8,7 +8,7 @@ export const KenaAILogo: React.FC<React.SVGProps<SVGSVGElement>> = (props) => {
     <div className={className} {...rest}>
       <Image 
         src={KenaAILogoSrc} 
-        alt="KenaAI Logo" 
+        alt="KenaAI" 
         width={133} 
         height={50} 
         priority

@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -35,13 +34,12 @@ type SettingsDialogProps = {
   onUserUpdate: (user: Partial<UserProfile>) => void
 }
 
-type SettingsSection = "profile" | "integrations" | "team" | "chatbot" | "help"
+type SettingsSection = "profile" | "integrations" | "chatbot" | "help"
 
 const settingsNavItems = (user: UserProfile | null) => {
     const allItems = [
         { id: "profile", label: "Profile & Account", icon: User, forAll: true },
         { id: "integrations", label: "Platform Integrations", icon: Link, forAll: false },
-        { id: "team", label: "Team & Permissions", icon: Users, forAll: false },
         { id: "chatbot", label: "Chatbot Settings", icon: Bot, forAll: false },
         { id: "help", label: "Help & Support", icon: HelpCircle, forAll: true },
     ];
@@ -217,94 +215,9 @@ const IntegrationSettings = () => {
     );
 };
 
-const ActivityLogsTab = ({ user }: { user: UserProfile | null }) => {
-    const [logs, setLogs] = React.useState<ActivityLog[]>([]);
-    const [isLoading, setIsLoading] = React.useState(true);
-
-    React.useEffect(() => {
-        async function fetchLogs() {
-            if (user?.companyId) {
-                setIsLoading(true);
-                const fetchedLogs = await getActivityLogs(user.companyId);
-                setLogs(fetchedLogs);
-                setIsLoading(false);
-            }
-        }
-        fetchLogs();
-    }, [user]);
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Activity Logs</CardTitle>
-                <CardDescription>An audit trail of all actions within your company.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Agent</TableHead>
-                            <TableHead>Action</TableHead>
-                            <TableHead>Details</TableHead>
-                            <TableHead className="text-right">Timestamp</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {isLoading ? (
-                            Array.from({ length: 5 }).map((_, i) => (
-                                <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-[100px]" /></TableCell>
-                                    <TableCell><Skeleton className="h-4 w-[200px]" /></TableCell>
-                                    <TableCell className="text-right"><Skeleton className="h-4 w-[150px] ml-auto" /></TableCell>
-                                </TableRow>
-                            ))
-                        ) : logs.map(log => (
-                            <TableRow key={log.id}>
-                                <TableCell>{log.agentName}</TableCell>
-                                <TableCell><Badge variant="secondary">{log.action}</Badge></TableCell>
-                                <TableCell>{log.details}</TableCell>
-                                <TableCell className="text-right">{new Date(log.timestamp).toLocaleString()}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </CardContent>
-        </Card>
-    );
-};
-
-
-const TeamSettings = ({ user }: { user: UserProfile | null }) => (
-    <Tabs defaultValue="users">
-        <TabsList className="mb-4">
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="permissions">Permissions</TabsTrigger>
-            <TabsTrigger value="logs">Activity Logs</TabsTrigger>
-        </TabsList>
-        <TabsContent value="users">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Team Members</CardTitle>
-                    <CardDescription>Add, remove, and manage agent roles.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <p className="p-8 text-center text-muted-foreground">User management is handled on the "Agents" page.</p>
-                </CardContent>
-            </Card>
-        </TabsContent>
-        <TabsContent value="permissions">
-            <p className="text-center text-muted-foreground p-8">Permission controls are coming soon.</p>
-        </TabsContent>
-        <TabsContent value="logs">
-            <ActivityLogsTab user={user} />
-        </TabsContent>
-    </Tabs>
-);
-
 const ChatbotSettings = () => (
     <Card>
-        <CardHeader><CardTitle>Chatbot & Conversation</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Chatbot &amp; Conversation</CardTitle></CardHeader>
         <CardContent className="space-y-6">
             <div className="space-y-2">
                 <Label htmlFor="greeting">Default Greeting</Label>
@@ -362,8 +275,6 @@ export function SettingsDialog({ open, onOpenChange, user, onUserUpdate }: Setti
               return <ProfileSettings user={user} />;
           case 'integrations':
               return <IntegrationSettings />;
-          case 'team':
-              return <TeamSettings user={user} />;
           case 'chatbot':
               return <ChatbotSettings />;
           case 'help':
@@ -376,7 +287,6 @@ export function SettingsDialog({ open, onOpenChange, user, onUserUpdate }: Setti
   const sectionTitles: Record<SettingsSection, string> = {
       profile: "Profile & Account",
       integrations: "Platform Integrations",
-      team: "Team & Permissions",
       chatbot: "Chatbot Settings",
       help: "Help & Support"
   }
