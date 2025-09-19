@@ -44,7 +44,7 @@ import type { Agent, UserProfile } from "@/types";
 import { AddAgentDialog } from "./add-agent-dialog";
 import { PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { BarChart, Cell, XAxis, YAxis } from "recharts";
+import { BarChart, Cell, XAxis, YAxis, Tooltip } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
 import { deleteAgent, getAgentsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
@@ -396,4 +396,5 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
   );
 }
 
+    
     
