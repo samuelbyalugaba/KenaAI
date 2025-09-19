@@ -62,6 +62,18 @@ async function logActivity(companyId: string | ObjectId, agentName: string, acti
     }
 }
 
+// A simple hashing function to create a pseudo-random but consistent number from a string.
+const simpleHash = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return Math.abs(hash);
+};
+
+
 export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
     try {
         if (!companyId || !ObjectId.isValid(companyId)) {
@@ -81,7 +93,10 @@ export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
             });
             
             const statuses: Array<'Online' | 'Offline' | 'Busy'> = ['Online', 'Offline', 'Busy'];
-            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            const hash = simpleHash(agent.name);
+            const randomStatus = statuses[hash % statuses.length];
+            const avgResponseMinutes = (hash % 4) + 1; // 1 to 4 minutes
+            const avgResponseSeconds = hash % 60; // 0 to 59 seconds
 
             return {
                 ...agent,
@@ -90,8 +105,8 @@ export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
                 companyId: agent.companyId?.toString(),
                 conversationsToday,
                 status: randomStatus,
-                avgResponseTime: `${Math.floor(Math.random() * 5)}m ${Math.floor(Math.random() * 60)}s`,
-                csat: 85 + Math.floor(Math.random() * 15),
+                avgResponseTime: `${avgResponseMinutes}m ${avgResponseSeconds}s`,
+                csat: 85 + (hash % 15),
             };
         }));
         
