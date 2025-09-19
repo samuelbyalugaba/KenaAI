@@ -298,26 +298,55 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     reader.onload = async (e) => {
       const text = e.target?.result as string;
       const lines = text.split(/\r\n|\n/);
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      const requiredHeaders = ['name', 'email', 'phone'];
+      const rawHeaders = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
-      if (!requiredHeaders.every(h => headers.includes(h))) {
+      const headerMap: { [key: string]: number } = {};
+      rawHeaders.forEach((h, i) => {
+          const lowerH = h.toLowerCase();
+          if (lowerH.includes('given name') && !('givenName' in headerMap)) headerMap['givenName'] = i;
+          else if (lowerH.includes('family name') && !('familyName' in headerMap)) headerMap['familyName'] = i;
+          else if (lowerH.includes('name') && !('name' in headerMap)) headerMap['name'] = i;
+          else if ((lowerH.includes('e-mail') || lowerH.includes('email')) && !('email' in headerMap)) headerMap['email'] = i;
+          else if (lowerH.includes('phone') && !('phone' in headerMap)) headerMap['phone'] = i;
+      });
+
+      if (!((headerMap.name !== undefined || (headerMap.givenName !== undefined && headerMap.familyName !== undefined)) && headerMap.email !== undefined && headerMap.phone !== undefined)) {
         toast({
             variant: "destructive",
             title: "Invalid CSV format",
-            description: "CSV must include 'name', 'email', and 'phone' columns.",
+            description: "CSV must include columns for name, email, and phone.",
         });
         setIsImporting(false);
         return;
       }
       
       const contactsData = lines.slice(1).map(line => {
-        const values = line.split(',');
-        return headers.reduce((obj, header, index) => {
-          (obj as any)[header] = values[index]?.trim();
-          return obj;
-        }, {} as { name: string; email: string; phone: string });
-      }).filter(c => c.name && c.email && c.phone);
+        const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+        
+        let name: string;
+        if (headerMap.name !== undefined) {
+            name = values[headerMap.name];
+        } else if (headerMap.givenName !== undefined && headerMap.familyName !== undefined) {
+            name = `${values[headerMap.givenName]} ${values[headerMap.familyName]}`.trim();
+        } else if (headerMap.givenName !== undefined) {
+            name = values[headerMap.givenName];
+        } else {
+            return null; // Not enough name info
+        }
+
+        const email = values[headerMap.email];
+        const phone = values[headerMap.phone];
+
+        if (!name || !email || !phone) return null;
+
+        return { name, email, phone };
+      }).filter(Boolean) as { name: string; email: string; phone: string }[];
+
+      if (contactsData.length === 0) {
+        toast({ variant: "destructive", title: "No contacts found", description: "The CSV file appears to be empty or in an unsupported format." });
+        setIsImporting(false);
+        return;
+      }
 
       if (!user?.companyId) {
         toast({ variant: "destructive", title: "Error", description: "Company context not found." });
@@ -449,3 +478,4 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     </div>
   );
 }
+
