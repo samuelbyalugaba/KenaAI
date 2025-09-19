@@ -1,16 +1,9 @@
 
 "use client"
 
-import { useContext } from "react"
-import {
-  ThemeContext,
-  type ThemeContextType,
-} from "@/components/ui/theme-provider"
+import { useTheme as useNextTheme } from "next-themes"
 
-export const useTheme = (): ThemeContextType => {
-  const context = useContext(ThemeContext)
-  if (context === undefined) {
-    throw new Error("useTheme must be used within a ThemeProvider")
-  }
-  return context
-}
+// This custom hook is now a simple re-export of the hook from next-themes.
+// This maintains the existing `useTheme` import paths throughout the app
+// while using the more robust library.
+export const useTheme = useNextTheme

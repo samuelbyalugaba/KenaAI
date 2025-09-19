@@ -2,7 +2,10 @@
 "use client"
 
 import * as React from "react"
-import { createContext, useEffect, useState } from "react"
+import { ThemeProvider as NextThemesProvider } from "next-themes"
+import type { ThemeProviderProps as NextThemesProviderProps } from "next-themes/dist/types"
+
+import { useTheme as useNextTheme } from "next-themes"
 
 export type Theme = "dark" | "light" | "system"
 
@@ -11,55 +14,9 @@ export type ThemeContextType = {
   setTheme: (theme: Theme) => void
 }
 
-export const ThemeContext = createContext<ThemeContextType | undefined>(
-  undefined
-)
+// Re-export useTheme from next-themes
+export const useTheme = useNextTheme
 
-type ThemeProviderProps = {
-  children: React.ReactNode
-  defaultTheme?: Theme
-  storageKey?: string
-}
-
-export function ThemeProvider({
-  children,
-  defaultTheme = "system",
-  storageKey = "vite-ui-theme",
-  ...props
-}: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (typeof window !== 'undefined' ? (localStorage.getItem(storageKey) as Theme) : undefined) || defaultTheme
-  )
-
-  useEffect(() => {
-    const root = window.document.documentElement
-    root.classList.remove("light", "dark")
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
-      root.classList.add(systemTheme)
-      return
-    }
-
-    root.classList.add(theme)
-  }, [theme])
-
-  const value = {
-    theme,
-    setTheme: (theme: Theme) => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(storageKey, theme)
-      }
-      setTheme(theme)
-    },
-  }
-
-  return (
-    <ThemeContext.Provider {...props} value={value}>
-      {children}
-    </ThemeContext.Provider>
-  )
+export function ThemeProvider({ children, ...props }: NextThemesProviderProps) {
+  return <NextThemesProvider {...props}>{children}</NextThemesProvider>
 }
