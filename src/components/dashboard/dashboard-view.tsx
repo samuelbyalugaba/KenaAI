@@ -12,7 +12,7 @@ import {
 import { 
     PanelLeft,
     FileText,
-    Calendar,
+    Calendar as CalendarIcon,
     MessageSquare,
     Users,
     Clock,
@@ -59,6 +59,10 @@ import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { getAgentsByCompany, getChatsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
+import { DateRange } from "react-day-picker";
+import { addDays, format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
 
 
 const channelBreakdownConfig = {
@@ -138,6 +142,10 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: addDays(new Date(), -7),
+    to: new Date(),
+  });
 
   React.useEffect(() => {
     async function fetchData() {
@@ -296,6 +304,46 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
       )
   }
 
+  const DateRangePicker = ({className}: {className?: string}) => (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          id="date"
+          variant={"outline"}
+          className={cn(
+            "justify-start text-left font-normal",
+            !date && "text-muted-foreground",
+            className
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date?.from ? (
+            date.to ? (
+              <>
+                {format(date.from, "LLL dd, y")} -{" "}
+                {format(date.to, "LLL dd, y")}
+              </>
+            ) : (
+              format(date.from, "LLL dd, y")
+            )
+          ) : (
+            <span>Pick a date</span>
+          )}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="end">
+        <Calendar
+          initialFocus
+          mode="range"
+          defaultMonth={date?.from}
+          selected={date}
+          onSelect={setDate}
+          numberOfMonths={2}
+        />
+      </PopoverContent>
+    </Popover>
+  );
+
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
       <header className="flex items-center justify-between gap-4 p-4 border-b">
@@ -308,8 +356,23 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
             <h1 className="text-xl sm:text-2xl font-bold">Analytics Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="outline" className="hidden sm:flex gap-2"><Calendar className="h-4 w-4" /> Date Range</Button>
-            <Button variant="outline" size="icon" className="sm:hidden"><Calendar className="h-4 w-4" /></Button>
+            <DateRangePicker className="hidden sm:flex" />
+             <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="sm:hidden"><CalendarIcon className="h-4 w-4" /></Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  initialFocus
+                  mode="range"
+                  defaultMonth={date?.from}
+                  selected={date}
+                  onSelect={setDate}
+                  numberOfMonths={1}
+                />
+              </PopoverContent>
+            </Popover>
+
 
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
