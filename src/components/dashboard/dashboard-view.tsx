@@ -347,12 +347,12 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground">
       <header className="flex items-center justify-between gap-4 p-4 border-b">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 h-full">
             <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
                 <PanelLeft className="h-5 w-5" />
                 <span className="sr-only">Open Menu</span>
             </Button>
-            <KenaAILogo className="h-8 hidden sm:block" />
+            <KenaAILogo className="h-10 hidden sm:block" />
             <h1 className="text-xl sm:text-2xl font-bold">Analytics Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -616,6 +616,8 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
+
+    
 
     
 
