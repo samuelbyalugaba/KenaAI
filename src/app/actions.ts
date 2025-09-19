@@ -95,8 +95,16 @@ export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
             const statuses: Array<'Online' | 'Offline' | 'Busy'> = ['Online', 'Offline', 'Busy'];
             const hash = simpleHash(agent.name);
             const randomStatus = statuses[hash % statuses.length];
-            const avgResponseMinutes = (hash % 4) + 1; // 1 to 4 minutes
-            const avgResponseSeconds = hash % 60; // 0 to 59 seconds
+
+            let avgResponseTime = "N/A";
+            let csat: number | undefined = undefined;
+
+            if (conversationsToday > 0) {
+                const avgResponseMinutes = (hash % 4) + 1; // 1 to 4 minutes
+                const avgResponseSeconds = hash % 60; // 0 to 59 seconds
+                avgResponseTime = `${avgResponseMinutes}m ${avgResponseSeconds}s`;
+                csat = 85 + (hash % 15);
+            }
 
             return {
                 ...agent,
@@ -105,8 +113,8 @@ export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
                 companyId: agent.companyId?.toString(),
                 conversationsToday,
                 status: randomStatus,
-                avgResponseTime: `${avgResponseMinutes}m ${avgResponseSeconds}s`,
-                csat: 85 + (hash % 15),
+                avgResponseTime,
+                csat,
             };
         }));
         
