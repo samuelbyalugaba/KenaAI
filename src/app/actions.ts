@@ -914,4 +914,60 @@ export async function getCampaignsByCompany(companyId: string): Promise<Campaign
     }
 }
 
+export async function importContactsFromCSV(contactsData: { name: string; email: string; phone: string }[], companyId: string): Promise<{ success: boolean; message: string; newContacts: User[]; importedCount: number; skippedCount: number; }> {
+    try {
+        const contactsCollection = await getContactsCollection();
+        const newContacts: User[] = [];
+        let importedCount = 0;
+        let skippedCount = 0;
+
+        const companyObjId = new ObjectId(companyId);
+
+        for (const contact of contactsData) {
+            const existingContact = await contactsCollection.findOne({
+                email: contact.email.toLowerCase(),
+                companyId: companyObjId
+            });
+
+            if (existingContact) {
+                skippedCount++;
+                continue;
+            }
+
+            const avatar = `https://picsum.photos/seed/${contact.name.replace(/\s/g, '')}/100/100`;
+            const contactToInsert: Omit<User, 'id' | '_id'> = {
+                name: contact.name,
+                email: contact.email.toLowerCase(),
+                phone: contact.phone,
+                avatar,
+                companyId: companyObjId,
+                notes: [],
+                online: false,
+            };
+
+            const result = await contactsCollection.insertOne(contactToInsert as any);
+            if (result.insertedId) {
+                importedCount++;
+                newContacts.push({
+                    ...(contactToInsert as Omit<User, 'id' | '_id'>),
+                    _id: result.insertedId.toString(),
+                    id: result.insertedId.toString(),
+                    companyId: companyId,
+                });
+            }
+        }
+
+        return {
+            success: true,
+            message: `Import complete. Added ${importedCount} new contacts, skipped ${skippedCount} duplicates.`,
+            newContacts,
+            importedCount,
+            skippedCount
+        };
+
+    } catch (error) {
+        console.error("CSV import error:", error);
+        return { success: false, message: "An unexpected error occurred during import.", newContacts: [], importedCount: 0, skippedCount: 0 };
+    }
+}
     

@@ -3,7 +3,7 @@
 "use client";
 
 import * as React from "react";
-import { User, Phone, Mail, Search, MessageSquare, ArrowLeft, PanelLeft, LogIn, UserCheck } from "lucide-react";
+import { User, Phone, Mail, Search, MessageSquare, ArrowLeft, PanelLeft, LogIn, UserCheck, Upload } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { Separator } from "../ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "../ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { getContactsByCompany, getAgentsByCompany, assignAgentToContact, addNoteToContact, getMessagesForChat, getChatsByCompany } from "@/app/actions";
+import { getContactsByCompany, getAgentsByCompany, assignAgentToContact, addNoteToContact, getMessagesForChat, getChatsByCompany, importContactsFromCSV } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { AddContactDialog } from "./add-contact-dialog";
 
@@ -210,9 +210,12 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isImporting, setIsImporting] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
   const [selectedChatHistory, setSelectedChatHistory] = React.useState<Message[] | undefined>(undefined);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
   
   React.useEffect(() => {
     async function fetchData() {
@@ -276,6 +279,67 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     setContacts(prev => [newContact, ...prev]);
   };
 
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      parseCSV(file);
+    }
+    // Reset file input to allow re-uploading the same file
+    event.target.value = '';
+  };
+
+  const parseCSV = (file: File) => {
+    setIsImporting(true);
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const text = e.target?.result as string;
+      const lines = text.split(/\r\n|\n/);
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const requiredHeaders = ['name', 'email', 'phone'];
+      
+      if (!requiredHeaders.every(h => headers.includes(h))) {
+        toast({
+            variant: "destructive",
+            title: "Invalid CSV format",
+            description: "CSV must include 'name', 'email', and 'phone' columns.",
+        });
+        setIsImporting(false);
+        return;
+      }
+      
+      const contactsData = lines.slice(1).map(line => {
+        const values = line.split(',');
+        return headers.reduce((obj, header, index) => {
+          (obj as any)[header] = values[index]?.trim();
+          return obj;
+        }, {} as { name: string; email: string; phone: string });
+      }).filter(c => c.name && c.email && c.phone);
+
+      if (!user?.companyId) {
+        toast({ variant: "destructive", title: "Error", description: "Company context not found." });
+        setIsImporting(false);
+        return;
+      }
+
+      const result = await importContactsFromCSV(contactsData, user.companyId);
+      if (result.success) {
+        setContacts(prev => [...result.newContacts, ...prev]);
+        toast({
+          title: "Import Successful",
+          description: result.message,
+        });
+      } else {
+        toast({ variant: "destructive", title: "Import Failed", description: result.message });
+      }
+      setIsImporting(false);
+    };
+    reader.readAsText(file);
+  };
+
 
   if (!user) {
       return (
@@ -309,6 +373,17 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept=".csv"
+            />
+            <Button variant="outline" onClick={handleImportClick} disabled={isImporting}>
+                <Upload className="mr-2 h-4 w-4" />
+                {isImporting ? "Importing..." : "Import"}
+            </Button>
             <AddContactDialog onContactAdd={handleContactAdd} user={user} />
         </div>
     </header>
