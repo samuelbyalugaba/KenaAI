@@ -140,7 +140,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md flex flex-col">
+      <DialogContent className="sm:max-w-md flex flex-col h-[70vh] max-h-[500px]">
         {view === 'select' ? (
           <>
             <DialogHeader>
@@ -162,7 +162,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
                 </div>
             </div>
 
-            <ScrollArea className="flex-1 -mr-6 pr-6">
+            <ScrollArea className="flex-1 -mr-6 pr-6 my-2">
                 <div className="space-y-2">
                     <div className="flex items-center gap-3 p-2">
                          <Checkbox 
@@ -200,7 +200,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
                 </div>
             </ScrollArea>
             
-            <div className="pr-6">
+            <div className="pr-6 pt-2">
                 <Separator className="my-4" />
                 <Label htmlFor="new-contact" className="text-sm font-medium">New Contact</Label>
                 <div className="relative mt-2">
@@ -215,7 +215,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
                 </div>
             </div>
 
-            <DialogFooter className="pt-4 pr-6">
+            <DialogFooter className="pt-4 pr-6 mt-auto">
               <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
               </DialogClose>
@@ -253,7 +253,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
                 onChange={(e) => setMessage(e.target.value)}
             />
 
-            <DialogFooter className="pt-4">
+            <DialogFooter className="pt-4 mt-auto">
               <Button variant="outline" onClick={() => setView('select')}>Back</Button>
               <Button onClick={handleSend} disabled={message.trim().length === 0 || isSubmitting}>
                 {isSubmitting ? 'Sending...' : <><Send className="mr-2 h-4 w-4" /> Send Message</>}
