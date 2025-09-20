@@ -359,7 +359,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         let name = '';
         if (headerMap.name !== -1 && row[headerMap.name]) {
             name = row[headerMap.name];
-        } else if (headerMap.givenName !== -1 || headerMap.familyName !==-1) {
+        } else {
             const firstName = (headerMap.givenName !== -1 && row[headerMap.givenName]) ? row[headerMap.givenName] : '';
             const lastName = (headerMap.familyName !== -1 && row[headerMap.familyName]) ? row[headerMap.familyName] : '';
             name = `${firstName} ${lastName}`.trim();
@@ -450,7 +450,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     <main className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
         {/* Contact List */}
         <div className={cn("md:col-span-1 lg:col-span-1 border-r flex flex-col", selectedContact ? "hidden md:flex" : "flex")}>
-            <ScrollArea className="flex-1 h-full">
+            <ScrollArea className="flex-1">
                 {isLoading ? (
                     <div className="p-2 space-y-1">
                         {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
@@ -509,3 +509,4 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     </div>
   );
 }
+
