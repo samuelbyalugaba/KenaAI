@@ -423,8 +423,8 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         <main className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 overflow-hidden">
             {/* Contact List */}
             <div className={cn("md:col-span-1 lg:col-span-1 border-r flex flex-col h-full", selectedContact ? "hidden md:flex" : "flex")}>
-                <div className="flex-1 min-h-0">
-                  <ScrollArea className="h-full">
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <ScrollArea className="flex-1">
                       {isLoading ? (
                           <div className="p-2 space-y-1">
                               {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
@@ -482,3 +482,5 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     </div>
   );
 }
+
+    
