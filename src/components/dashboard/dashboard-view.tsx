@@ -60,7 +60,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getAgentsByCompany, getChatsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { DateRange } from "react-day-picker";
-import { addDays, format } from "date-fns";
+import { addDays, format, startOfDay, eachDayOfInterval, isWithinInterval } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 
@@ -88,14 +88,39 @@ const channelBreakdownConfig = {
 }
 
 
-const AgentPerformanceTable = ({ agents }: { agents: Agent[] }) => {
-    const sortedAgents = [...agents]
-        .sort((a, b) => (b.conversationsToday || 0) - (a.conversationsToday || 0))
+const AgentPerformanceTable = ({ agents, chats }: { agents: Agent[], chats: Chat[] }) => {
+    
+    const agentPerformance = agents.map(agent => {
+        const agentChats = chats.filter(chat => {
+            // A simple heuristic: if a message from 'me' (agent) exists with this agent's ID
+            return chat.messages.some(m => m.sender === 'me' && m.senderId?.toString() === agent.id.toString());
+        });
+        
+        let totalSeconds = 0;
+        let validAgentsForTime = 0;
+        if (agent.avgResponseTime && agent.avgResponseTime !== 'N/A') {
+            const minMatch = agent.avgResponseTime.match(/(\d+)m/);
+            const secMatch = agent.avgResponseTime.match(/(\d+)s/);
+            if (minMatch) totalSeconds += parseInt(minMatch[1]) * 60;
+            if (secMatch) totalSeconds += parseInt(secMatch[1]);
+            validAgentsForTime++;
+        }
+        
+        return {
+            ...agent,
+            conversationsHandled: agentChats.length,
+            avgResponseTime: agent.avgResponseTime,
+            csat: agent.csat
+        }
+    });
+    
+    const sortedAgents = [...agentPerformance]
+        .sort((a, b) => (b.conversationsHandled || 0) - (a.conversationsHandled || 0))
         .slice(0, 5)
         .map((agent, index) => ({...agent, rank: index + 1}));
 
-    if (sortedAgents.length === 0 || sortedAgents.every(a => (a.conversationsToday || 0) === 0)) {
-        return <p className="text-center text-muted-foreground p-8">No agent data available.</p>;
+    if (sortedAgents.length === 0 || sortedAgents.every(a => (a.conversationsHandled || 0) === 0)) {
+        return <p className="text-center text-muted-foreground p-8">No agent data available for the selected period.</p>;
     }
 
     return (
@@ -122,7 +147,7 @@ const AgentPerformanceTable = ({ agents }: { agents: Agent[] }) => {
                             <div className="font-medium">{perf.name}</div>
                         </div>
                     </TableCell>
-                    <TableCell className="text-center">{perf.conversationsToday || 0}</TableCell>
+                    <TableCell className="text-center">{perf.conversationsHandled || 0}</TableCell>
                     <TableCell className="text-center">{perf.avgResponseTime || 'N/A'}</TableCell>
                     <TableCell className="text-right">{perf.csat ? `${perf.csat}%` : 'N/A'}</TableCell>
                 </TableRow>
@@ -140,10 +165,10 @@ type DashboardViewProps = {
 export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   const { toast } = useToast();
   const [agents, setAgents] = React.useState<Agent[]>([]);
-  const [chats, setChats] = React.useState<Chat[]>([]);
+  const [allChats, setAllChats] = React.useState<Chat[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: addDays(new Date(), -7),
+    from: addDays(new Date(), -6),
     to: new Date(),
   });
 
@@ -156,12 +181,27 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                 getChatsByCompany(user.companyId)
             ]);
             setAgents(fetchedAgents);
-            setChats(fetchedChats);
+            setAllChats(fetchedChats);
             setIsLoading(false);
         }
     }
     fetchData();
   }, [user]);
+
+  const filteredChats = React.useMemo(() => {
+    if (!date?.from || !date?.to) {
+        return allChats;
+    }
+    const from = startOfDay(date.from);
+    const to = startOfDay(date.to);
+    
+    return allChats.filter(chat => {
+        // We will use the last message's timestamp for filtering
+        const chatDate = new Date(chat.messages[chat.messages.length - 1]?.timestamp || chat.timestamp);
+        return isWithinInterval(chatDate, { start: from, end: to });
+    });
+  }, [allChats, date]);
+
 
   const handleExport = (type: 'PDF' | 'CSV') => {
       toast({
@@ -180,8 +220,8 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
   const kpiData = React.useMemo(() => {
     if (isLoading) return Array(5).fill({});
 
-    const totalConversations = chats.length;
-    const botConversations = chats.filter(c => c.isChatbotActive).length;
+    const totalConversations = filteredChats.length;
+    const botConversations = filteredChats.filter(c => c.isChatbotActive).length;
     const agentConversations = totalConversations - botConversations;
     const botPercentage = totalConversations > 0 ? (botConversations / totalConversations) * 100 : 0;
     const agentPercentage = totalConversations > 0 ? (agentConversations / totalConversations) * 100 : 0;
@@ -247,11 +287,11 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
             icon: UserCheck,
         },
     ]
-  }, [chats, agents, isLoading]);
+  }, [filteredChats, agents, isLoading]);
 
   const channelBreakdownData = React.useMemo(() => {
-    if (chats.length === 0) return [];
-    const counts = chats.reduce((acc, chat) => {
+    if (filteredChats.length === 0) return [];
+    const counts = filteredChats.reduce((acc, chat) => {
         acc[chat.channel] = (acc[chat.channel] || 0) + 1;
         return acc;
     }, {} as Record<string, number>);
@@ -261,21 +301,29 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         value,
         fill: `hsl(var(--chart-${index + 1}))`
     }));
-  }, [chats]);
+  }, [filteredChats]);
   
   const conversationVolumeData = React.useMemo(() => {
-      // This remains mock data as historical logging is not implemented.
-      if (chats.length === 0) return [];
-      return [
-        { date: "Mon", conversations: 150 },
-        { date: "Tue", conversations: 210 },
-        { date: "Wed", conversations: 180 },
-        { date: "Thu", conversations: 250 },
-        { date: "Fri", conversations: 220 },
-        { date: "Sat", conversations: 300 },
-        { date: "Sun", conversations: 280 },
-      ];
-  }, [chats]);
+    if (!date?.from || !date?.to || filteredChats.length === 0) return [];
+
+    const days = eachDayOfInterval({ start: date.from, end: date.to });
+    const dailyData = days.map(day => ({
+        date: format(day, "EEE"), // e.g., "Mon"
+        fullDate: format(day, "yyyy-MM-dd"),
+        conversations: 0,
+    }));
+    
+    const dailyDataMap = new Map(dailyData.map(d => [d.fullDate, d]));
+
+    for (const chat of filteredChats) {
+        const chatDateStr = format(new Date(chat.timestamp), "yyyy-MM-dd");
+        if (dailyDataMap.has(chatDateStr)) {
+            dailyDataMap.get(chatDateStr)!.conversations++;
+        }
+    }
+    
+    return Array.from(dailyDataMap.values());
+}, [filteredChats, date]);
 
 
   if (user?.role !== 'admin') {
@@ -480,11 +528,11 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                     <Card>
                         <CardHeader>
                             <CardTitle>Conversation Volume</CardTitle>
-                            <CardDescription>Volume of conversations over the last 7 days. (Demo data)</CardDescription>
+                            <CardDescription>Volume of conversations for the selected period.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ChartContainer config={{}} className="h-[300px] w-full">
-                                {isLoading || conversationVolumeData.length === 0 ? (
+                                {isLoading || !conversationVolumeData || conversationVolumeData.length === 0 ? (
                                     <div className="flex h-full items-center justify-center text-muted-foreground">No conversation data available.</div>
                                 ) : (
                                     <LineChart data={conversationVolumeData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
@@ -513,7 +561,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                                 {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
                                 </div>
                             ) : (
-                                <AgentPerformanceTable agents={agents} />
+                                <AgentPerformanceTable agents={agents} chats={filteredChats} />
                             )}
                         </CardContent>
                     </Card>
@@ -592,7 +640,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                             <CardTitle>New vs Returning</CardTitle>
                         </CardHeader>
                         <CardContent className="flex justify-around items-center">
-                             {chats.length === 0 ? (
+                             {filteredChats.length === 0 ? (
                                 <div className="text-center text-muted-foreground p-4">No data</div>
                              ) : (
                                 <>
