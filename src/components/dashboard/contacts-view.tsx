@@ -146,21 +146,21 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
                                 <Button size="sm" className="mt-2" onClick={handleSaveNote}>Save Note</Button>
                             </div>
                         </div>
-                        <div className="space-y-4 max-h-48 overflow-y-auto">
+                        <ScrollArea className="space-y-4 max-h-48">
                             {contact.notes && contact.notes.map(note => (
-                                <div key={note.id} className="text-sm border-l-2 pl-3">
+                                <div key={note.id} className="text-sm border-l-2 pl-3 py-2">
                                     <p className="font-medium">{note.text}</p>
                                     <p className="text-xs text-muted-foreground mt-1">- {note.agentName} on {new Date(note.timestamp).toLocaleString()}</p>
                                 </div>
                             ))}
-                        </div>
+                        </ScrollArea>
                     </div>
                     
                     <Separator />
 
                     <div className="space-y-4">
                         <h3 className="text-sm font-medium text-muted-foreground">Conversation History</h3>
-                        <div className="p-4 space-y-4 bg-muted/50 rounded-md max-h-72 overflow-y-auto">
+                        <ScrollArea className="p-4 space-y-4 bg-muted/50 rounded-md max-h-72">
                             {chatHistory === undefined && <Skeleton className="h-24 w-full" />}
                             {chatHistory && chatHistory.length > 0 ? chatHistory.map((message) => {
                                 const isMe = message.sender === 'me';
@@ -175,12 +175,12 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
                                         )}
                                         <div className={cn("max-w-xs rounded-lg px-3 py-2", isMe ? "bg-primary text-primary-foreground" : "bg-background")}>
                                             <p>{message.text}</p>
-                                            <p className={cn("text-xs mt-1 opacity-70", isMe ? "text-right" : "text-left")}>{message.timestamp}</p>
+                                            <p className={cn("text-xs mt-1 opacity-70", isMe ? "text-right" : "text-left")}>{new Date(message.timestamp).toLocaleTimeString()}</p>
                                         </div>
                                     </div>
                                 )
                             }) : chatHistory && <p className="text-center text-muted-foreground">No conversation history.</p>}
-                        </div>
+                        </ScrollArea>
                     </div>
                 </div>
             </ScrollArea>
@@ -284,23 +284,27 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     event.target.value = '';
   };
   
-  const csvToArray = (text: string) => {
-    let p = '', row: string[] = [''], ret: string[][] = [row], i = 0, r = 0, s = !0, l;
-    for (l of text) {
-        if ('"' === l) {
-            if (s && l === p) row[i] += l;
-            s = !s;
-        } else if (',' === l && s) l = row[++i] = '';
-        else if ('\n' === l && s) {
-            if ('\r' === p) row[i] = row[i].slice(0, -1);
-            ret.push(row = []);
-            i = 0;
-        } else row[i] += l;
-        p = l;
-    }
-    if (row.length === 1 && row[0] === '') ret.pop();
-    return ret;
-  };
+  const csvToArray = (text: string): string[][] => {
+    const rows = text.split('\n').map(row => row.trim());
+    return rows.map(row => {
+        const result: string[] = [];
+        let inQuotes = false;
+        let field = '';
+        for (let i = 0; i < row.length; i++) {
+            const char = row[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(field);
+                field = '';
+            } else {
+                field += char;
+            }
+        }
+        result.push(field);
+        return result;
+    });
+};
   
   const findHeaderIndex = (headers: string[], possibleNames: string[]): number => {
     for (const name of possibleNames) {
@@ -318,7 +322,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     reader.onload = async (e) => {
       const text = e.target?.result as string;
       const data = csvToArray(text);
-      if (data.length < 2) {
+      if (data.length < 1) {
           toast({ variant: "destructive", title: "Invalid CSV", description: "File is empty or not formatted correctly." });
           setIsImporting(false);
           return;
@@ -347,7 +351,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         } else {
             const firstName = (headerMap.givenName !== -1 && row[headerMap.givenName]) ? row[headerMap.givenName] : '';
             const lastName = (headerMap.familyName !== -1 && row[headerMap.familyName]) ? row[headerMap.familyName] : '';
-            name = `${firstName} ${lastName}`.trim();
+            name = [firstName, lastName].filter(Boolean).join(' ').trim();
         }
 
         const email = (headerMap.email !== -1 && row[headerMap.email]) ? row[headerMap.email] : '';
@@ -419,40 +423,42 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         <main className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 overflow-hidden">
             {/* Contact List */}
             <div className={cn("md:col-span-1 lg:col-span-1 border-r flex flex-col h-full", selectedContact ? "hidden md:flex" : "flex")}>
-                <ScrollArea className="flex-1">
-                    {isLoading ? (
-                        <div className="p-2 space-y-1">
-                            {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
-                        </div>
-                    ) : (
-                        <div className="flex flex-col gap-1 p-2">
-                        {filteredContacts.map((contact) => (
-                            <button
-                                key={contact.id} 
-                                onClick={() => handleSelectContact(contact, chats)}
-                                className={cn("w-full text-left p-3 rounded-lg hover:bg-muted/50", selectedContact?.id === contact.id && "bg-muted")}
-                            >
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-10 w-10">
-                                        <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
-                                        <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-medium truncate">{contact.name}</div>
-                                        <div className="text-xs text-muted-foreground truncate">{contact.email}</div>
-                                    </div>
-                                    {contact.assignedAgentId && (
-                                        <Badge variant="secondary" className="h-5 text-xs">
-                                            <UserCheck className="h-3 w-3 mr-1" />
-                                            Assigned
-                                        </Badge>
-                                    )}
-                                </div>
-                            </button>
-                        ))}
-                        </div>
-                    )}
-                </ScrollArea>
+                <div className="flex-1 min-h-0">
+                  <ScrollArea className="h-full">
+                      {isLoading ? (
+                          <div className="p-2 space-y-1">
+                              {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
+                          </div>
+                      ) : (
+                          <div className="flex flex-col gap-1 p-2">
+                          {filteredContacts.map((contact) => (
+                              <button
+                                  key={contact.id} 
+                                  onClick={() => handleSelectContact(contact, chats)}
+                                  className={cn("w-full text-left p-3 rounded-lg hover:bg-muted/50", selectedContact?.id === contact.id && "bg-muted")}
+                              >
+                                  <div className="flex items-center gap-3">
+                                      <Avatar className="h-10 w-10">
+                                          <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
+                                          <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex-1 min-w-0">
+                                          <div className="font-medium truncate">{contact.name}</div>
+                                          <div className="text-xs text-muted-foreground truncate">{contact.email}</div>
+                                      </div>
+                                      {contact.assignedAgentId && (
+                                          <Badge variant="secondary" className="h-5 text-xs">
+                                              <UserCheck className="h-3 w-3 mr-1" />
+                                              Assigned
+                                          </Badge>
+                                      )}
+                                  </div>
+                              </button>
+                          ))}
+                          </div>
+                      )}
+                  </ScrollArea>
+                </div>
             </div>
             
             {/* Contact Profile */}
