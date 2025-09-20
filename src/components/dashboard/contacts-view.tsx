@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from "react";
@@ -451,7 +450,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         {/* Contact List */}
         <div className={cn("md:col-span-1 lg:col-span-1 border-r flex flex-col h-full", selectedContact ? "hidden md:flex" : "flex")}>
             <div className="flex-1 flex flex-col min-h-0">
-                <ScrollArea className="flex-1">
+                <ScrollArea className="flex-1" style={{height: "calc(11 * 68px)"}}>
                     {isLoading ? (
                         <div className="p-2 space-y-1">
                             {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
@@ -491,7 +490,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         </div>
         
         {/* Contact Profile */}
-        <div className={cn("md:col-span-2 lg:col-span-3 flex flex-col h-full", selectedContact ? "flex" : "hidden md:flex")}>
+        <div className={cn("md:col-span-2 lg:col-span-3 h-full flex flex-col", selectedContact ? "flex" : "hidden md:flex")}>
             {selectedContact ? (
                 <ContactProfile 
                     contact={selectedContact}
