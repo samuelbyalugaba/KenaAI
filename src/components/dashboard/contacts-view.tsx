@@ -450,42 +450,44 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     <main className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
         {/* Contact List */}
         <div className={cn("md:col-span-1 lg:col-span-1 border-r flex flex-col h-full", selectedContact ? "hidden md:flex" : "flex")}>
-            <ScrollArea className="flex-1">
-                {isLoading ? (
-                    <div className="p-2 space-y-1">
-                        {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-1 p-2">
-                    {filteredContacts.map((contact) => (
-                        <Card 
-                            key={contact.id} 
-                            onClick={() => handleSelectContact(contact, chats)}
-                            className={cn("cursor-pointer hover:bg-muted/50", selectedContact?.id === contact.id && "bg-muted/80")}
-                        >
-                            <CardHeader className="p-3">
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-10 w-10">
-                                        <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
-                                        <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="font-medium truncate">{contact.name}</div>
-                                        <div className="text-xs text-muted-foreground truncate">{contact.email}</div>
+            <div className="flex-1 flex flex-col min-h-0">
+                <ScrollArea className="flex-1">
+                    {isLoading ? (
+                        <div className="p-2 space-y-1">
+                            {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
+                        </div>
+                    ) : (
+                        <div className="flex flex-col gap-1 p-2">
+                        {filteredContacts.map((contact) => (
+                            <Card 
+                                key={contact.id} 
+                                onClick={() => handleSelectContact(contact, chats)}
+                                className={cn("cursor-pointer hover:bg-muted/50", selectedContact?.id === contact.id && "bg-muted/80")}
+                            >
+                                <CardHeader className="p-3">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-10 w-10">
+                                            <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
+                                            <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-medium truncate">{contact.name}</div>
+                                            <div className="text-xs text-muted-foreground truncate">{contact.email}</div>
+                                        </div>
+                                        {contact.assignedAgentId && (
+                                            <Badge variant="secondary" className="h-5 text-xs">
+                                                <UserCheck className="h-3 w-3 mr-1" />
+                                                Assigned
+                                            </Badge>
+                                        )}
                                     </div>
-                                    {contact.assignedAgentId && (
-                                        <Badge variant="secondary" className="h-5 text-xs">
-                                            <UserCheck className="h-3 w-3 mr-1" />
-                                            Assigned
-                                        </Badge>
-                                    )}
-                                </div>
-                            </CardHeader>
-                        </Card>
-                    ))}
-                    </div>
-                )}
-            </ScrollArea>
+                                </CardHeader>
+                            </Card>
+                        ))}
+                        </div>
+                    )}
+                </ScrollArea>
+            </div>
         </div>
         
         {/* Contact Profile */}
