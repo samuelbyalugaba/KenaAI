@@ -103,8 +103,8 @@ const ChatList = ({ chats, selectedChat, onSelectChat, isLoading }: { chats: Cha
             </div>
             <div className="flex items-center justify-between mt-1">
               <p className="text-sm text-muted-foreground truncate">
-                {chat.lastMessage.length > 40
-                  ? `${chat.lastMessage.substring(0, 40)}...`
+                {chat.lastMessage.length > 30
+                  ? `${chat.lastMessage.substring(0, 30)}...`
                   : chat.lastMessage}
               </p>
               <div className="flex items-center gap-2 flex-shrink-0 pl-2">

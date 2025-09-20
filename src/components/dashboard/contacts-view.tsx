@@ -90,7 +90,7 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
                 </div>
                  <Button variant="outline" onClick={() => onStartChat(contact)}><MessageSquare className="h-4 w-4 mr-2" /> Message</Button>
             </CardHeader>
-            <CardContent className="flex-1 overflow-auto space-y-6 pt-0">
+            <CardContent className="flex-1 overflow-auto space-y-6 pt-0 flex flex-col">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">Contact Details</h3>
@@ -129,9 +129,9 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
 
                 <Separator />
 
-                <div>
+                <div className="flex flex-col flex-1 min-h-0">
                     <h3 className="text-sm font-medium text-muted-foreground mb-4">Agent Notes</h3>
-                    <div className="space-y-4">
+                    <div className="space-y-4 flex flex-col flex-1 min-h-0">
                         <div className="flex gap-3">
                              <Avatar className="h-8 w-8">
                                 <AvatarImage src={user?.avatar} alt={user?.name || ""} data-ai-hint="person portrait" />
@@ -147,7 +147,7 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
                                  <Button size="sm" className="mt-2" onClick={handleSaveNote}>Save Note</Button>
                              </div>
                         </div>
-                        <ScrollArea className="h-48">
+                        <ScrollArea className="flex-1">
                             <div className="space-y-4 pr-4">
                                 {contact.notes && contact.notes.map(note => (
                                     <div key={note.id} className="text-sm border-l-2 pl-3">
@@ -160,9 +160,9 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
                     </div>
                 </div>
                 <Separator />
-                <div>
+                <div className="flex flex-col flex-1 min-h-0">
                     <h3 className="text-sm font-medium text-muted-foreground mb-2">Conversation History</h3>
-                    <ScrollArea className="h-64">
+                    <ScrollArea className="flex-1">
                          <div className="p-4 space-y-4 bg-muted/50 rounded-md">
                             {chatHistory?.length ? chatHistory.map((message) => {
                                 const isMe = message.sender === 'me';
@@ -450,7 +450,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     <main className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
         {/* Contact List */}
         <div className={cn("md:col-span-1 lg:col-span-1 border-r flex flex-col", selectedContact ? "hidden md:flex" : "flex")}>
-            <ScrollArea className="flex-1">
+            <ScrollArea className="flex-1 h-full">
                 {isLoading ? (
                     <div className="p-2 space-y-1">
                         {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
@@ -489,7 +489,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         </div>
         
         {/* Contact Profile */}
-        <div className={cn("md:col-span-2 lg:col-span-3 overflow-auto", selectedContact ? "block" : "hidden md:block")}>
+        <div className={cn("md:col-span-2 lg:col-span-3 flex flex-col", selectedContact ? "flex" : "hidden md:flex")}>
             {selectedContact ? (
                 <ContactProfile 
                     contact={selectedContact}
