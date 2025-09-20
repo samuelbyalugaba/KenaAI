@@ -2,10 +2,10 @@
 "use client";
 
 import * as React from "react";
-import { User, Phone, Mail, Search, MessageSquare, ArrowLeft, PanelLeft, UserCheck, Upload } from "lucide-react";
+import { User as UserIcon, Phone, Mail, Search, PanelLeft, UserCheck, Upload, ArrowLeft, MoreVertical, Grip, List } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { User as ContactUser, Chat, Message, UserProfile, Agent, Note } from "@/types";
@@ -18,13 +18,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { getContactsByCompany, getAgentsByCompany, assignAgentToContact, addNoteToContact, getMessagesForChat, getChatsByCompany, importContactsFromCSV } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { AddContactDialog } from "./add-contact-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 
 const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd, onAssign, onStartChat }: { 
     contact: ContactUser;
     agents: Agent[];
     chatHistory: Message[] | undefined;
-    onBack?: () => void;
+    onBack: () => void;
     user: UserProfile | null;
     onNoteAdd: (contactId: string, note: Note) => void;
     onAssign: (contactId: string, agentId: string) => void;
@@ -72,11 +73,9 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
     return (
         <div className="h-full flex flex-col">
             <header className="flex-shrink-0 p-4 border-b flex items-center gap-4">
-                 {onBack && (
-                     <Button variant="ghost" size="icon" className="md:hidden -ml-2" onClick={onBack}>
-                         <ArrowLeft className="h-5 w-5" />
-                     </Button>
-                 )}
+                 <Button variant="ghost" size="icon" className="-ml-2" onClick={onBack}>
+                     <ArrowLeft className="h-5 w-5" />
+                 </Button>
                  <Avatar className="h-16 w-16">
                     <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
                     <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
@@ -87,7 +86,9 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
                        Last active: 2 hours ago
                     </p>
                 </div>
-                 <Button variant="outline" onClick={() => onStartChat(contact)}><MessageSquare className="h-4 w-4 mr-2" /> Message</Button>
+                 <Button variant="outline" onClick={() => onStartChat(contact)}>
+                   <Mail className="h-4 w-4 mr-2" /> Message
+                 </Button>
             </header>
             <ScrollArea className="flex-1">
                 <div className="p-6 space-y-6">
@@ -188,13 +189,55 @@ const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd,
     )
 }
 
-const EmptyState = () => (
-    <div className="hidden md:flex flex-col items-center justify-center h-full text-center p-8 bg-muted/30">
-        <UserCheck className="h-16 w-16 text-muted-foreground/50" />
-        <h2 className="mt-4 text-xl font-semibold">Select a Contact</h2>
-        <p className="mt-1 text-muted-foreground">Choose a contact from the list to view their profile and conversation history.</p>
-    </div>
-)
+const ContactCard = ({ contact, onClick }: { contact: ContactUser, onClick: () => void }) => {
+    return (
+        <Card
+          className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
+          onClick={onClick}
+        >
+            <CardContent className="p-6 text-center flex flex-col items-center">
+                <div className="relative mb-4">
+                    <Avatar className="h-24 w-24">
+                        <AvatarImage src={contact.avatar} alt={contact.name} />
+                        <AvatarFallback>{contact.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute top-0 right-0 -mr-2">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={(e) => e.stopPropagation()}>
+                                    <MoreVertical className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
+                <h3 className="font-bold text-lg">{contact.name}</h3>
+                <p className="text-sm text-muted-foreground">Marketing Manager</p>
+                <a href="#" className="text-sm text-primary hover:underline">Highspeed Studios</a>
+                <Separator className="my-4" />
+                <div className="w-full space-y-2 text-left text-sm">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <Phone className="w-4 h-4" />
+                        </div>
+                        <span className="text-muted-foreground">{contact.phone || "N/A"}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <Mail className="w-4 h-4" />
+                        </div>
+                        <span className="text-muted-foreground">{contact.email || "N/A"}</span>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    )
+};
+
 
 type ContactsViewProps = {
   onMenuClick: () => void;
@@ -207,11 +250,9 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [chats, setChats] = React.useState<Chat[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [isImporting, setIsImporting] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
   const [selectedChatHistory, setSelectedChatHistory] = React.useState<Message[] | undefined>(undefined);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
   React.useEffect(() => {
@@ -226,10 +267,6 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
             setContacts(fetchedContacts);
             setAgents(fetchedAgents);
             setChats(fetchedChats);
-
-            if (fetchedContacts.length > 0 && window.innerWidth >= 768) {
-                handleSelectContact(fetchedContacts[0], fetchedChats);
-            }
             setIsLoading(false);
         }
     }
@@ -272,215 +309,68 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     setContacts(prev => [newContact, ...prev]);
   };
 
-  const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      parseCSV(file);
-    }
-    event.target.value = '';
-  };
-  
-  const csvToArray = (text: string): string[][] => {
-    const rows = text.split('\n').map(row => row.trim());
-    return rows.map(row => {
-        const result: string[] = [];
-        let inQuotes = false;
-        let field = '';
-        for (let i = 0; i < row.length; i++) {
-            const char = row[i];
-            if (char === '"') {
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                result.push(field);
-                field = '';
-            } else {
-                field += char;
-            }
-        }
-        result.push(field);
-        return result;
-    });
-};
-  
-  const findHeaderIndex = (headers: string[], possibleNames: string[]): number => {
-    for (const name of possibleNames) {
-        const index = headers.findIndex(h => h.toLowerCase().trim() === name.toLowerCase());
-        if (index !== -1) {
-            return index;
-        }
-    }
-    return -1;
-  };
-
-  const parseCSV = (file: File) => {
-    setIsImporting(true);
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target?.result as string;
-      const data = csvToArray(text);
-      if (data.length < 1) {
-          toast({ variant: "destructive", title: "Invalid CSV", description: "File is empty or not formatted correctly." });
-          setIsImporting(false);
-          return;
-      }
-      const headers = data[0].map(h => h.trim().toLowerCase());
-      const headerMap = {
-          name: findHeaderIndex(headers, ['name']),
-          givenName: findHeaderIndex(headers, ['given name']),
-          familyName: findHeaderIndex(headers, ['family name']),
-          email: findHeaderIndex(headers, ['e-mail 1 - value', 'email', 'email address']),
-          phone: findHeaderIndex(headers, ['phone 1 - value', 'phone', 'phone number']),
-      };
-      
-      const requiredColumnsFound = headerMap.name !== -1 || (headerMap.givenName !== -1 || headerMap.familyName !== -1);
-      if (!requiredColumnsFound) {
-        toast({ variant: "destructive", title: "Invalid CSV format", description: "Could not find a required 'Name' column (or 'Given Name'/'Family Name')." });
-        setIsImporting(false);
-        return;
-      }
-
-      const rows = data.slice(1);
-      const contactsData = rows.map(row => {
-        let name = '';
-        if (headerMap.name !== -1 && row[headerMap.name]) {
-            name = row[headerMap.name];
-        } else {
-            const firstName = (headerMap.givenName !== -1 && row[headerMap.givenName]) ? row[headerMap.givenName] : '';
-            const lastName = (headerMap.familyName !== -1 && row[headerMap.familyName]) ? row[headerMap.familyName] : '';
-            name = [firstName, lastName].filter(Boolean).join(' ').trim();
-        }
-
-        const email = (headerMap.email !== -1 && row[headerMap.email]) ? row[headerMap.email] : '';
-        const phone = (headerMap.phone !== -1 && row[headerMap.phone]) ? row[headerMap.phone] : '';
-        
-        if (!name) return null;
-
-        return { name, email, phone };
-      }).filter(Boolean) as { name: string; email: string; phone: string }[];
-
-      if (contactsData.length === 0) {
-        toast({ variant: "destructive", title: "No contacts found", description: "The CSV file appears to be empty or in an unsupported format." });
-        setIsImporting(false);
-        return;
-      }
-
-      if (!user?.companyId) {
-        toast({ variant: "destructive", title: "Error", description: "Company context not found." });
-        setIsImporting(false);
-        return;
-      }
-
-      const result = await importContactsFromCSV(contactsData, user.companyId);
-      if (result.success) {
-        setContacts(prev => [...result.newContacts, ...prev]);
-        toast({ title: "Import Successful", description: result.message, });
-      } else {
-        toast({ variant: "destructive", title: "Import Failed", description: result.message });
-      }
-      setIsImporting(false);
-    };
-    reader.readAsText(file);
-  };
-
-  return (
-    <div className="flex h-screen w-full flex-col bg-background text-foreground">
-        <header className="flex-shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border-b">
+  const MainView = () => (
+      <div className="flex h-screen w-full flex-col bg-muted/40">
+        <header className="flex-shrink-0 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 md:p-6 bg-background border-b">
             <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
+                 <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenuClick}>
                     <PanelLeft className="h-5 w-5" />
                     <span className="sr-only">Open Menu</span>
                 </Button>
-                <h1 className="text-2xl font-bold">Contacts</h1>
+                <div>
+                    <h1 className="text-2xl font-bold">Contacts</h1>
+                    <p className="text-sm text-muted-foreground">Manage your customer contacts.</p>
+                </div>
             </div>
-            <div className="flex items-center gap-4 w-full sm:w-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
                 <div className="relative w-full sm:w-64">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
-                        placeholder="Search contacts..." 
-                        className="pl-9"
+                        placeholder="Search here..." 
+                        className="pl-9 bg-muted/50 border-none focus-visible:ring-primary"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden"
-                    accept=".csv"
-                />
-                <Button variant="outline" onClick={handleImportClick} disabled={isImporting}>
-                    <Upload className="mr-2 h-4 w-4" />
-                    {isImporting ? "Importing..." : "Import"}
-                </Button>
-                <AddContactDialog onContactAdd={handleContactAdd} user={user} />
+                <div className="flex items-center bg-muted/50 p-1 rounded-md">
+                    <Button variant="ghost" size="icon" className="h-8 w-8"><List className="h-4 w-4" /></Button>
+                    <Button variant="secondary" size="icon" className="h-8 w-8"><Grip className="h-4 w-4" /></Button>
+                </div>
+                <AddContactDialog onContactAdd={handleContactAdd} user={user}>
+                   <Button>New Contact</Button>
+                </AddContactDialog>
             </div>
         </header>
-        <main className="flex-1 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 overflow-hidden">
-            {/* Contact List */}
-            <div className={cn("md:col-span-1 lg:col-span-1 border-r flex flex-col h-full", selectedContact ? "hidden md:flex" : "flex")}>
-                <div className="flex-1 min-h-0 flex flex-col">
-                  <ScrollArea className="flex-1">
-                      {isLoading ? (
-                          <div className="p-2 space-y-1">
-                              {Array.from({length: 8}).map((_, i) => <Skeleton key={i} className="h-[68px] w-full" />)}
-                          </div>
-                      ) : (
-                          <div className="flex flex-col gap-1 p-2">
-                          {filteredContacts.map((contact) => (
-                              <button
-                                  key={contact.id} 
-                                  onClick={() => handleSelectContact(contact, chats)}
-                                  className={cn("w-full text-left p-3 rounded-lg hover:bg-muted/50", selectedContact?.id === contact.id && "bg-muted")}
-                              >
-                                  <div className="flex items-center gap-3">
-                                      <Avatar className="h-10 w-10">
-                                          <AvatarImage src={contact.avatar} alt={contact.name} data-ai-hint="person portrait" />
-                                          <AvatarFallback>{contact.name.charAt(0)}</AvatarFallback>
-                                      </Avatar>
-                                      <div className="flex-1 min-w-0">
-                                          <div className="font-medium truncate">{contact.name}</div>
-                                          <div className="text-xs text-muted-foreground truncate">{contact.email}</div>
-                                      </div>
-                                      {contact.assignedAgentId && (
-                                          <Badge variant="secondary" className="h-5 text-xs">
-                                              <UserCheck className="h-3 w-3 mr-1" />
-                                              Assigned
-                                          </Badge>
-                                      )}
-                                  </div>
-                              </button>
-                          ))}
-                          </div>
-                      )}
-                  </ScrollArea>
-                </div>
-            </div>
-            
-            {/* Contact Profile */}
-            <div className={cn("md:col-span-2 lg:col-span-3 h-full", selectedContact ? "block" : "hidden md:block")}>
-                {selectedContact ? (
-                    <ContactProfile 
-                        contact={selectedContact}
-                        agents={agents}
-                        chatHistory={selectedChatHistory} 
-                        onBack={() => setSelectedContact(null)}
-                        user={user}
-                        onNoteAdd={handleNoteAdd}
-                        onAssign={handleAssignAgent}
-                        onStartChat={onNavigateToChat}
-                    />
+        <ScrollArea className="flex-1">
+            <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {isLoading ? (
+                    Array.from({ length: 10 }).map((_, i) => <Skeleton key={i} className="h-80 w-full" />)
                 ) : (
-                    <EmptyState />
+                    filteredContacts.map((contact) => (
+                        <ContactCard key={contact.id} contact={contact} onClick={() => handleSelectContact(contact, chats)} />
+                    ))
                 )}
             </div>
-        </main>
-    </div>
-  );
+        </ScrollArea>
+      </div>
+  )
+
+  if (selectedContact) {
+      return (
+          <ContactProfile 
+              contact={selectedContact}
+              agents={agents}
+              chatHistory={selectedChatHistory} 
+              onBack={() => setSelectedContact(null)}
+              user={user}
+              onNoteAdd={handleNoteAdd}
+              onAssign={handleAssignAgent}
+              onStartChat={onNavigateToChat}
+          />
+      )
+  }
+
+  return <MainView />;
 }
 
     
