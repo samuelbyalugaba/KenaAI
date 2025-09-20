@@ -60,7 +60,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getAgentsByCompany, getChatsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { DateRange } from "react-day-picker";
-import { addDays, format, startOfDay, eachDayOfInterval, isWithinInterval } from "date-fns";
+import { addDays, format, startOfDay, eachDayOfInterval, isWithinInterval, endOfDay } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 
@@ -193,7 +193,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         return allChats;
     }
     const from = startOfDay(date.from);
-    const to = startOfDay(date.to);
+    const to = endOfDay(date.to); // Use end of day to include the entire last day
     
     return allChats.filter(chat => {
         // We will use the last message's timestamp for filtering
@@ -324,6 +324,32 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     
     return Array.from(dailyDataMap.values());
 }, [filteredChats, date]);
+
+  const customerEngagementData = React.useMemo(() => {
+    if (!date?.from || !date?.to || filteredChats.length === 0) {
+      return { new: 0, returning: 0 };
+    }
+    const from = startOfDay(date.from);
+
+    const contactIdsInPeriod = new Set(filteredChats.map(c => c.user.id));
+    let newCustomers = 0;
+    let returningCustomers = 0;
+    
+    contactIdsInPeriod.forEach(contactId => {
+      const contact = allChats.find(c => c.user.id === contactId)?.user;
+      if (contact?._id) {
+        // A simple heuristic: if the contact was created (based on ObjectId timestamp) before the date range, they are returning.
+        const creationDate = new Date(parseInt(contact._id.toString().substring(0, 8), 16) * 1000);
+        if (creationDate < from) {
+          returningCustomers++;
+        } else {
+          newCustomers++;
+        }
+      }
+    });
+
+    return { new: newCustomers, returning: returningCustomers };
+  }, [filteredChats, allChats, date]);
 
 
   if (user?.role !== 'admin') {
@@ -645,11 +671,11 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                              ) : (
                                 <>
                                     <div className="text-center">
-                                        <p className="text-3xl font-bold">350</p>
+                                        <p className="text-3xl font-bold">{customerEngagementData.new}</p>
                                         <p className="text-sm text-muted-foreground">New</p>
                                     </div>
                                     <div className="text-center">
-                                        <p className="text-3xl font-bold">895</p>
+                                        <p className="text-3xl font-bold">{customerEngagementData.returning}</p>
                                         <p className="text-sm text-muted-foreground">Returning</p>
                                     </div>
                                 </>
@@ -664,9 +690,5 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
-
-    
-
-    
 
     
