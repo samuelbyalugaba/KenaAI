@@ -45,7 +45,6 @@ const adminNavItems = [
   { icon: Users, label: "Agents" as View },
   { icon: Send, label: "Campaigns" as View },
   { icon: Megaphone, label: "Announcements" as View },
-  { icon: Settings, label: "System Settings" as View },
 ];
 
 const superAgentNavItems = [

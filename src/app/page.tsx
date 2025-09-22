@@ -13,10 +13,9 @@ import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 import { AuthForm } from "@/components/dashboard/auth-form";
-import { handleLogin, handleSignUp } from "@/app/actions";
+import { handleLogin } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingScreen } from "@/components/dashboard/loading-screen";
-import { SystemSettingsView } from "@/components/dashboard/system-settings-view";
 
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
@@ -63,32 +62,6 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
     return { success: result.success, message: result.message };
   }
   
-  const onSignUp = async (name: string, email: string, password_unused: string) => {
-    const result = await handleSignUp(name, email, password_unused);
-    if (result.success && result.agent) {
-        toast({
-            title: "Account Created!",
-            description: "You can now sign in with your new credentials.",
-        });
-        const agent = result.agent as Agent;
-         setCurrentUser({
-          id: agent.id,
-          name: agent.name,
-          avatar: agent.avatar,
-          role: agent.role,
-          email: agent.email,
-          phone: agent.phone,
-          companyId: agent.companyId,
-        } as UserProfile);
-
-        if (agent.role === 'admin') {
-          setActiveView('Dashboard');
-        } else {
-          setActiveView('Chat');
-        }
-    }
-    return result;
-  }
 
   const handleLogout = () => {
     setCurrentUser(null);
@@ -123,8 +96,6 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
         return <MyPerformanceView {...props} />;
       case "Campaigns":
          return <CampaignsView {...props} />;
-      case "System Settings":
-        return <SystemSettingsView {...props} />;
       default:
         return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} initialContact={initialContact} />;
     }
@@ -137,7 +108,7 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   if (!currentUser) {
     return (
       <main className="flex h-screen w-full items-center justify-center bg-background p-4 overflow-hidden auth-page-background">
-        <AuthForm onLogin={onLogin} onSignUp={onSignUp} />
+        <AuthForm onLogin={onLogin} />
       </main>
     );
   }

@@ -406,82 +406,6 @@ export async function deleteAgent(agentId: string, companyId?: string, deletedBy
 }
 
 
-export async function handleSignUp(name: string, email: string, password_unused: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
-    const db = await getDb();
-    const session = db.client.startSession();
-    try {
-        let newAgentResult: Agent | undefined;
-        await session.withTransaction(async () => {
-            const companiesCollection = await getCompaniesCollection();
-            const agentsCollection = await getAgentsCollection();
-            const existingAgent = await agentsCollection.findOne({ email: email.toLowerCase() }, { session });
-
-            if (existingAgent) {
-                throw new Error("An agent with this email already exists.");
-            }
-            
-            const companyResult = await companiesCollection.insertOne({
-                name: `${name}'s Company`,
-                createdAt: new Date(),
-                botpressBotId: 'placeholder_bot_id', // Add placeholder
-                botpressApiKey: 'placeholder_api_key' // Add placeholder
-            }, { session });
-
-            if (!companyResult.insertedId) {
-                throw new Error("Failed to create company.");
-            }
-            const companyId = companyResult.insertedId;
-            
-            const hashedPassword = await hashPassword(password_unused);
-            
-            const agentToInsert: Omit<Agent, 'id' | '_id'> = {
-                name,
-                email: email.toLowerCase(),
-                password: hashedPassword,
-                role: 'admin',
-                avatar: '',
-                phone: '',
-                companyId: companyId,
-            };
-
-            const agentResult = await agentsCollection.insertOne(agentToInsert as any, { session });
-
-             if (!agentResult.insertedId) {
-                throw new Error("Failed to create admin agent.");
-            }
-            
-            await logActivity(companyId, name, 'Sign Up', `Created new company and admin account.`);
-
-            const newAgentDoc = await agentsCollection.findOne({ _id: agentResult.insertedId }, { session });
-            if (newAgentDoc) {
-                 const { password, ...agentData } = newAgentDoc;
-                 newAgentResult = {
-                    ...agentData,
-                    _id: newAgentDoc._id.toString(),
-                    id: newAgentDoc._id.toString(),
-                    companyId: newAgentDoc.companyId?.toString()
-                };
-            }
-        });
-        
-        if (!newAgentResult) {
-            return { success: false, message: "Failed to retrieve the created agent." }
-        }
-
-        return { success: true, agent: newAgentResult };
-    } catch (error: any) {
-        console.error("Sign up transaction error:", error);
-        // Abort transaction on error if it was started
-        if (session.inTransaction()) {
-            await session.abortTransaction();
-        }
-        return { success: false, message: error.message || "An unexpected error occurred during sign up." };
-    } finally {
-        await session.endSession();
-    }
-}
-
-
 export async function getActivityLogs(companyId: string): Promise<ActivityLog[]> {
     try {
         if (!companyId || !ObjectId.isValid(companyId)) {
@@ -1019,3 +943,4 @@ export async function scheduleAnalyticsReport(email: string, frequency: string):
     
 
     
+
