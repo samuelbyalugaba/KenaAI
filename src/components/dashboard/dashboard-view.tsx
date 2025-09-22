@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -423,7 +424,9 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     const dailyDataMap = new Map(dailyData.map(d => [d.fullDate, d]));
 
     for (const chat of filteredChats) {
-        const chatDateStr = format(new Date(chat.timestamp), "yyyy-MM-dd");
+        // FIX: Use a reliable timestamp from the first message, or fallback to now()
+        const chatDate = new Date(chat.messages?.[0]?.timestamp || new Date());
+        const chatDateStr = format(chatDate, "yyyy-MM-dd");
         if (dailyDataMap.has(chatDateStr)) {
             dailyDataMap.get(chatDateStr)!.conversations++;
         }
@@ -533,7 +536,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                 <span className="sr-only">Open Menu</span>
             </Button>
             <KenaAILogo className="h-13 hidden sm:block" />
-            <h1 className="text-xl sm:text-2xl font-bold">Analytics Dashboard</h1>
+            <h1 className="text-xl sm:text-2xl font-bold">Dashboard</h1>
         </div>
         <div className="flex items-center gap-2">
             <DateRangePicker className="hidden sm:flex" />
