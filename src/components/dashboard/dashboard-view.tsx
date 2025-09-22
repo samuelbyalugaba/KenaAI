@@ -228,20 +228,57 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     const tableData = agentPerformanceData.map(d => [d.name, d.conversations, d.avgResponseTime, d.csat]);
     
     if (type === 'PDF') {
-      doc.setFontSize(18);
-      doc.text("KenaAI Analytics Report", 14, 22);
+      const pageHeight = doc.internal.pageSize.height || doc.internal.pageSize.getHeight();
+      const pageWidth = doc.internal.pageSize.width || doc.internal.pageSize.getWidth();
+
+      // Header
+      doc.setFillColor(86, 36, 112); // Primary color
+      doc.rect(0, 0, pageWidth, 20, 'F');
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(255, 255, 255);
+      doc.text("KenaAI Analytics Report", 14, 14);
+
+      // Report Info
       doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
       doc.setTextColor(100);
       const dateRangeText = date?.from && date.to ? `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}` : "All Time";
       doc.text(`Date Range: ${dateRangeText}`, 14, 30);
       
-      const kpiText = kpiData.map(kpi => `${kpi.title}: ${kpi.value}`).join('\n');
-      doc.text(kpiText, 14, 40);
+      // KPIs
+      doc.setFontSize(10);
+      let kpiY = 40;
+      kpiData.forEach((kpi, index) => {
+          doc.setFont('helvetica', 'bold');
+          doc.text(kpi.title || '', 14, kpiY);
+          doc.setFont('helvetica', 'normal');
+          doc.text(String(kpi.value) || '', 60, kpiY);
+          kpiY += 7;
+      });
 
+      // Table
       autoTable(doc, {
-        startY: 70,
+        startY: kpiY + 10,
         head: [['Agent', 'Conversations', 'Avg. Response', 'CSAT']],
         body: tableData,
+        theme: 'striped',
+        headStyles: {
+            fillColor: [86, 36, 112], // Primary color
+            textColor: 255,
+            fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+            fillColor: [245, 245, 245]
+        },
+        didDrawPage: (data) => {
+            // Footer
+            const pageCount = doc.internal.pages.length;
+            doc.setFontSize(10);
+            doc.setTextColor(150);
+            doc.text(`Page ${data.pageNumber} of ${pageCount}`, data.settings.margin.left, pageHeight - 10);
+            doc.text(`Report generated on: ${format(new Date(), 'yyyy-MM-dd HH:mm')}`, pageWidth - data.settings.margin.right, pageHeight - 10, { align: 'right' });
+        }
       });
       doc.save(`kena-ai-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
     } else if (type === 'CSV') {
@@ -759,5 +796,3 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
-
-    
