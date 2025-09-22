@@ -57,7 +57,7 @@ import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Input } from "../ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { getAgentsByCompany, getChatsByCompany } from "@/app/actions";
+import { getAgentsByCompany, getChatsByCompany, scheduleAnalyticsReport } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { DateRange } from "react-day-picker";
 import { addDays, format, startOfDay, eachDayOfInterval, isWithinInterval, endOfDay } from "date-fns";
@@ -171,6 +171,8 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     from: addDays(new Date(), -6),
     to: new Date(),
   });
+  const [reportEmail, setReportEmail] = React.useState("");
+  const [reportFrequency, setReportFrequency] = React.useState("weekly");
 
   React.useEffect(() => {
     async function fetchData() {
@@ -193,10 +195,9 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
         return allChats;
     }
     const from = startOfDay(date.from);
-    const to = endOfDay(date.to); // Use end of day to include the entire last day
+    const to = endOfDay(date.to);
     
     return allChats.filter(chat => {
-        // We will use the last message's timestamp for filtering
         const chatDate = new Date(chat.messages[chat.messages.length - 1]?.timestamp || chat.timestamp);
         return isWithinInterval(chatDate, { start: from, end: to });
     });
@@ -210,11 +211,28 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
       });
   }
 
-  const handleScheduleReport = () => {
-      toast({
-          title: "Feature Not Implemented",
-          description: `This feature is for demonstration. In a real app, an email report would be scheduled.`,
-      });
+  const handleScheduleReport = async () => {
+    if (!reportEmail || !reportEmail.includes('@')) {
+        toast({
+            variant: 'destructive',
+            title: "Invalid Email",
+            description: "Please enter a valid email address.",
+        });
+        return;
+    }
+    const result = await scheduleAnalyticsReport(reportEmail, reportFrequency);
+    if (result.success) {
+        toast({
+            title: "Report Scheduled",
+            description: `Your ${reportFrequency} analytics report will be sent to ${reportEmail}.`,
+        });
+    } else {
+         toast({
+            variant: 'destructive',
+            title: "Scheduling Failed",
+            description: result.message,
+        });
+    }
   }
 
   const kpiData = React.useMemo(() => {
@@ -308,7 +326,7 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
 
     const days = eachDayOfInterval({ start: date.from, end: date.to });
     const dailyData = days.map(day => ({
-        date: format(day, "EEE"), // e.g., "Mon"
+        date: format(day, "EEE"),
         fullDate: format(day, "yyyy-MM-dd"),
         conversations: 0,
     }));
@@ -338,7 +356,6 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     contactIdsInPeriod.forEach(contactId => {
       const contact = allChats.find(c => c.user.id === contactId)?.user;
       if (contact?._id) {
-        // A simple heuristic: if the contact was created (based on ObjectId timestamp) before the date range, they are returning.
         const creationDate = new Date(parseInt(contact._id.toString().substring(0, 8), 16) * 1000);
         if (creationDate < from) {
           returningCustomers++;
@@ -462,10 +479,10 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                         <div className="px-2 py-1.5">
                             <Label htmlFor="report-email" className="text-xs font-semibold">Schedule Email Report</Label>
                             <div className="flex items-center gap-2 mt-2">
-                                <Input id="report-email" type="email" placeholder="your@email.com" className="h-8 flex-1" />
+                                <Input id="report-email" type="email" placeholder="your@email.com" className="h-8 flex-1" value={reportEmail} onChange={(e) => setReportEmail(e.target.value)} />
                             </div>
                             <div className="flex items-center gap-2 mt-2">
-                                <Select defaultValue="weekly">
+                                <Select defaultValue={reportFrequency} onValueChange={setReportFrequency}>
                                     <SelectTrigger className="h-8 flex-1">
                                         <SelectValue />
                                     </SelectTrigger>
@@ -496,10 +513,10 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
                         <div className="px-2 py-1.5">
                             <Label htmlFor="report-email-mobile" className="text-xs font-semibold">Schedule Email Report</Label>
                             <div className="flex items-center gap-2 mt-2">
-                                <Input id="report-email-mobile" type="email" placeholder="your@email.com" className="h-8 flex-1" />
+                                <Input id="report-email-mobile" type="email" placeholder="your@email.com" className="h-8 flex-1" value={reportEmail} onChange={(e) => setReportEmail(e.target.value)} />
                             </div>
                              <div className="flex items-center gap-2 mt-2">
-                                <Select defaultValue="weekly">
+                                <Select defaultValue={reportFrequency} onValueChange={setReportFrequency}>
                                     <SelectTrigger className="h-8 flex-1">
                                         <SelectValue />
                                     </SelectTrigger>

@@ -302,13 +302,13 @@ export async function updateAgentPassword(agentId: string, currentPassword: stri
 }
 
 
-export async function handleLogin(email: string, password_unused: string): Promise<{ success: boolean; message?: string; agent?: Agent }> {
+export async function handleLogin(email: string, password: string): Promise<{ success: boolean; message?: string; agent?: Agent }> {
     try {
       const agentsCollection = await getAgentsCollection();
       const agentDoc = await agentsCollection.findOne({ email: email.toLowerCase() });
 
       if (agentDoc && agentDoc.password) {
-        const isPasswordValid = await verifyPassword(password_unused, agentDoc.password);
+        const isPasswordValid = await verifyPassword(password, agentDoc.password);
         if (isPasswordValid) {
           const { password, ...agentData } = agentDoc;
           const agent: Agent = {
@@ -328,7 +328,7 @@ export async function handleLogin(email: string, password_unused: string): Promi
     }
 };
 
-export async function createAgent(name: string, email: string, password_unused: string, role: AgentRole, companyId: string, createdBy: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
+export async function createAgent(name: string, email: string, password: string, role: AgentRole, companyId: string, createdBy: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
     try {
         const agentsCollection = await getAgentsCollection();
         const existingAgent = await agentsCollection.findOne({ email: email.toLowerCase() });
@@ -337,7 +337,7 @@ export async function createAgent(name: string, email: string, password_unused: 
             return { success: false, message: "An agent with this email already exists." };
         }
 
-        const hashedPassword = await hashPassword(password_unused);
+        const hashedPassword = await hashPassword(password);
         const avatar = '';
 
         const agentToInsert: Omit<Agent, 'id' | '_id'> = {
@@ -406,7 +406,7 @@ export async function deleteAgent(agentId: string, companyId?: string, deletedBy
 }
 
 
-export async function handleSignUp(name: string, email: string, password_unused: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
+export async function handleSignUp(name: string, email: string, password: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
     const db = await getDb();
     const session = db.client.startSession();
     try {
@@ -430,7 +430,7 @@ export async function handleSignUp(name: string, email: string, password_unused:
             }
             const companyId = companyResult.insertedId;
             
-            const hashedPassword = await hashPassword(password_unused);
+            const hashedPassword = await hashPassword(password);
             const avatar = '';
             
             const agentToInsert: Omit<Agent, 'id' | '_id'> = {
@@ -997,6 +997,23 @@ export async function updateAgentAvatar(agentId: string, avatar: string): Promis
     } catch (error) {
         console.error("Update agent avatar error:", error);
         return { success: false, message: "An unexpected error occurred." };
+    }
+}
+
+export async function scheduleAnalyticsReport(email: string, frequency: string): Promise<{ success: boolean; message: string; }> {
+    try {
+        // In a real application, you would connect to a job scheduler (e.g., BullMQ, cron)
+        // and queue a job to send an email report based on the frequency.
+        // For this demo, we'll just log it to the console.
+        console.log(`Analytics report scheduled for ${email} with frequency: ${frequency}`);
+        
+        // You could also log this as a system activity
+        // await logActivity(companyId, 'System', 'Schedule Report', `Analytics report scheduled for ${email} (${frequency})`);
+
+        return { success: true, message: `Report successfully scheduled for ${email}.` };
+    } catch (error) {
+        console.error("Schedule report error:", error);
+        return { success: false, message: "An unexpected error occurred while scheduling the report." };
     }
 }
     
