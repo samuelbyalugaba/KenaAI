@@ -11,7 +11,7 @@ async function getAgentsCollection(): Promise<Collection<Agent>> {
     return db.collection<Agent>('agents');
 }
 
-async function getCompaniesCollection(): Promise<Collection<Company>> {
+export async function getCompaniesCollection(): Promise<Collection<Company>> {
     const db: Db = await getDb();
     return db.collection<Company>('companies');
 }
@@ -26,7 +26,7 @@ async function getActivityLogsCollection(): Promise<Collection<ActivityLog>> {
     return db.collection<ActivityLog>('activity_logs');
 }
 
-async function getContactsCollection(): Promise<Collection<User>> {
+export async function getUsersCollection(): Promise<Collection<User>> {
     const db: Db = await getDb();
     return db.collection<User>('contacts');
 }
@@ -432,7 +432,7 @@ export async function getContactsByCompany(companyId: string): Promise<User[]> {
         if (!companyId || !ObjectId.isValid(companyId)) {
             return [];
         }
-        const contactsCollection = await getContactsCollection();
+        const contactsCollection = await getUsersCollection();
         const contacts = await contactsCollection.find({ companyId: new ObjectId(companyId) }).toArray();
 
         return contacts.map(contact => {
@@ -456,7 +456,7 @@ export async function getContactsByCompany(companyId: string): Promise<User[]> {
 
 export async function createContact(name: string, email: string, phone: string, companyId: string): Promise<{ success: boolean; message?: string; contact?: User }> {
     try {
-        const contactsCollection = await getContactsCollection();
+        const contactsCollection = await getUsersCollection();
         
         const existingContact = await contactsCollection.findOne({ email: email.toLowerCase(), companyId: new ObjectId(companyId) });
         if (existingContact) {
@@ -496,7 +496,7 @@ export async function createContact(name: string, email: string, phone: string, 
 
 export async function assignAgentToContact(contactId: string, agentId: string): Promise<{ success: boolean }> {
     try {
-        const contactsCollection = await getContactsCollection();
+        const contactsCollection = await getUsersCollection();
         await contactsCollection.updateOne(
             { _id: new ObjectId(contactId) },
             { $set: { assignedAgentId: agentId } }
@@ -510,7 +510,7 @@ export async function assignAgentToContact(contactId: string, agentId: string): 
 
 export async function addNoteToContact(contactId: string, agentId: string, agentName: string, text: string): Promise<{ success: boolean; note?: Note }> {
     try {
-        const contactsCollection = await getContactsCollection();
+        const contactsCollection = await getUsersCollection();
         
         const newNote: Note = {
             id: new ObjectId().toString(),
@@ -540,7 +540,7 @@ export async function getNotesForContact(contactId: string): Promise<Note[]> {
         if (!contactId || !ObjectId.isValid(contactId)) {
             return [];
         }
-        const contactsCollection = await getContactsCollection();
+        const contactsCollection = await getUsersCollection();
         const contact = await contactsCollection.findOne({ _id: new ObjectId(contactId) });
         return (contact?.notes || []).map((note: Note) => ({
             ...note,
@@ -753,7 +753,7 @@ export async function startNewChats(users: User[], message: string, companyId: s
 export async function createCampaign(data: Partial<Campaign> & { scheduleType?: 'now' | 'later' }, companyId: string, agentId: string): Promise<{ success: boolean; message?: string; campaign?: Campaign; }> {
     try {
         const campaignsCollection = await getCampaignsCollection();
-        const contactsCollection = await getContactsCollection();
+        const contactsCollection = await getUsersCollection();
         
         let status: Campaign['status'] = 'Draft';
         let sentAt: string | undefined = undefined;
@@ -839,7 +839,7 @@ export async function getCampaignsByCompany(companyId: string): Promise<Campaign
 
 export async function importContactsFromCSV(contactsData: { name: string; email: string; phone: string }[], companyId: string): Promise<{ success: boolean; message: string; newContacts: User[]; importedCount: number; skippedCount: number; }> {
     try {
-        const contactsCollection = await getContactsCollection();
+        const contactsCollection = await getUsersCollection();
         const newContacts: User[] = [];
         let importedCount = 0;
         let skippedCount = 0;
@@ -943,4 +943,5 @@ export async function scheduleAnalyticsReport(email: string, frequency: string):
     
 
     
+
 
