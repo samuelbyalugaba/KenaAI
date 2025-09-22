@@ -272,7 +272,7 @@ export async function updateAgentProfile(agentId: string, name: string, email: s
     }
 }
 
-export async function updateAgentPassword(agentId: string, currentPassword_unused: string, newPassword_unused: string, companyId: string): Promise<{ success: boolean; message: string }> {
+export async function updateAgentPassword(agentId: string, currentPassword: string, newPassword: string, companyId: string): Promise<{ success: boolean; message: string }> {
     try {
         const agentsCollection = await getAgentsCollection();
         const agent = await agentsCollection.findOne({ _id: new ObjectId(agentId) });
@@ -281,12 +281,12 @@ export async function updateAgentPassword(agentId: string, currentPassword_unuse
             return { success: false, message: "Agent not found." };
         }
         
-        const isPasswordValid = await verifyPassword(currentPassword_unused, agent.password);
+        const isPasswordValid = await verifyPassword(currentPassword, agent.password);
         if (!isPasswordValid) {
             return { success: false, message: "Incorrect current password." };
         }
 
-        const newHashedPassword = await hashPassword(newPassword_unused);
+        const newHashedPassword = await hashPassword(newPassword);
         await agentsCollection.updateOne(
             { _id: new ObjectId(agentId) },
             { $set: { password: newHashedPassword } }
@@ -999,6 +999,8 @@ export async function updateAgentAvatar(agentId: string, avatar: string): Promis
         return { success: false, message: "An unexpected error occurred." };
     }
 }
+    
+
     
 
     

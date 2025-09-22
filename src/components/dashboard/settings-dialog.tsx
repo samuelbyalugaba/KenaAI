@@ -24,10 +24,14 @@ import { ScrollArea } from "../ui/scroll-area"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { Textarea } from "../ui/textarea"
-import { getActivityLogs, updateAgentAvatar } from "@/app/actions"
+import { getActivityLogs, updateAgentAvatar, updateAgentPassword, updateAgentProfile } from "@/app/actions"
 import { Skeleton } from "../ui/skeleton"
 import { Badge } from "../ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { z } from "zod"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form"
 
 type SettingsDialogProps = {
   open: boolean
@@ -68,13 +72,48 @@ const SettingsNav = ({ activeSection, setActiveSection, user }: { activeSection:
 );
 
 // --- Setting Section Components ---
+const profileFormSchema = z.object({
+  name: z.string().min(1, "Name is required."),
+  email: z.string().email("Invalid email address."),
+  phone: z.string().min(1, "Phone number is required."),
+})
+type ProfileFormValues = z.infer<typeof profileFormSchema>
+
+const passwordFormSchema = z.object({
+    currentPassword: z.string().min(1, "Current password is required."),
+    newPassword: z.string().min(8, "New password must be at least 8 characters."),
+    confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+})
+type PasswordFormValues = z.infer<typeof passwordFormSchema>
+
 
 const ProfileSettings = ({ user, onUserUpdate }: { user: UserProfile, onUserUpdate: (user: Partial<UserProfile>) => void }) => {
     const { theme, setTheme } = useTheme();
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const { toast } = useToast();
 
-    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const profileForm = useForm<ProfileFormValues>({
+        resolver: zodResolver(profileFormSchema),
+        defaultValues: {
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+        }
+    })
+
+    const passwordForm = useForm<PasswordFormValues>({
+        resolver: zodResolver(passwordFormSchema),
+        defaultValues: {
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+        }
+    })
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
@@ -100,6 +139,42 @@ const ProfileSettings = ({ user, onUserUpdate }: { user: UserProfile, onUserUpda
         };
         reader.readAsDataURL(file);
     };
+
+    const handleProfileSubmit = async (values: ProfileFormValues) => {
+        const result = await updateAgentProfile(user.id, values.name, values.email, values.phone, user.companyId);
+
+        if (result.success && result.agent) {
+            onUserUpdate(result.agent);
+            toast({
+                title: "Profile Updated",
+                description: "Your personal information has been saved.",
+            });
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Update Failed",
+                description: result.message,
+            });
+        }
+    }
+    
+    const handlePasswordSubmit = async (values: PasswordFormValues) => {
+        const result = await updateAgentPassword(user.id, values.currentPassword, values.newPassword, user.companyId);
+
+        if (result.success) {
+            toast({
+                title: "Password Updated",
+                description: "Your password has been changed successfully.",
+            });
+            passwordForm.reset();
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Update Failed",
+                description: result.message,
+            });
+        }
+    }
 
 
     return (
@@ -134,22 +209,41 @@ const ProfileSettings = ({ user, onUserUpdate }: { user: UserProfile, onUserUpda
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                       </div>
                     </div>
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1"> <Label htmlFor="name">Name</Label> <Input id="name" defaultValue={user.name} /> </div>
-                            <div className="space-y-1"> <Label htmlFor="email">Email Address</Label> <Input id="email" type="email" defaultValue={user.email} /> </div>
-                        </div>
-                        <div className="space-y-1"> <Label htmlFor="phone">Phone Number</Label> <Input id="phone" type="tel" defaultValue={user.phone} /> </div>
-                    </div>
+                     <Form {...profileForm}>
+                        <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField control={profileForm.control} name="name" render={({ field }) => (
+                                    <FormItem> <FormLabel>Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem>
+                                )} />
+                                <FormField control={profileForm.control} name="email" render={({ field }) => (
+                                    <FormItem> <FormLabel>Email Address</FormLabel> <FormControl><Input type="email" {...field} /></FormControl> <FormMessage /> </FormItem>
+                                )} />
+                            </div>
+                            <FormField control={profileForm.control} name="phone" render={({ field }) => (
+                                <FormItem> <FormLabel>Phone Number</FormLabel> <FormControl><Input type="tel" {...field} /></FormControl> <FormMessage /> </FormItem>
+                            )} />
+                            <div className="flex justify-end"> <Button type="submit">Save Changes</Button> </div>
+                        </form>
+                    </Form>
                      <div className="space-y-4 border-t pt-6">
                         <h4 className="font-semibold">Change Password</h4>
-                        <div className="space-y-2"> <Label htmlFor="current-password">Current Password</Label> <Input id="current-password" type="password" /> </div>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2"> <Label htmlFor="new-password">New Password</Label> <Input id="new-password" type="password" /> </div>
-                            <div className="space-y-2"> <Label htmlFor="confirm-password">Confirm Password</Label> <Input id="confirm-password" type="password" /> </div>
-                        </div>
+                         <Form {...passwordForm}>
+                            <form onSubmit={passwordForm.handleSubmit(handlePasswordSubmit)} className="space-y-4">
+                                <FormField control={passwordForm.control} name="currentPassword" render={({ field }) => (
+                                    <FormItem> <FormLabel>Current Password</FormLabel> <FormControl><Input type="password" {...field} /></FormControl> <FormMessage /> </FormItem>
+                                )}/>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormField control={passwordForm.control} name="newPassword" render={({ field }) => (
+                                        <FormItem> <FormLabel>New Password</FormLabel> <FormControl><Input type="password" {...field} /></FormControl> <FormMessage /> </FormItem>
+                                    )}/>
+                                    <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (
+                                        <FormItem> <FormLabel>Confirm Password</FormLabel> <FormControl><Input type="password" {...field} /></FormControl> <FormMessage /> </FormItem>
+                                    )}/>
+                                </div>
+                                <div className="flex justify-end"> <Button type="submit">Update Password</Button> </div>
+                            </form>
+                        </Form>
                     </div>
-                     <div className="flex justify-end pt-6"> <Button>Save Changes</Button> </div>
                   </div>
             </TabsContent>
             <TabsContent value="notifications">
@@ -349,3 +443,5 @@ export function SettingsDialog({ open, onOpenChange, user, onUserUpdate }: Setti
     </Dialog>
   )
 }
+
+    
