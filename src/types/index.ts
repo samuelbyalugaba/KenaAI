@@ -49,6 +49,8 @@ export type User = {
     id?: string;
     name: string;
     createdAt: Date;
+    botpressBotId?: string;
+    botpressApiKey?: string;
   };
 
   export type Agent = {

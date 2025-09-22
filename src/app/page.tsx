@@ -16,6 +16,7 @@ import { AuthForm } from "@/components/dashboard/auth-form";
 import { handleLogin, handleSignUp } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingScreen } from "@/components/dashboard/loading-screen";
+import { SystemSettingsView } from "@/components/dashboard/system-settings-view";
 
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
@@ -122,6 +123,8 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
         return <MyPerformanceView {...props} />;
       case "Campaigns":
          return <CampaignsView {...props} />;
+      case "System Settings":
+        return <SystemSettingsView {...props} />;
       default:
         return <ChatLayout user={currentUser} onMenuClick={() => setIsNavOpen(true)} initialContact={initialContact} />;
     }

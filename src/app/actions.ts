@@ -302,13 +302,13 @@ export async function updateAgentPassword(agentId: string, currentPassword: stri
 }
 
 
-export async function handleLogin(email: string, password: string): Promise<{ success: boolean; message?: string; agent?: Agent }> {
+export async function handleLogin(email: string, password_unused: string): Promise<{ success: boolean; message?: string; agent?: Agent }> {
     try {
       const agentsCollection = await getAgentsCollection();
       const agentDoc = await agentsCollection.findOne({ email: email.toLowerCase() });
 
       if (agentDoc && agentDoc.password) {
-        const isPasswordValid = await verifyPassword(password, agentDoc.password);
+        const isPasswordValid = await verifyPassword(password_unused, agentDoc.password);
         if (isPasswordValid) {
           const { password, ...agentData } = agentDoc;
           const agent: Agent = {
@@ -328,7 +328,7 @@ export async function handleLogin(email: string, password: string): Promise<{ su
     }
 };
 
-export async function createAgent(name: string, email: string, password: string, role: AgentRole, companyId: string, createdBy: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
+export async function createAgent(name: string, email: string, password_unused: string, role: AgentRole, companyId: string, createdBy: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
     try {
         const agentsCollection = await getAgentsCollection();
         const existingAgent = await agentsCollection.findOne({ email: email.toLowerCase() });
@@ -337,7 +337,7 @@ export async function createAgent(name: string, email: string, password: string,
             return { success: false, message: "An agent with this email already exists." };
         }
 
-        const hashedPassword = await hashPassword(password);
+        const hashedPassword = await hashPassword(password_unused);
         const avatar = '';
 
         const agentToInsert: Omit<Agent, 'id' | '_id'> = {
@@ -406,7 +406,7 @@ export async function deleteAgent(agentId: string, companyId?: string, deletedBy
 }
 
 
-export async function handleSignUp(name: string, email: string, password: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
+export async function handleSignUp(name: string, email: string, password_unused: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
     const db = await getDb();
     const session = db.client.startSession();
     try {
@@ -423,6 +423,8 @@ export async function handleSignUp(name: string, email: string, password: string
             const companyResult = await companiesCollection.insertOne({
                 name: `${name}'s Company`,
                 createdAt: new Date(),
+                botpressBotId: 'placeholder_bot_id', // Add placeholder
+                botpressApiKey: 'placeholder_api_key' // Add placeholder
             }, { session });
 
             if (!companyResult.insertedId) {
@@ -430,15 +432,14 @@ export async function handleSignUp(name: string, email: string, password: string
             }
             const companyId = companyResult.insertedId;
             
-            const hashedPassword = await hashPassword(password);
-            const avatar = '';
+            const hashedPassword = await hashPassword(password_unused);
             
             const agentToInsert: Omit<Agent, 'id' | '_id'> = {
                 name,
                 email: email.toLowerCase(),
                 password: hashedPassword,
                 role: 'admin',
-                avatar,
+                avatar: '',
                 phone: '',
                 companyId: companyId,
             };
@@ -538,13 +539,11 @@ export async function createContact(name: string, email: string, phone: string, 
             return { success: false, message: "A contact with this email already exists." };
         }
 
-        const avatar = '';
-
         const contactToInsert: Omit<User, 'id' | '_id'> = {
             name,
             email: email.toLowerCase(),
             phone,
-            avatar,
+            avatar: '',
             companyId: new ObjectId(companyId),
             notes: [],
             online: false,
@@ -937,12 +936,11 @@ export async function importContactsFromCSV(contactsData: { name: string; email:
                 continue;
             }
 
-            const avatar = '';
             const contactToInsert: Omit<User, 'id' | '_id'> = {
                 name: contact.name,
                 email: contact.email.toLowerCase(),
                 phone: contact.phone,
-                avatar,
+                avatar: '',
                 companyId: companyObjId,
                 notes: [],
                 online: false,
