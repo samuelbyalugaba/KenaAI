@@ -63,6 +63,9 @@ import { DateRange } from "react-day-picker";
 import { addDays, format, startOfDay, eachDayOfInterval, isWithinInterval, endOfDay } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import Papa from 'papaparse';
 
 
 const channelBreakdownConfig = {
@@ -198,18 +201,67 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     const to = endOfDay(date.to);
     
     return allChats.filter(chat => {
-        const chatDate = new Date(chat.messages[chat.messages.length - 1]?.timestamp || chat.timestamp);
+        // Use the last message timestamp if available, otherwise fallback to the chat's main timestamp
+        const lastActivityTimestamp = chat.messages.length > 0 
+            ? new Date(chat.messages[chat.messages.length - 1].timestamp)
+            : new Date(chat.timestamp); // Note: chat.timestamp might be just a time string. This might need improvement.
+            
+        // A more robust check if chat.timestamp is only a time string
+        const chatDate = new Date(chat.messages.length > 0 ? chat.messages[chat.messages.length - 1].timestamp : new Date());
+
         return isWithinInterval(chatDate, { start: from, end: to });
     });
   }, [allChats, date]);
 
 
+  const agentPerformanceData = React.useMemo(() => {
+    return agents.map(agent => ({
+      name: agent.name,
+      conversations: filteredChats.filter(c => c.messages.some(m => m.senderId?.toString() === agent.id)).length,
+      avgResponseTime: agent.avgResponseTime || 'N/A',
+      csat: agent.csat || 'N/A',
+    }));
+  }, [agents, filteredChats]);
+
   const handleExport = (type: 'PDF' | 'CSV') => {
-      toast({
-          title: "Feature Not Implemented",
-          description: `This feature is for demonstration. In a real app, a ${type} file would be downloaded.`,
+    const doc = new jsPDF();
+    const tableData = agentPerformanceData.map(d => [d.name, d.conversations, d.avgResponseTime, d.csat]);
+    
+    if (type === 'PDF') {
+      doc.setFontSize(18);
+      doc.text("KenaAI Analytics Report", 14, 22);
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      const dateRangeText = date?.from && date.to ? `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}` : "All Time";
+      doc.text(`Date Range: ${dateRangeText}`, 14, 30);
+      
+      const kpiText = kpiData.map(kpi => `${kpi.title}: ${kpi.value}`).join('\n');
+      doc.text(kpiText, 14, 40);
+
+      autoTable(doc, {
+        startY: 70,
+        head: [['Agent', 'Conversations', 'Avg. Response', 'CSAT']],
+        body: tableData,
       });
-  }
+      doc.save(`kena-ai-report-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    } else if (type === 'CSV') {
+        const csv = Papa.unparse({
+            fields: ['Agent', 'Conversations Handled', 'Average Response Time', 'CSAT Score'],
+            data: tableData
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `kena-ai-report-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+  };
 
   const handleScheduleReport = async () => {
     if (!reportEmail || !reportEmail.includes('@')) {
