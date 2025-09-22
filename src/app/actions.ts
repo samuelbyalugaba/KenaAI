@@ -973,6 +973,32 @@ export async function importContactsFromCSV(contactsData: { name: string; email:
         return { success: false, message: "An unexpected error occurred during import.", newContacts: [], importedCount: 0, skippedCount: 0 };
     }
 }
+
+export async function updateAgentAvatar(agentId: string, avatar: string): Promise<{ success: boolean; message?: string; avatar?: string; }> {
+    try {
+        const agentsCollection = await getAgentsCollection();
+        
+        const updateResult = await agentsCollection.updateOne(
+            { _id: new ObjectId(agentId) },
+            { $set: { avatar } }
+        );
+
+        if (updateResult.modifiedCount === 0 && updateResult.matchedCount === 0) {
+            return { success: false, message: "Agent not found." };
+        }
+        
+        // Log activity
+        const agent = await agentsCollection.findOne({ _id: new ObjectId(agentId) });
+        if (agent) {
+             await logActivity(agent.companyId, agent.name, 'Update Profile', `Updated profile picture`);
+        }
+
+        return { success: true, avatar: avatar };
+    } catch (error) {
+        console.error("Update agent avatar error:", error);
+        return { success: false, message: "An unexpected error occurred." };
+    }
+}
     
 
     

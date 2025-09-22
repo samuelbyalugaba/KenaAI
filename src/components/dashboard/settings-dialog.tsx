@@ -24,9 +24,10 @@ import { ScrollArea } from "../ui/scroll-area"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 import { Textarea } from "../ui/textarea"
-import { getActivityLogs } from "@/app/actions"
+import { getActivityLogs, updateAgentAvatar } from "@/app/actions"
 import { Skeleton } from "../ui/skeleton"
 import { Badge } from "../ui/badge"
+import { useToast } from "@/hooks/use-toast"
 
 type SettingsDialogProps = {
   open: boolean
@@ -68,8 +69,39 @@ const SettingsNav = ({ activeSection, setActiveSection, user }: { activeSection:
 
 // --- Setting Section Components ---
 
-const ProfileSettings = ({ user }: { user: UserProfile }) => {
+const ProfileSettings = ({ user, onUserUpdate }: { user: UserProfile, onUserUpdate: (user: Partial<UserProfile>) => void }) => {
     const { theme, setTheme } = useTheme();
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const { toast } = useToast();
+
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            const dataUrl = event.target?.result as string;
+            
+            const result = await updateAgentAvatar(user.id, dataUrl);
+
+            if(result.success && result.avatar) {
+                onUserUpdate({ avatar: result.avatar });
+                toast({
+                    title: "Avatar Updated",
+                    description: "Your profile picture has been changed.",
+                });
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Upload Failed",
+                    description: result.message || "Could not update your avatar.",
+                });
+            }
+        };
+        reader.readAsDataURL(file);
+    };
+
+
     return (
         <Tabs defaultValue="personal" className="h-full">
             <TabsList className="mb-4">
@@ -85,7 +117,14 @@ const ProfileSettings = ({ user }: { user: UserProfile }) => {
                             <AvatarImage src={user.avatar} alt={user.name} />
                             <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                           </Avatar>
-                          <Button variant="ghost" size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-background/80 hover:bg-background">
+                          <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/png, image/jpeg, image/gif"
+                                onChange={handleAvatarChange}
+                            />
+                          <Button variant="ghost" size="icon" className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-background/80 hover:bg-background" onClick={() => fileInputRef.current?.click()}>
                             <Camera className="h-4 w-4" />
                             <span className="sr-only">Change Photo</span>
                           </Button>
@@ -273,7 +312,7 @@ export function SettingsDialog({ open, onOpenChange, user, onUserUpdate }: Setti
   const renderSection = () => {
       switch (activeSection) {
           case 'profile':
-              return <ProfileSettings user={user} />;
+              return <ProfileSettings user={user} onUserUpdate={onUserUpdate} />;
           case 'integrations':
               return <IntegrationSettings />;
           case 'chatbot':
@@ -281,7 +320,7 @@ export function SettingsDialog({ open, onOpenChange, user, onUserUpdate }: Setti
           case 'help':
               return <HelpSettings />;
           default:
-              return <ProfileSettings user={user} />;
+              return <ProfileSettings user={user} onUserUpdate={onUserUpdate} />;
       }
   }
   
