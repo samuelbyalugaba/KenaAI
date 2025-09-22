@@ -82,7 +82,7 @@ export function AddAgentDialog({ onAgentAdd, user }: AddAgentDialogProps) {
         const newAgent: Agent = {
             id: result.agent._id!,
             ...data,
-            avatar: `https://picsum.photos/seed/${data.name}/100/100`,
+            avatar: '',
             role: data.role as AgentRole,
             status: "Offline",
             conversationsToday: 0,
@@ -214,3 +214,5 @@ export function AddAgentDialog({ onAgentAdd, user }: AddAgentDialogProps) {
     </Dialog>
   );
 }
+
+    

@@ -338,7 +338,7 @@ export async function createAgent(name: string, email: string, password_unused: 
         }
 
         const hashedPassword = await hashPassword(password_unused);
-        const avatar = `https://picsum.photos/seed/${name.replace(/\s/g, '')}/100/100`;
+        const avatar = '';
 
         const agentToInsert: Omit<Agent, 'id' | '_id'> = {
             name,
@@ -431,7 +431,7 @@ export async function handleSignUp(name: string, email: string, password_unused:
             const companyId = companyResult.insertedId;
             
             const hashedPassword = await hashPassword(password_unused);
-            const avatar = `https://picsum.photos/seed/${name.replace(/\s/g, '')}/100/100`;
+            const avatar = '';
             
             const agentToInsert: Omit<Agent, 'id' | '_id'> = {
                 name,
@@ -538,7 +538,7 @@ export async function createContact(name: string, email: string, phone: string, 
             return { success: false, message: "A contact with this email already exists." };
         }
 
-        const avatar = `https://picsum.photos/seed/${name.replace(/\s/g, '')}/100/100`;
+        const avatar = '';
 
         const contactToInsert: Omit<User, 'id' | '_id'> = {
             name,
@@ -937,7 +937,7 @@ export async function importContactsFromCSV(contactsData: { name: string; email:
                 continue;
             }
 
-            const avatar = `https://picsum.photos/seed/${contact.name.replace(/\s/g, '')}/100/100`;
+            const avatar = '';
             const contactToInsert: Omit<User, 'id' | '_id'> = {
                 name: contact.name,
                 email: contact.email.toLowerCase(),
@@ -973,4 +973,6 @@ export async function importContactsFromCSV(contactsData: { name: string; email:
         return { success: false, message: "An unexpected error occurred during import.", newContacts: [], importedCount: 0, skippedCount: 0 };
     }
 }
+    
+
     

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -54,7 +55,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
     );
   };
 
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = (checked: boolean | string) => {
     if (checked) {
       setSelectedContacts(filteredContacts);
     } else {
@@ -70,7 +71,7 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
             const newUser: User = {
                 id: `new-${new Date().toISOString()}`,
                 name: newContactInput,
-                avatar: `https://picsum.photos/seed/${newContactInput}/100/100`,
+                avatar: '',
                 online: false,
                 email: newContactInput.includes('@') ? newContactInput : undefined,
                 phone: !newContactInput.includes('@') ? newContactInput : undefined,
@@ -265,3 +266,5 @@ export function NewChatDialog({ children, contacts, onStartChat }: NewChatDialog
     </Dialog>
   );
 }
+
+    
