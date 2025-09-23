@@ -31,19 +31,15 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
 
-        // Basic validation for incoming Botpress payload
-        if (body.type !== 'message.created') {
-            return NextResponse.json({ message: 'Ignoring non-message event' }, { status: 200 });
-        }
+        // Destructure the custom payload from the user's Botpress workflow
+        const { botId, conversationId, userId: botpressUserId, text } = body;
 
-        const { data: messageData } = body;
-        const { botId, conversationId, userId: botpressUserId, payload, direction } = messageData;
+        // Basic validation for the custom payload
+        if (!botId || !botpressUserId || !text) {
+            console.error('Webhook Error: Missing required fields in payload.', body);
+            return NextResponse.json({ error: 'Missing botId, userId, or text in payload.' }, { status: 400 });
+        }
         
-        // Don't process empty messages
-        if (!payload.text) {
-            return NextResponse.json({ message: 'Ignoring empty message' }, { status: 200 });
-        }
-
         // 1. Find the company associated with this bot
         const companiesCollection = await getCompaniesCollection();
         const company = await companiesCollection.findOne({ botpressBotId: botId });
@@ -56,6 +52,7 @@ export async function POST(req: NextRequest) {
 
         // 2. Find or create the user (contact)
         const usersCollection = await getUsersCollection();
+        // Use a consistent identifier for the user based on their Botpress ID
         const userEmail = `${botpressUserId}@botpress.io`;
         let user = await usersCollection.findOne({ email: userEmail, companyId: companyId });
 
@@ -70,7 +67,7 @@ export async function POST(req: NextRequest) {
                 online: true,
             };
             const result = await usersCollection.insertOne(newUserToInsert as any);
-            user = { ...newUserToInsert, _id: result.insertedId, id: result.insertedId.toString() };
+            user = { ...newUserToInsert, _id: result.insertedId, id: result.insertedId.toString(), companyId: companyId.toString() };
         }
 
 
@@ -79,35 +76,29 @@ export async function POST(req: NextRequest) {
         let chat = await chatsCollection.findOne({ userId: user._id, companyId: companyId });
 
         if (!chat) {
-            const newChatToInsert: Omit<Chat, 'id' | '_id'> = {
+            const newChatToInsert: Omit<Chat, 'id' | '_id' | 'user'> = {
                 userId: user._id,
                 companyId: companyId,
-                lastMessage: payload.text,
+                lastMessage: text,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 unreadCount: 1,
                 priority: 'normal',
-                channel: (messageData.channel || 'Webchat') as any,
+                channel: 'Webchat', // Default channel, can be customized
                 isChatbotActive: true, // It came from the bot, so it's active
                 messages: [],
-                user: {
-                    ...user,
-                    id: user._id.toString(),
-                    _id: user._id,
-                }, // Embedding user for easier access
             };
             const result = await chatsCollection.insertOne(newChatToInsert as any);
-            const createdChat = await chatsCollection.findOne({ _id: result.insertedId });
-            if (!createdChat) {
-                throw new Error("Failed to retrieve created chat");
+            chat = await chatsCollection.findOne({ _id: result.insertedId });
+            if (!chat) {
+                 throw new Error("Failed to retrieve created chat");
             }
-            chat = createdChat;
         } else {
              // Update existing chat
             await chatsCollection.updateOne(
                 { _id: chat._id },
                 { 
                     $set: { 
-                        lastMessage: payload.text, 
+                        lastMessage: text, 
                         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
                     },
                     $inc: { unreadCount: 1 }
@@ -119,10 +110,14 @@ export async function POST(req: NextRequest) {
         const messagesCollection = await getMessagesCollection();
         const newMessage: Omit<Message, 'id' | '_id'> = {
             chatId: chat._id,
-            sender: user, // The sender is the user object
+            sender: {
+                ...user,
+                _id: user._id.toString(),
+                id: user._id.toString(),
+            },
             senderId: user._id,
-            text: payload.text,
-            timestamp: new Date(messageData.createdAt).toISOString(),
+            text: text,
+            timestamp: new Date().toISOString(),
         };
 
         await messagesCollection.insertOne(newMessage as any);
