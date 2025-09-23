@@ -26,18 +26,18 @@ async function getMessagesCollection(): Promise<Collection<Message>> {
 }
 
 
-// This is the main webhook handler
-export async function POST(req: NextRequest) {
+// This is the main webhook handler, now using GET
+export async function GET(req: NextRequest) {
     try {
-        const body = await req.json();
+        const { searchParams } = new URL(req.url);
+        const botId = searchParams.get('botId');
+        const botpressUserId = searchParams.get('userId');
+        const text = searchParams.get('text');
 
-        // Destructure the custom payload from the user's Botpress workflow
-        const { botId, conversationId, userId: botpressUserId, text } = body;
-
-        // Basic validation for the custom payload
+        // Basic validation for the query parameters
         if (!botId || !botpressUserId || !text) {
-            console.error('Webhook Error: Missing required fields in payload.', body);
-            return NextResponse.json({ error: 'Missing botId, userId, or text in payload.' }, { status: 400 });
+            console.error('Webhook Error: Missing required query parameters.', { botId, botpressUserId, text });
+            return NextResponse.json({ error: 'Missing botId, userId, or text in query parameters.' }, { status: 400 });
         }
         
         // 1. Find the company associated with this bot
@@ -88,10 +88,12 @@ export async function POST(req: NextRequest) {
                 messages: [],
             };
             const result = await chatsCollection.insertOne(newChatToInsert as any);
-            chat = await chatsCollection.findOne({ _id: result.insertedId });
-            if (!chat) {
+            const createdChat = await chatsCollection.findOne({ _id: result.insertedId });
+            if (!createdChat) {
                  throw new Error("Failed to retrieve created chat");
             }
+            chat = { ...createdChat, user: user, messages: [] };
+
         } else {
              // Update existing chat
             await chatsCollection.updateOne(
@@ -122,7 +124,7 @@ export async function POST(req: NextRequest) {
 
         await messagesCollection.insertOne(newMessage as any);
 
-        console.log(`Successfully processed message for conversation ${conversationId}`);
+        console.log(`Successfully processed message for user ${botpressUserId}`);
         return NextResponse.json({ success: true, message: "Message processed" }, { status: 200 });
 
     } catch (error) {
