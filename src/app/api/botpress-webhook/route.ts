@@ -26,8 +26,8 @@ async function getMessagesCollection(): Promise<Collection<Message>> {
 }
 
 
-// This is the main webhook handler, now using GET
-export async function GET(req: NextRequest) {
+// This is the main webhook handler, now using POST
+export async function POST(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const botId = searchParams.get('botId');
