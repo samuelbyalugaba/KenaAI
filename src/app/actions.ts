@@ -81,16 +81,23 @@ export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
         }
         const agentsCollection = await getAgentsCollection();
         const messagesCollection = await getMessagesCollection();
+        
         const agents = await agentsCollection.find({ companyId: new ObjectId(companyId) }, { projection: { password: 0 } }).toArray();
 
-        const agentDataWithStats = await Promise.all(agents.map(async (agent) => {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+        // Efficiently get conversation counts for all agents in one query
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-            const conversationsToday = await messagesCollection.countDocuments({
-                senderId: agent._id,
-                timestamp: { $gte: today.toISOString() } 
-            });
+        const conversationCounts = await messagesCollection.aggregate([
+            { $match: { sender: 'me', companyId: new ObjectId(companyId), timestamp: { $gte: today.toISOString() } } },
+            { $group: { _id: "$senderId", count: { $sum: 1 } } }
+        ]).toArray();
+
+        const countsMap = new Map(conversationCounts.map(item => [item._id.toString(), item.count]));
+
+        const agentDataWithStats = agents.map(agent => {
+            const agentIdStr = agent._id.toString();
+            const conversationsToday = countsMap.get(agentIdStr) || 0;
             
             const statuses: Array<'Online' | 'Offline' | 'Busy'> = ['Online', 'Offline', 'Busy'];
             const hash = simpleHash(agent.name);
@@ -108,15 +115,15 @@ export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
 
             return {
                 ...agent,
-                _id: agent._id.toString(),
-                id: agent._id.toString(),
+                _id: agentIdStr,
+                id: agentIdStr,
                 companyId: agent.companyId?.toString(),
                 conversationsToday,
                 status: randomStatus,
                 avgResponseTime,
                 csat,
             };
-        }));
+        });
         
         return agentDataWithStats;
     } catch (error) {
@@ -945,3 +952,6 @@ export async function scheduleAnalyticsReport(email: string, frequency: string):
     
 
 
+
+
+    

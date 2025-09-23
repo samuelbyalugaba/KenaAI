@@ -436,28 +436,30 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
 }, [filteredChats, date]);
 
   const customerEngagementData = React.useMemo(() => {
-    if (!date?.from || !date?.to || filteredChats.length === 0) {
-      return { new: 0, returning: 0 };
+    if (!date?.from || !date?.to || allChats.length === 0) {
+        return { new: 0, returning: 0 };
     }
     const from = startOfDay(date.from);
 
     const contactIdsInPeriod = new Set(filteredChats.map(c => c.user.id));
-    let newCustomers = 0;
-    let returningCustomers = 0;
-    
-    contactIdsInPeriod.forEach(contactId => {
-      const contact = allChats.find(c => c.user.id === contactId)?.user;
-      if (contact?._id) {
-        const creationDate = new Date(parseInt(contact._id.toString().substring(0, 8), 16) * 1000);
-        if (creationDate < from) {
-          returningCustomers++;
-        } else {
-          newCustomers++;
-        }
-      }
-    });
+    const newCustomers = new Set<string>();
+    const returningCustomers = new Set<string>();
 
-    return { new: newCustomers, returning: returningCustomers };
+    for (const chat of allChats) {
+        if (!chat.user._id) continue;
+        
+        const contactCreationDate = new Date(parseInt(chat.user._id.toString().substring(0, 8), 16) * 1000);
+        
+        if (contactIdsInPeriod.has(chat.user.id)) {
+            if (contactCreationDate >= from) {
+                newCustomers.add(chat.user.id);
+            } else {
+                returningCustomers.add(chat.user.id);
+            }
+        }
+    }
+
+    return { new: newCustomers.size, returning: returningCustomers.size };
   }, [filteredChats, allChats, date]);
 
 
@@ -799,3 +801,5 @@ export function DashboardView({ onMenuClick, user }: DashboardViewProps) {
     </div>
   );
 }
+
+    

@@ -41,6 +41,7 @@ async function createIndexes(db: Db) {
             db.collection('contacts').createIndex({ email: 1 }),
             db.collection('chats').createIndex({ companyId: 1 }),
             db.collection('chats').createIndex({ userId: 1 }),
+            db.collection('messages').createIndex({ companyId: 1, sender: 1, timestamp: 1 }),
             db.collection('announcements').createIndex({ companyId: 1 }),
             db.collection('campaigns').createIndex({ companyId: 1 }),
         ]);
@@ -66,3 +67,5 @@ export async function getDb(): Promise<Db> {
 
     return db;
 }
+
+    
