@@ -39,9 +39,9 @@ export async function POST(req: NextRequest) {
         const { data: messageData } = body;
         const { botId, conversationId, userId: botpressUserId, payload, direction } = messageData;
         
-        // Ignore messages sent FROM the bot to prevent loops
-        if (direction === 'outgoing') {
-             return NextResponse.json({ message: 'Ignoring outgoing bot message' }, { status: 200 });
+        // Don't process empty messages
+        if (!payload.text) {
+            return NextResponse.json({ message: 'Ignoring empty message' }, { status: 200 });
         }
 
         // 1. Find the company associated with this bot
@@ -56,13 +56,14 @@ export async function POST(req: NextRequest) {
 
         // 2. Find or create the user (contact)
         const usersCollection = await getUsersCollection();
-        let user = await usersCollection.findOne({ email: `${botpressUserId}@botpress.io` });
+        const userEmail = `${botpressUserId}@botpress.io`;
+        let user = await usersCollection.findOne({ email: userEmail, companyId: companyId });
 
         if (!user) {
             const newUserToInsert: Omit<User, 'id' | '_id'> = {
                 name: `Botpress User ${botpressUserId.substring(0, 5)}`,
-                email: `${botpressUserId}@botpress.io`, // Create a unique email
-                avatar: '',
+                email: userEmail,
+                avatar: `https://picsum.photos/seed/${botpressUserId}/100/100`,
                 phone: '',
                 companyId: companyId,
                 notes: [],
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
 
         // 3. Find or create the chat
         const chatsCollection = await getChatsCollection();
-        let chat = await chatsCollection.findOne({ 'user.id': user.id, companyId: companyId });
+        let chat = await chatsCollection.findOne({ userId: user._id, companyId: companyId });
 
         if (!chat) {
             const newChatToInsert: Omit<Chat, 'id' | '_id'> = {
@@ -88,10 +89,18 @@ export async function POST(req: NextRequest) {
                 channel: (messageData.channel || 'Webchat') as any,
                 isChatbotActive: true, // It came from the bot, so it's active
                 messages: [],
-                user: user, // Embedding user for easier access
+                user: {
+                    ...user,
+                    id: user._id.toString(),
+                    _id: user._id,
+                }, // Embedding user for easier access
             };
             const result = await chatsCollection.insertOne(newChatToInsert as any);
-            chat = { ...newChatToInsert, _id: result.insertedId, id: result.insertedId.toString() };
+            const createdChat = await chatsCollection.findOne({ _id: result.insertedId });
+            if (!createdChat) {
+                throw new Error("Failed to retrieve created chat");
+            }
+            chat = createdChat;
         } else {
              // Update existing chat
             await chatsCollection.updateOne(
