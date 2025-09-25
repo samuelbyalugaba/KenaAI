@@ -29,22 +29,15 @@ async function getMessagesCollection(): Promise<Collection<Message>> {
 // This is the main webhook handler
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
-
-        // Check if body is an array and not empty
-        if (!Array.isArray(body) || body.length === 0) {
-            console.error('Webhook Error: Request body is not a valid array or is empty.', { body });
-            return NextResponse.json({ error: 'Request body must be a non-empty array.' }, { status: 400 });
-        }
-
-        // Process the first event in the array. Botpress often sends a single event in an array.
-        const event = body[0];
-        const { botId, userId: botpressUserId, text } = event;
+        const { searchParams } = new URL(req.url);
+        const botId = searchParams.get('botId');
+        const botpressUserId = searchParams.get('userId');
+        const text = searchParams.get('text');
 
         // Basic validation for the event object
         if (!botId || !botpressUserId || !text) {
-            console.error('Webhook Error: Missing required fields in event object.', event);
-            return NextResponse.json({ error: 'Missing botId, userId, or text in event object.' }, { status: 400 });
+            console.error('Webhook Error: Missing required fields in query parameters.', { botId, botpressUserId, text });
+            return NextResponse.json({ error: 'Missing botId, userId, or text in query parameters.' }, { status: 400 });
         }
         
         // 1. Find the company associated with this bot
