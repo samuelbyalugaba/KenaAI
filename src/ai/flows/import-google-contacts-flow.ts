@@ -51,9 +51,12 @@ const importContactsPrompt = ai.definePrompt({
     name: 'importContactsPrompt',
     tools: [getGoogleContacts],
     prompt: `The user wants to import their contacts from Google.
-    You must call the getGoogleContacts tool to fetch the contacts.
-    Do not ask for confirmation, just call the tool.
-    Once you have the list of contacts, do not output any text, just return the structured data from the tool.`,
+You must call the getGoogleContacts tool to fetch the contacts.
+Do not ask for confirmation, just call the tool.
+Once you have the list of contacts, do not output any text, just return the structured data from the tool.`,
+    output: {
+        schema: GoogleContactsListSchema,
+    }
 });
 
 // Define the main flow for importing contacts
