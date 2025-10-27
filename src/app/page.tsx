@@ -33,21 +33,25 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   const { toast } = useToast();
 
   React.useEffect(() => {
-    // Check for saved user session in localStorage when the app loads
     try {
         const savedUser = localStorage.getItem('currentUser');
+        const savedView = localStorage.getItem('activeView') as View | null;
+
         if (savedUser) {
-            const user = JSON.parse(savedUser);
+            const user: UserProfile = JSON.parse(savedUser);
             setCurrentUser(user);
-            if (user.role === 'admin') {
+
+            if (savedView) {
+                setActiveView(savedView);
+            } else if (user.role === 'admin') {
               setActiveView('Dashboard');
             } else {
               setActiveView('Chat');
             }
         }
     } catch (error) {
-        console.error("Failed to parse user from localStorage", error);
-        localStorage.removeItem('currentUser');
+        console.error("Failed to parse from localStorage", error);
+        localStorage.clear(); // Clear storage on parsing error
     }
     
     const timer = setTimeout(() => {
@@ -55,6 +59,13 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Persist activeView to localStorage
+  React.useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem('activeView', activeView);
+    }
+  }, [activeView, currentUser]);
 
   const onLogin = async (email: string, password_unused: string) => {
     const result = await handleLogin(email, password_unused);
@@ -70,14 +81,11 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
         companyId: agent.companyId,
       };
       setCurrentUser(userProfile);
-      // Save user to localStorage
       localStorage.setItem('currentUser', JSON.stringify(userProfile));
 
-      if (agent.role === 'admin') {
-        setActiveView('Dashboard');
-      } else {
-        setActiveView('Chat');
-      }
+      const viewToSet = agent.role === 'admin' ? 'Dashboard' : 'Chat';
+      setActiveView(viewToSet);
+      localStorage.setItem('activeView', viewToSet);
     }
     return { success: result.success, message: result.message };
   }
@@ -85,8 +93,8 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
 
   const handleLogout = () => {
     setCurrentUser(null);
-    // Clear user from localStorage
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('activeView');
     setActiveView('Chat');
   };
   
@@ -94,7 +102,6 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
     setCurrentUser(prev => {
         if (prev) {
             const newUser = { ...prev, ...updatedUser };
-            // Update localStorage when user profile changes
             localStorage.setItem('currentUser', JSON.stringify(newUser));
             return newUser;
         }
@@ -105,7 +112,6 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   const handleNavigateToChat = (contact: User) => {
     setInitialContact(contact);
     setActiveView("Chat");
-    // Reset initialContact after a short delay to allow ChatLayout to pick it up
     setTimeout(() => setInitialContact(null), 100);
   }
 
