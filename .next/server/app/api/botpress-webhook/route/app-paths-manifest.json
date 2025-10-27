@@ -1,0 +1,3 @@
+{
+  "/api/botpress-webhook/route": "app/api/botpress-webhook/route.js"
+}

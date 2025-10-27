@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 12, "column": 0}, "map": {"version":3,"sources":["file:///home/user/studio/KenaAI.png.mjs%20%28structured%20image%20object%29"],"sourcesContent":["import src from \"IMAGE\";\nexport default { src, width: 5567, height: 2103, blurDataURL: \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAADCAYAAACuyE5IAAAAbklEQVR42gFjAJz/AC0WO449HVDCKxU4iRQJGEIQBxQ3DAUOJwgEChwFAwYPAD8fU8pEIVraOhxMuyUQLX0oETGMJA8sfR4NJGcPBxIzAC0WO449HVDCLRc6iBEOExMSDxMREQ8TEBEOEg4QDhEMxDoR4APU2I8AAAAASUVORK5CYII=\", blurWidth: 8, blurHeight: 3 }\n"],"names":[],"mappings":";;;AAAA;;uCACe;IAAE,KAAA,+FAAA,CAAA,UAAG;IAAE,OAAO;IAAM,QAAQ;IAAM,aAAa;IAA0P,WAAW;IAAG,YAAY;AAAE","debugId":null}}]
+}
