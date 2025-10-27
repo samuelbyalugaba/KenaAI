@@ -266,7 +266,6 @@ type ContactsViewProps = {
 export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsViewProps) {
   const [contacts, setContacts] = React.useState<ContactUser[]>([]);
   const [agents, setAgents] = React.useState<Agent[]>([]);
-  const [chats, setChats] = React.useState<Chat[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
@@ -279,14 +278,12 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     async function fetchData() {
         if(user?.companyId) {
             setIsLoading(true);
-            const [fetchedContacts, fetchedAgents, fetchedChats] = await Promise.all([
+            const [fetchedContacts, fetchedAgents] = await Promise.all([
                 getContactsByCompany(user.companyId),
                 getAgentsByCompany(user.companyId),
-                getChatsByCompany(user.companyId),
             ]);
             setContacts(fetchedContacts);
             setAgents(fetchedAgents);
-            setChats(fetchedChats);
             setIsLoading(false);
         }
     }
@@ -354,10 +351,15 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     }
   };
   
-  const handleSelectContact = async (contact: ContactUser, allChats: Chat[]) => {
+  const handleSelectContact = async (contact: ContactUser) => {
     setSelectedContact(contact);
     setSelectedChatHistory(undefined); // Show loading state
+    
+    // This is inefficient if there are many chats, but required for this architecture.
+    // A better approach would be a dedicated backend endpoint `getChatByContactId`.
+    const allChats = await getChatsByCompany(user!.companyId);
     const relevantChat = allChats.find(chat => chat.user.id === contact.id);
+
     if (relevantChat) {
       const messages = await getMessagesForChat(relevantChat.id);
       setSelectedChatHistory(messages);
@@ -432,7 +434,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
             ) : viewMode === 'grid' ? (
                 <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                     {filteredContacts.map((contact) => (
-                        <ContactCard key={contact.id} contact={contact} onClick={() => handleSelectContact(contact, chats)} />
+                        <ContactCard key={contact.id} contact={contact} onClick={() => handleSelectContact(contact)} />
                     ))}
                 </div>
             ) : (
@@ -450,7 +452,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
                             <ContactListRow 
                                 key={contact.id} 
                                 contact={contact} 
-                                onClick={() => handleSelectContact(contact, chats)}
+                                onClick={() => handleSelectContact(contact)}
                                 onStartChat={onNavigateToChat}
                                 assignedAgent={agents.find(a => a.id === contact.assignedAgentId)}
                             />
@@ -480,5 +482,3 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
 
   return <MainView />;
 }
-
-    

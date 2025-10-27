@@ -421,7 +421,7 @@ const ChatMessage = ({ message }: { message: Message }) => {
             )}
              <div className={cn("max-w-xs md:max-w-md lg:max-w-lg rounded-lg px-4 py-2", isMe ? "bg-primary text-primary-foreground" : "bg-secondary")}>
                 <p className="text-sm">{message.text}</p>
-                <p className={cn("text-xs mt-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>{message.timestamp}</p>
+                <p className={cn("text-xs mt-1", isMe ? "text-primary-foreground/70" : "text-muted-foreground")}>{new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
             </div>
         </div>
     )
@@ -548,7 +548,7 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
 
   const handleSelectChat = async (chat: Chat) => {
     const contactForChat = contacts.find(c => c.id === chat.user.id);
-    const chatWithFullContact = { ...chat, user: { ...chat.user, assignedAgentId: contactForChat?.assignedAgentId } };
+    const chatWithFullContact = { ...chat, user: { ...chat.user, assignedAgentId: contactForChat?.assignedAgentId, notes: contactForChat?.notes } };
 
     setSelectedChat(chatWithFullContact);
     if (!chat.messages || chat.messages.length === 0) {
@@ -583,30 +583,35 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
     const result = await sendMessage(chatId, text, user.id);
 
     if (result.success && result.newMessage) {
-      const newMessage = result.newMessage;
-      const updatedChats = chats.map(chat => {
-        if (chat.id === chatId) {
-          return {
-            ...chat,
-            messages: [...(chat.messages || []), newMessage],
+        const newMessage = result.newMessage;
+        const finalNewMessage: Message = {
+            ...newMessage,
+            timestamp: new Date(newMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+
+        const updatedChats = chats.map(chat => {
+            if (chat.id === chatId) {
+                return {
+                    ...chat,
+                    messages: [...(chat.messages || []), finalNewMessage],
+                    lastMessage: text,
+                    timestamp: finalNewMessage.timestamp,
+                };
+            }
+            return chat;
+        });
+
+        setChats(updatedChats);
+        if (selectedChat?.id === chatId) {
+            setSelectedChat(prev => prev ? { 
+            ...prev, 
+            messages: [...(prev.messages || []), finalNewMessage],
             lastMessage: text,
-            timestamp: newMessage.timestamp,
-          };
+            timestamp: finalNewMessage.timestamp,
+            } : null);
         }
-        return chat;
-      });
-  
-      setChats(updatedChats);
-      if (selectedChat?.id === chatId) {
-        setSelectedChat(prev => prev ? { 
-          ...prev, 
-          messages: [...(prev.messages || []), newMessage],
-          lastMessage: text,
-          timestamp: newMessage.timestamp,
-        } : null);
-      }
     } else {
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to send message.' });
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to send message.' });
     }
   };
 
@@ -657,6 +662,9 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
       setContacts(prev => prev.map(c => 
           c.id === contactId ? { ...c, notes: [note, ...(c.notes || [])] } : c
       ));
+      if (selectedChat?.user.id === contactId) {
+        setSelectedChat(prev => prev ? { ...prev, user: { ...prev.user, notes: [note, ...(prev.user.notes || [])] } } : null);
+      }
   }
 
   const handleAssignAgent = (contactId: string, agentId: string) => {
@@ -828,13 +836,3 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
     </div>
   );
 }
-
-
-
-
-
-
-
-    
-
-    

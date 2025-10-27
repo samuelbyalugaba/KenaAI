@@ -441,10 +441,3 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
     </div>
   );
 }
-
-    
-    
-
-    
-
-    
