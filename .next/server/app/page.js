@@ -1,35 +1,34 @@
-const CHUNK_PUBLIC_PATH = "server/app/page.js";
-const runtime = require("../chunks/ssr/[turbopack]_runtime.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_0962b827._.js");
-runtime.loadChunk("server/chunks/ssr/[root-of-the-server]__fb250061._.js");
-runtime.loadChunk("server/chunks/ssr/src_app_4e52cfa9._.js");
-runtime.loadChunk("server/chunks/ssr/_857d923e._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_96715ba7._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_client_components_forbidden-error_ea7ea172.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_client_components_unauthorized-error_c8949b27.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_node-fetch_src_index_1afde4c3.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_496bc32d._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_zod_lib_9973ecc6._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@genkit-ai_core_lib_8f01467c._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_ajv_dist_e6327f72._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_zod-to-json-schema_dist_cfb46992._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@opentelemetry_47e238e3._.js");
-runtime.loadChunk("server/chunks/ssr/bf1d5_@opentelemetry_semantic-conventions_build_esm_f50c7e13._.js");
-runtime.loadChunk("server/chunks/ssr/4292a_@opentelemetry_semantic-conventions_build_esm_c6330d2a._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@opentelemetry_b33ca58c._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@genkit-ai_ai_lib_1905d568._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_handlebars_097a2825._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_yaml_dist_5cbea403._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@opentelemetry_resources_build_esm_eadd61b9._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@opentelemetry_sdk-metrics_build_esm_2bc910b7._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@opentelemetry_sdk-trace-base_build_esm_ffb73884._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_protobufjs_c6ba58b0._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@opentelemetry_otlp-transformer_build_esm_7b4c78bd._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@grpc_grpc-js_cc2986af._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_thriftrw_872e9171._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_@opentelemetry_26c0981b._.js");
-runtime.loadChunk("server/chunks/ssr/node_modules_49840ba1._.js");
-runtime.loadChunk("server/chunks/ssr/[root-of-the-server]__a42a1a50._.js");
-runtime.getOrInstantiateRuntimeModule("[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/ai/flows/intelligent-chat-summary.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/src/ai/flows/generate-campaign-message.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)", CHUNK_PUBLIC_PATH);
-runtime.getOrInstantiateRuntimeModule("[project]/node_modules/next/dist/esm/build/templates/app-page.js?page=/page { METADATA_0 => \"[project]/src/app/icon.png.mjs { IMAGE => \\\"[project]/src/app/icon.png (static in ecmascript)\\\" } [app-rsc] (structured image object, ecmascript, Next.js server component)\", MODULE_1 => \"[project]/src/app/layout.tsx [app-rsc] (ecmascript, Next.js server component)\", MODULE_2 => \"[project]/node_modules/next/dist/client/components/not-found-error.js [app-rsc] (ecmascript, Next.js server component)\", MODULE_3 => \"[project]/node_modules/next/dist/client/components/forbidden-error.js [app-rsc] (ecmascript, Next.js server component)\", MODULE_4 => \"[project]/node_modules/next/dist/client/components/unauthorized-error.js [app-rsc] (ecmascript, Next.js server component)\", METADATA_5 => \"[project]/src/app/icon.png.mjs { IMAGE => \\\"[project]/src/app/icon.png (static in ecmascript)\\\" } [app-rsc] (structured image object, ecmascript, Next.js server component)\", MODULE_6 => \"[project]/src/app/page.tsx [app-rsc] (ecmascript, Next.js server component)\" } [app-rsc] (ecmascript)", CHUNK_PUBLIC_PATH);
-module.exports = runtime.getOrInstantiateRuntimeModule("[project]/node_modules/next/dist/esm/build/templates/app-page.js?page=/page { METADATA_0 => \"[project]/src/app/icon.png.mjs { IMAGE => \\\"[project]/src/app/icon.png (static in ecmascript)\\\" } [app-rsc] (structured image object, ecmascript, Next.js server component)\", MODULE_1 => \"[project]/src/app/layout.tsx [app-rsc] (ecmascript, Next.js server component)\", MODULE_2 => \"[project]/node_modules/next/dist/client/components/not-found-error.js [app-rsc] (ecmascript, Next.js server component)\", MODULE_3 => \"[project]/node_modules/next/dist/client/components/forbidden-error.js [app-rsc] (ecmascript, Next.js server component)\", MODULE_4 => \"[project]/node_modules/next/dist/client/components/unauthorized-error.js [app-rsc] (ecmascript, Next.js server component)\", METADATA_5 => \"[project]/src/app/icon.png.mjs { IMAGE => \\\"[project]/src/app/icon.png (static in ecmascript)\\\" } [app-rsc] (structured image object, ecmascript, Next.js server component)\", MODULE_6 => \"[project]/src/app/page.tsx [app-rsc] (ecmascript, Next.js server component)\" } [app-rsc] (ecmascript)", CHUNK_PUBLIC_PATH).exports;
+var R=require("../chunks/ssr/[turbopack]_runtime.js")("server/app/page.js")
+R.c("server/chunks/ssr/node_modules_bb681d96._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__f0336b73._.js")
+R.c("server/chunks/ssr/src_app_4891526f._.js")
+R.c("server/chunks/ssr/node_modules_ab3884db._.js")
+R.c("server/chunks/ssr/src_97210eb7._.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_9774470f._.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_forbidden_45780354.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_unauthorized_15817684.js")
+R.c("server/chunks/ssr/node_modules_next_dist_client_components_builtin_global-error_ece394eb.js")
+R.c("server/chunks/ssr/node_modules_node-fetch_src_index_1f6c0c62.js")
+R.c("server/chunks/ssr/node_modules_next_dist_51f9fd12._.js")
+R.c("server/chunks/ssr/node_modules_zod_lib_669d4bf3._.js")
+R.c("server/chunks/ssr/node_modules_@genkit-ai_core_lib_91793727._.js")
+R.c("server/chunks/ssr/node_modules_ajv_dist_7f0a026b._.js")
+R.c("server/chunks/ssr/node_modules_zod-to-json-schema_dist_3b5c0de2._.js")
+R.c("server/chunks/ssr/node_modules_@opentelemetry_28b1336a._.js")
+R.c("server/chunks/ssr/node_modules_@opentelemetry_05992674._.js")
+R.c("server/chunks/ssr/node_modules_@genkit-ai_ai_lib_ad490aa8._.js")
+R.c("server/chunks/ssr/node_modules_handlebars_de2360b8._.js")
+R.c("server/chunks/ssr/node_modules_yaml_dist_c70cf5b3._.js")
+R.c("server/chunks/ssr/node_modules_@opentelemetry_resources_build_esm_5f5d2121._.js")
+R.c("server/chunks/ssr/node_modules_@opentelemetry_sdk-metrics_build_esm_1ea28c64._.js")
+R.c("server/chunks/ssr/node_modules_@opentelemetry_sdk-trace-base_build_esm_4b613864._.js")
+R.c("server/chunks/ssr/node_modules_protobufjs_ec3531bd._.js")
+R.c("server/chunks/ssr/node_modules_@opentelemetry_otlp-transformer_build_esm_6522dc85._.js")
+R.c("server/chunks/ssr/node_modules_@grpc_grpc-js_5b4dad51._.js")
+R.c("server/chunks/ssr/node_modules_thriftrw_d9865ef6._.js")
+R.c("server/chunks/ssr/node_modules_@opentelemetry_4a05c3bf._.js")
+R.c("server/chunks/ssr/node_modules_002fea11._.js")
+R.c("server/chunks/ssr/[root-of-the-server]__573b5c03._.js")
+R.m("[project]/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/src/app/actions.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE1 => \"[project]/src/ai/flows/intelligent-chat-summary.ts [app-rsc] (ecmascript)\", ACTIONS_MODULE2 => \"[project]/src/ai/flows/generate-campaign-message.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)")
+R.m("[project]/node_modules/next/dist/esm/build/templates/app-page.js?page=/page { GLOBAL_ERROR_MODULE => \"[project]/node_modules/next/dist/client/components/builtin/global-error.js [app-rsc] (ecmascript, Next.js Server Component)\", METADATA_0 => \"[project]/src/app/icon.png.mjs { IMAGE => \\\"[project]/src/app/icon.png (static in ecmascript)\\\" } [app-rsc] (structured image object, ecmascript, Next.js Server Component)\", MODULE_1 => \"[project]/src/app/layout.tsx [app-rsc] (ecmascript, Next.js Server Component)\", MODULE_2 => \"[project]/node_modules/next/dist/client/components/builtin/not-found.js [app-rsc] (ecmascript, Next.js Server Component)\", MODULE_3 => \"[project]/node_modules/next/dist/client/components/builtin/forbidden.js [app-rsc] (ecmascript, Next.js Server Component)\", MODULE_4 => \"[project]/node_modules/next/dist/client/components/builtin/unauthorized.js [app-rsc] (ecmascript, Next.js Server Component)\", MODULE_5 => \"[project]/node_modules/next/dist/client/components/builtin/global-error.js [app-rsc] (ecmascript, Next.js Server Component)\", METADATA_6 => \"[project]/src/app/icon.png.mjs { IMAGE => \\\"[project]/src/app/icon.png (static in ecmascript)\\\" } [app-rsc] (structured image object, ecmascript, Next.js Server Component)\", MODULE_7 => \"[project]/src/app/page.tsx [app-rsc] (ecmascript, Next.js Server Component)\" } [app-rsc] (ecmascript)")
+module.exports=R.m("[project]/node_modules/next/dist/esm/build/templates/app-page.js?page=/page { GLOBAL_ERROR_MODULE => \"[project]/node_modules/next/dist/client/components/builtin/global-error.js [app-rsc] (ecmascript, Next.js Server Component)\", METADATA_0 => \"[project]/src/app/icon.png.mjs { IMAGE => \\\"[project]/src/app/icon.png (static in ecmascript)\\\" } [app-rsc] (structured image object, ecmascript, Next.js Server Component)\", MODULE_1 => \"[project]/src/app/layout.tsx [app-rsc] (ecmascript, Next.js Server Component)\", MODULE_2 => \"[project]/node_modules/next/dist/client/components/builtin/not-found.js [app-rsc] (ecmascript, Next.js Server Component)\", MODULE_3 => \"[project]/node_modules/next/dist/client/components/builtin/forbidden.js [app-rsc] (ecmascript, Next.js Server Component)\", MODULE_4 => \"[project]/node_modules/next/dist/client/components/builtin/unauthorized.js [app-rsc] (ecmascript, Next.js Server Component)\", MODULE_5 => \"[project]/node_modules/next/dist/client/components/builtin/global-error.js [app-rsc] (ecmascript, Next.js Server Component)\", METADATA_6 => \"[project]/src/app/icon.png.mjs { IMAGE => \\\"[project]/src/app/icon.png (static in ecmascript)\\\" } [app-rsc] (structured image object, ecmascript, Next.js Server Component)\", MODULE_7 => \"[project]/src/app/page.tsx [app-rsc] (ecmascript, Next.js Server Component)\" } [app-rsc] (ecmascript)").exports
