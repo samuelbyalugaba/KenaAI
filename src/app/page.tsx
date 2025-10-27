@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -13,7 +14,7 @@ import { SettingsDialog } from "@/components/dashboard/settings-dialog";
 import { CampaignsView } from "@/components/dashboard/campaigns-view";
 import { MyPerformanceView } from "@/components/dashboard/my-performance-view";
 import { AuthForm } from "@/components/dashboard/auth-form";
-import { handleLogin } from "@/app/actions";
+import { handleLogin, handleLogout } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingScreen } from "@/components/dashboard/loading-screen";
 
@@ -79,6 +80,7 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
         email: agent.email,
         phone: agent.phone,
         companyId: agent.companyId,
+        status: 'Online',
       };
       setCurrentUser(userProfile);
       localStorage.setItem('currentUser', JSON.stringify(userProfile));
@@ -91,7 +93,10 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   }
   
 
-  const handleLogout = () => {
+  const onLogout = async () => {
+    if(currentUser) {
+        await handleLogout(currentUser.id);
+    }
     setCurrentUser(null);
     localStorage.removeItem('currentUser');
     localStorage.removeItem('activeView');
@@ -161,7 +166,7 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
           activeView={activeView} 
           setActiveView={setActiveView} 
           user={currentUser}
-          onLogout={handleLogout}
+          onLogout={onLogout}
           isOpen={isNavOpen}
           setIsOpen={setIsNavOpen}
           onSettingsClick={() => setIsSettingsOpen(true)}

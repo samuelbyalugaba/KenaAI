@@ -77,6 +77,7 @@ export type User = {
     email: string;
     phone: string;
     companyId: string;
+    status?: 'Online' | 'Offline' | 'Busy';
   };
   
   export type AnnouncementCategory = "General" | "Urgent" | "Training";
@@ -150,5 +151,3 @@ export type User = {
     text: string;
     timestamp: string;
 };
-
-    

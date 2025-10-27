@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import * as React from "react";
-import { User as UserIcon, Phone, Mail, Search, PanelLeft, UserCheck, Upload, ArrowLeft, MoreVertical, Grip, List } from "lucide-react";
+import { User as UserIcon, Phone, Mail, Search, PanelLeft, UserCheck, Upload, ArrowLeft, MoreVertical, Grip, List, Contact } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import { Skeleton } from "../ui/skeleton";
 import { AddContactDialog } from "./add-contact-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { importGoogleContacts } from "@/ai/flows/import-google-contacts-flow";
 
 
 const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd, onAssign, onStartChat }: { 
@@ -267,6 +269,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
   const [contacts, setContacts] = React.useState<ContactUser[]>([]);
   const [agents, setAgents] = React.useState<Agent[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isImporting, setIsImporting] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
   const [selectedChatHistory, setSelectedChatHistory] = React.useState<Message[] | undefined>(undefined);
@@ -350,6 +353,32 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
         fileInputRef.current.value = "";
     }
   };
+
+  const handleGoogleImport = async () => {
+    setIsImporting(true);
+    toast({ title: "Importing from Google...", description: "Please wait while we fetch your contacts." });
+    try {
+        const googleContacts = await importGoogleContacts();
+        if (user?.companyId) {
+            const result = await importContactsFromCSV(googleContacts, user.companyId);
+            toast({
+                title: 'Google Import Complete',
+                description: result.message,
+            });
+            if (result.newContacts.length > 0) {
+                setContacts(prev => [...result.newContacts, ...prev]);
+            }
+        }
+    } catch (error) {
+        console.error("Google Import Error:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Google Import Failed',
+            description: 'Could not import contacts from Google. Please try again.',
+        });
+    }
+    setIsImporting(false);
+  }
   
   const handleSelectContact = async (contact: ContactUser) => {
     setSelectedContact(contact);
@@ -357,7 +386,8 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
     
     // This is inefficient if there are many chats, but required for this architecture.
     // A better approach would be a dedicated backend endpoint `getChatByContactId`.
-    const allChats = await getChatsByCompany(user!.companyId);
+    if (!user?.companyId) return;
+    const allChats = await getChatsByCompany(user.companyId);
     const relevantChat = allChats.find(chat => chat.user.id === contact.id);
 
     if (relevantChat) {
@@ -420,7 +450,22 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
                     <Button variant={viewMode === 'grid' ? "secondary" : "ghost"} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')}><Grip className="h-4 w-4" /></Button>
                 </div>
                 <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
-                <Button variant="outline" onClick={() => fileInputRef.current?.click()}><Upload className="h-4 w-4 mr-2" /> Import</Button>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="outline"><Upload className="h-4 w-4 mr-2" /> Import</Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                           <Upload className="h-4 w-4 mr-2" /> Import from CSV
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleGoogleImport} disabled={isImporting}>
+                           <Contact className="h-4 w-4 mr-2" />
+                           {isImporting ? "Importing..." : "Import from Google"}
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
                 <AddContactDialog onContactAdd={handleContactAdd} user={user} />
             </div>
         </header>

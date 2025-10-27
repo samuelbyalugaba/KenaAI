@@ -1,8 +1,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
-import type { User, Chat, Message, Company } from '@/types';
+import type { User, Chat, Message, Company, Priority } from '@/types';
 import { Collection, ObjectId } from 'mongodb';
+import { chatPrioritization } from '@/ai/flows/chat-prioritization';
 
 // Helper function to get database collections
 async function getCompaniesCollection(): Promise<Collection<Company>> {
@@ -69,6 +70,9 @@ export async function POST(req: NextRequest) {
             user = { ...newUserToInsert, _id: result.insertedId, id: result.insertedId.toString(), companyId: companyId.toString() };
         }
 
+        // --- AI Prioritization ---
+        const { priority } = await chatPrioritization({ chatText: text });
+
 
         // 3. Find or create the chat
         const chatsCollection = await getChatsCollection();
@@ -82,7 +86,7 @@ export async function POST(req: NextRequest) {
                 lastMessage: text,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 unreadCount: 1,
-                priority: 'normal',
+                priority: priority as Priority,
                 channel: 'Webchat', // Default channel, can be customized
                 isChatbotActive: true, // It came from the bot, so it's active
                 messages: [],
@@ -101,7 +105,8 @@ export async function POST(req: NextRequest) {
                 { 
                     $set: { 
                         lastMessage: text, 
-                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        priority: priority as Priority,
                     },
                     $inc: { unreadCount: 1 }
                 }

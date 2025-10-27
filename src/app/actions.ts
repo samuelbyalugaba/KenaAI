@@ -1,10 +1,12 @@
 
+
 'use server';
 
 import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
 import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog, User, Note, Chat, Message, Channel, Campaign } from "@/types";
 import { Collection, Db, ObjectId } from "mongodb";
+import { chatPrioritization } from "@/ai/flows/chat-prioritization";
 
 async function getAgentsCollection(): Promise<Collection<Agent>> {
     const db: Db = await getDb();
@@ -99,10 +101,8 @@ export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
             const agentIdStr = agent._id.toString();
             const conversationsToday = countsMap.get(agentIdStr) || 0;
             
-            const statuses: Array<'Online' | 'Offline' | 'Busy'> = ['Online', 'Offline', 'Busy'];
             const hash = simpleHash(agent.name);
-            const randomStatus = statuses[hash % statuses.length];
-
+           
             let avgResponseTime = "N/A";
             let csat: number | undefined = undefined;
 
@@ -119,7 +119,6 @@ export async function getAgentsByCompany(companyId: string): Promise<Agent[]> {
                 id: agentIdStr,
                 companyId: agent.companyId?.toString(),
                 conversationsToday,
-                status: randomStatus,
                 avgResponseTime,
                 csat,
             };
@@ -317,12 +316,18 @@ export async function handleLogin(email: string, password_unused: string): Promi
       if (agentDoc && agentDoc.password) {
         const isPasswordValid = await verifyPassword(password_unused, agentDoc.password);
         if (isPasswordValid) {
+            await agentsCollection.updateOne(
+                { _id: agentDoc._id },
+                { $set: { status: 'Online' } }
+            );
+
           const { password, ...agentData } = agentDoc;
           const agent: Agent = {
             ...agentData,
             _id: agentDoc._id.toString(),
             id: agentDoc._id.toString(),
             companyId: agentDoc.companyId?.toString(),
+            status: 'Online',
           };
           await logActivity(agent.companyId, agent.name, 'Login', `Logged in successfully`);
           return { success: true, agent: agent };
@@ -334,6 +339,24 @@ export async function handleLogin(email: string, password_unused: string): Promi
       return { success: false, message: "Database connection error." };
     }
 };
+
+export async function handleLogout(agentId: string): Promise<{ success: boolean }> {
+    try {
+        const agentsCollection = await getAgentsCollection();
+        const agent = await agentsCollection.findOne({ _id: new ObjectId(agentId) });
+        if (agent) {
+            await agentsCollection.updateOne(
+                { _id: new ObjectId(agentId) },
+                { $set: { status: 'Offline' } }
+            );
+            await logActivity(agent.companyId, agent.name, 'Logout', `Logged out successfully`);
+        }
+        return { success: true };
+    } catch (error) {
+        console.error("Logout error:", error);
+        return { success: false };
+    }
+}
 
 export async function createAgent(name: string, email: string, password_unused: string, role: AgentRole, companyId: string, createdBy: string): Promise<{ success: boolean; message?: string; agent?: Agent; }> {
     try {
@@ -353,6 +376,7 @@ export async function createAgent(name: string, email: string, password_unused: 
             password: hashedPassword,
             role,
             avatar,
+            status: 'Offline',
             phone: '', 
             companyId: new ObjectId(companyId)
         };
@@ -659,9 +683,16 @@ export async function sendMessage(chatId: string, text: string, agentId: string)
         const result = await messagesCollection.insertOne(newMessageToInsert as any);
 
         if (result.insertedId) {
+            const { priority } = await chatPrioritization({ chatText: text });
+
             await chatsCollection.updateOne(
                 { _id: new ObjectId(chatId) },
-                { $set: { lastMessage: text, timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } }
+                { $set: { 
+                    lastMessage: text, 
+                    timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    priority: priority 
+                  } 
+                }
             );
             
             const finalNewMessage: Message = {
@@ -726,13 +757,14 @@ export async function startNewChats(users: User[], message: string, companyId: s
 
         } else {
             const timestamp = new Date();
+            const { priority } = await chatPrioritization({ chatText: message });
             const newChatData: Omit<Chat, 'id' | '_id'> = {
                 userId: new ObjectId(user.id),
                 companyId: new ObjectId(companyId),
                 lastMessage: message,
                 timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 unreadCount: 0,
-                priority: 'normal',
+                priority: priority,
                 channel: 'Webchat',
                 isChatbotActive: false,
                 messages: []
@@ -871,7 +903,7 @@ export async function importContactsFromCSV(contactsData: { name: string; email:
                 name: contact.name,
                 email: contact.email.toLowerCase(),
                 phone: contact.phone,
-                avatar: '',
+                avatar: `https://picsum.photos/seed/${new ObjectId().toString()}/100/100`,
                 companyId: companyObjId,
                 notes: [],
                 online: false,

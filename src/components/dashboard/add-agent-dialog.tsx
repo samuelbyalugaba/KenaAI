@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -42,7 +43,6 @@ const agentFormSchema = z.object({
   password: z
     .string()
     .min(8, { message: "Password must be at least 8 characters." }),
-  phone: z.string().min(10, { message: "Please enter a valid phone number." }),
   role: z.enum(["admin", "agent", "super_agent"]),
 });
 
@@ -62,35 +62,23 @@ export function AddAgentDialog({ onAgentAdd, user }: AddAgentDialogProps) {
       name: "",
       email: "",
       password: "",
-      phone: "",
       role: "agent",
     },
   });
 
   async function onSubmit(data: AgentFormValues) {
-    if (!user?.companyId) {
+    if (!user?.companyId || !user?.name) {
         toast({
             variant: 'destructive',
             title: "Error",
-            description: "Cannot add agent without a company context.",
+            description: "Cannot add agent without a company context or creator name.",
         });
         return;
     }
-    const result = await createAgent(data.name, data.email, data.password, data.role as AgentRole, user.companyId);
+    const result = await createAgent(data.name, data.email, data.password, data.role as AgentRole, user.companyId, user.name);
 
     if (result.success && result.agent) {
-        const newAgent: Agent = {
-            id: result.agent._id!,
-            ...data,
-            avatar: '',
-            role: data.role as AgentRole,
-            status: "Offline",
-            conversationsToday: 0,
-            avgResponseTime: "N/A",
-            csat: 90 + Math.floor(Math.random() * 10), // Random high CSAT for new agent
-        };
-        onAgentAdd(newAgent);
-
+        onAgentAdd(result.agent);
         toast({
         title: "Agent Created",
         description: `New agent "${data.name}" has been added successfully.`,
@@ -166,19 +154,6 @@ export function AddAgentDialog({ onAgentAdd, user }: AddAgentDialogProps) {
             />
             <FormField
               control={form.control}
-              name="phone"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Phone Number</FormLabel>
-                  <FormControl>
-                    <Input placeholder="+1 234 567 890" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
               name="role"
               render={({ field }) => (
                 <FormItem>
@@ -214,5 +189,3 @@ export function AddAgentDialog({ onAgentAdd, user }: AddAgentDialogProps) {
     </Dialog>
   );
 }
-
-    
