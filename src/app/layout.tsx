@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'KenaAI Chat Dashboard',
   description: 'A responsive chat dashboard application.',
   icons: {
-    icon: '/icon.png?v=2',
+    icon: '/icon.png?v=3',
   },
 };
 
