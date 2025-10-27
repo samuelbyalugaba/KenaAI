@@ -16,6 +16,7 @@ import { AuthForm } from "@/components/dashboard/auth-form";
 import { handleLogin } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { LoadingScreen } from "@/components/dashboard/loading-screen";
+import { Analytics } from "@vercel/analytics/next";
 
 
 export type View = "Chat" | "Contacts" | "Agents" | "Dashboard" | "Announcements" | "History" | "Payments" | "Settings" | "System Settings" | "Campaigns" | "My Performance";
