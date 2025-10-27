@@ -33,6 +33,23 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
   const { toast } = useToast();
 
   React.useEffect(() => {
+    // Check for saved user session in localStorage when the app loads
+    try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            const user = JSON.parse(savedUser);
+            setCurrentUser(user);
+            if (user.role === 'admin') {
+              setActiveView('Dashboard');
+            } else {
+              setActiveView('Chat');
+            }
+        }
+    } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        localStorage.removeItem('currentUser');
+    }
+    
     const timer = setTimeout(() => {
         setIsLoading(false);
     }, 1500);
@@ -43,7 +60,7 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
     const result = await handleLogin(email, password_unused);
     if (result.success && result.agent) {
       const agent = result.agent as Agent;
-       setCurrentUser({
+       const userProfile: UserProfile = {
         id: agent.id,
         name: agent.name,
         avatar: agent.avatar,
@@ -51,7 +68,10 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
         email: agent.email,
         phone: agent.phone,
         companyId: agent.companyId,
-      } as UserProfile);
+      };
+      setCurrentUser(userProfile);
+      // Save user to localStorage
+      localStorage.setItem('currentUser', JSON.stringify(userProfile));
 
       if (agent.role === 'admin') {
         setActiveView('Dashboard');
@@ -65,11 +85,21 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
 
   const handleLogout = () => {
     setCurrentUser(null);
+    // Clear user from localStorage
+    localStorage.removeItem('currentUser');
     setActiveView('Chat');
   };
   
   const handleUpdateUser = (updatedUser: Partial<UserProfile>) => {
-    setCurrentUser(prev => prev ? { ...prev, ...updatedUser } : null);
+    setCurrentUser(prev => {
+        if (prev) {
+            const newUser = { ...prev, ...updatedUser };
+            // Update localStorage when user profile changes
+            localStorage.setItem('currentUser', JSON.stringify(newUser));
+            return newUser;
+        }
+        return null;
+    });
   }
 
   const handleNavigateToChat = (contact: User) => {
@@ -136,5 +166,3 @@ export default function Home({ params, searchParams }: { params: {}; searchParam
     </main>
   );
 }
-
-    
