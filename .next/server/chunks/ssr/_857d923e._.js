@@ -114,7 +114,7 @@ const metadata = {
     title: 'KenaAI Chat Dashboard',
     description: 'A responsive chat dashboard application.',
     icons: {
-        icon: '/icon.png'
+        icon: '/icon.png?v=2'
     }
 };
 function RootLayout({ children }) {
