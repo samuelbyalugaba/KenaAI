@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: 'KenaAI Chat Dashboard',
@@ -36,6 +37,7 @@ export default function RootLayout({
             {children}
             <Toaster />
             <Analytics />
+            <SpeedInsights />
           </ThemeProvider>
       </body>
     </html>
