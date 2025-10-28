@@ -4,7 +4,7 @@
 
 import { getDb } from "@/lib/db";
 import { hashPassword, verifyPassword } from "@/lib/auth";
-import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog, User, Note, Chat, Message, Channel, Campaign } from "@/types";
+import type { Agent, AgentRole, Announcement, Company, Comment, ActivityLog, User, Note, Chat, Message, Channel } from "@/types";
 import { Collection, Db, ObjectId } from "mongodb";
 import { chatPrioritization } from "@/ai/flows/chat-prioritization";
 
@@ -683,14 +683,11 @@ export async function sendMessage(chatId: string, text: string, agentId: string)
         const result = await messagesCollection.insertOne(newMessageToInsert as any);
 
         if (result.insertedId) {
-            const { priority } = await chatPrioritization({ chatText: text });
-
             await chatsCollection.updateOne(
                 { _id: new ObjectId(chatId) },
                 { $set: { 
                     lastMessage: text, 
                     timestamp: timestamp.toISOString(),
-                    priority: priority 
                   } 
                 }
             );

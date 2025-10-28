@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -475,7 +476,7 @@ const ChatInput = ({ chatId, isChatbotActive, onSendMessage }: { chatId: string;
                             <TooltipContent>Add emoji</TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
-                    <Button type="submit" size="icon" disabled={isChatbotActive || isSending}><Send className="h-5 w-5" /></Button>
+                    <Button type="submit" size="icon" disabled={isChatbotActive || isSending || !message.trim()}><Send className="h-5 w-5" /></Button>
                 </div>
             </form>
         </div>
@@ -538,10 +539,7 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
                               chat.lastMessage.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
         const matchesChannel = selectedChannel === 'all' || chat.channel === selectedChannel;
         return matchesSearch && matchesChannel;
-    }).sort((a, b) => {
-      const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
-      return priorityOrder[a.priority] - priorityOrder[b.priority];
-    });
+    }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
   }, [chats, debouncedSearchTerm, selectedChannel]);
 
   useEffect(() => {
@@ -584,38 +582,70 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
   const handleSendMessage = async (chatId: string, text: string) => {
     if (!user) return;
     
+    // Optimistic UI update
+    const newTimestamp = new Date();
+    const optimisticMessage: Message = {
+      id: `temp-${Date.now()}`,
+      chatId,
+      sender: 'me',
+      senderId: user.id,
+      text,
+      timestamp: newTimestamp.toISOString(),
+    };
+
+    setChats(prevChats => {
+      return prevChats.map(chat => {
+        if (chat.id === chatId) {
+          return {
+            ...chat,
+            messages: [...(chat.messages || []), optimisticMessage],
+            lastMessage: text,
+            timestamp: newTimestamp.toISOString(),
+          };
+        }
+        return chat;
+      }).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    });
+
+    if (selectedChat?.id === chatId) {
+        setSelectedChat(prev => prev ? { 
+        ...prev, 
+        messages: [...(prev.messages || []), optimisticMessage],
+        lastMessage: text,
+        timestamp: newTimestamp.toISOString(),
+        } : null);
+    }
+    
+    // Send to backend
     const result = await sendMessage(chatId, text, user.id);
 
     if (result.success && result.newMessage) {
-        const newMessage = result.newMessage;
-        const finalNewMessage: Message = {
-            ...newMessage,
-            timestamp: new Date(newMessage.timestamp).toISOString(),
-        };
-
-        const updatedChats = chats.map(chat => {
+        // Replace optimistic update with real one from backend
+        setChats(prev => prev.map(chat => {
+            if (chat.id === chatId) {
+                const newMessages = chat.messages.map(m => m.id === optimisticMessage.id ? result.newMessage! : m);
+                return { ...chat, messages: newMessages };
+            }
+            return chat;
+        }));
+         if (selectedChat?.id === chatId) {
+             setSelectedChat(prev => prev ? {
+                 ...prev,
+                 messages: prev.messages.map(m => m.id === optimisticMessage.id ? result.newMessage! : m)
+             } : null);
+         }
+    } else {
+        // Revert optimistic update on failure
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to send message.' });
+        setChats(prev => prev.map(chat => {
             if (chat.id === chatId) {
                 return {
                     ...chat,
-                    messages: [...(chat.messages || []), finalNewMessage],
-                    lastMessage: text,
-                    timestamp: finalNewMessage.timestamp,
-                };
+                    messages: chat.messages.filter(m => m.id !== optimisticMessage.id)
+                }
             }
             return chat;
-        });
-
-        setChats(updatedChats);
-        if (selectedChat?.id === chatId) {
-            setSelectedChat(prev => prev ? { 
-            ...prev, 
-            messages: [...(prev.messages || []), finalNewMessage],
-            lastMessage: text,
-            timestamp: finalNewMessage.timestamp,
-            } : null);
-        }
-    } else {
-        toast({ variant: 'destructive', title: 'Error', description: 'Failed to send message.' });
+        }));
     }
   };
 
