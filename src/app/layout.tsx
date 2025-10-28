@@ -6,6 +6,15 @@ import { cn } from '@/lib/utils';
 import { ThemeProvider } from '@/components/ui/theme-provider';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { PT_Sans } from 'next/font/google';
+import KenaAILogoSrc from '@/app/KenaAI.png';
+
+const pt_sans = PT_Sans({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  display: 'swap',
+  variable: '--font-pt-sans',
+});
 
 export const metadata: Metadata = {
   title: 'KenaAI Chat Dashboard',
@@ -23,11 +32,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet" />
+        <link rel="preload" href={KenaAILogoSrc.src} as="image" />
       </head>
-      <body className={cn("font-body antialiased", "min-h-screen bg-background font-sans")}>
+      <body className={cn("font-body antialiased", "min-h-screen bg-background font-sans", pt_sans.variable)}>
           <ThemeProvider 
             attribute="class"
             defaultTheme="system"
