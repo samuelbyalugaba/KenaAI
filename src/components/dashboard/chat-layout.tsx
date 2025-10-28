@@ -100,7 +100,9 @@ const ChatList = ({ chats, selectedChat, onSelectChat, isLoading }: { chats: Cha
           <div className="flex-1 overflow-hidden">
             <div className="flex items-center justify-between">
               <h3 className="font-semibold truncate">{chat.user.name}</h3>
-              <span className="text-xs text-muted-foreground flex-shrink-0">{chat.timestamp}</span>
+              <span className="text-xs text-muted-foreground flex-shrink-0">
+                {new Date(chat.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </div>
             <div className="flex items-center justify-between mt-1">
               <p className="text-sm text-muted-foreground truncate">
@@ -588,7 +590,7 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
         const newMessage = result.newMessage;
         const finalNewMessage: Message = {
             ...newMessage,
-            timestamp: new Date(newMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            timestamp: new Date(newMessage.timestamp).toISOString(),
         };
 
         const updatedChats = chats.map(chat => {
@@ -838,3 +840,5 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
     </div>
   );
 }
+
+    

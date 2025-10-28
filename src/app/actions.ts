@@ -689,7 +689,7 @@ export async function sendMessage(chatId: string, text: string, agentId: string)
                 { _id: new ObjectId(chatId) },
                 { $set: { 
                     lastMessage: text, 
-                    timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    timestamp: timestamp.toISOString(),
                     priority: priority 
                   } 
                 }
@@ -749,7 +749,7 @@ export async function startNewChats(users: User[], message: string, companyId: s
                 userId: existingChatDoc.userId.toString(),
                 companyId: existingChatDoc.companyId.toString(),
                 lastMessage: message,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date().toISOString(),
                 user: user,
                 messages: [],
             };
@@ -762,7 +762,7 @@ export async function startNewChats(users: User[], message: string, companyId: s
                 userId: new ObjectId(user.id),
                 companyId: new ObjectId(companyId),
                 lastMessage: message,
-                timestamp: timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: timestamp.toISOString(),
                 unreadCount: 0,
                 priority: priority,
                 channel: 'Webchat',
@@ -985,5 +985,7 @@ export async function scheduleAnalyticsReport(email: string, frequency: string):
 
 
 
+
+    
 
     

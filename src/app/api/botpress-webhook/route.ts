@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
                 user: user,
                 companyId: companyId,
                 lastMessage: text,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                timestamp: new Date().toISOString(),
                 unreadCount: 1,
                 priority: priority as Priority,
                 channel: 'Webchat',
@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
                 { 
                     $set: { 
                         lastMessage: text, 
-                        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        timestamp: new Date().toISOString(),
                         priority: priority as Priority,
                     },
                     $inc: { unreadCount: 1 }
@@ -160,3 +160,5 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'An unknown error occurred.' }, { status: 500 });
     }
 }
+
+    
