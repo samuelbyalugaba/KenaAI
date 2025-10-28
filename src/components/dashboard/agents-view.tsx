@@ -52,6 +52,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "../ui/alert-dialog";
 import { EditAgentDialog } from "./edit-agent-dialog";
 import { ScrollArea } from "../ui/scroll-area";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 const statusVariantMap: Record<string, "bg-emerald-500" | "bg-amber-500" | "bg-slate-400"> = {
@@ -65,6 +66,7 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
   const [activityLogs, setActivityLogs] = React.useState<ActivityLog[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchTerm, setSearchTerm] = React.useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [editingAgent, setEditingAgent] = React.useState<Agent | null>(null);
   const { toast } = useToast();
@@ -117,12 +119,12 @@ export function AgentsView({ onMenuClick, user }: { onMenuClick: () => void; use
         const email = agent.email || '';
         const status = agent.status || 'Offline';
 
-        const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              email.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                              email.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
         const matchesStatus = statusFilter === 'all' || status === statusFilter;
         return matchesSearch && matchesStatus;
     });
-  }, [agents, searchTerm, statusFilter]);
+  }, [agents, debouncedSearchTerm, statusFilter]);
 
   const mostActiveAgents = React.useMemo(() => {
     return [...agents]

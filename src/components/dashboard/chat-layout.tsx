@@ -68,6 +68,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { NewChatDialog } from "./new-chat-dialog";
 import { getChatsByCompany, getMessagesForChat, sendMessage, setChatbotStatus, startNewChats, getContactsByCompany, addNoteToContact, assignAgentToContact, getAgentsByCompany } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 const ChatList = ({ chats, selectedChat, onSelectChat, isLoading }: { chats: Chat[], selectedChat: Chat | null, onSelectChat: (chat: Chat) => void, isLoading: boolean }) => (
@@ -491,6 +492,7 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [selectedChannel, setSelectedChannel] = useState<Channel | "all">("all");
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -530,15 +532,15 @@ export function ChatLayout({ user, onMenuClick, initialContact }: ChatLayoutProp
 
   const filteredChats = React.useMemo(() => {
     return chats.filter(chat => {
-        const matchesSearch = chat.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              chat.lastMessage.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesSearch = chat.user.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+                              chat.lastMessage.toLowerCase().includes(debouncedSearchTerm.toLowerCase());
         const matchesChannel = selectedChannel === 'all' || chat.channel === selectedChannel;
         return matchesSearch && matchesChannel;
     }).sort((a, b) => {
       const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
       return priorityOrder[a.priority] - priorityOrder[b.priority];
     });
-  }, [chats, searchTerm, selectedChannel]);
+  }, [chats, debouncedSearchTerm, selectedChannel]);
 
   useEffect(() => {
     if (!user) {

@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -23,6 +24,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../ui/collapsible";
 import { Separator } from "../ui/separator";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 const categoryVariantMap: Record<AnnouncementCategory, "default" | "secondary" | "destructive"> = {
@@ -270,6 +272,7 @@ export function AnnouncementsView({ onMenuClick, user }: AnnouncementsViewProps)
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const { toast } = useToast();
 
   const form = useForm<AnnouncementFormValues>({
@@ -298,8 +301,8 @@ export function AnnouncementsView({ onMenuClick, user }: AnnouncementsViewProps)
   }, [user]);
 
   const filteredAnnouncements = announcements.filter(ann =>
-    ann.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ann.content.toLowerCase().includes(searchTerm.toLowerCase())
+    ann.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    ann.content.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
 
   async function onSubmit(data: AnnouncementFormValues) {

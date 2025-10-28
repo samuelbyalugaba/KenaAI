@@ -22,6 +22,7 @@ import { AddContactDialog } from "./add-contact-dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { importGoogleContacts } from "@/ai/flows/import-google-contacts-flow";
+import { useDebounce } from "@/hooks/use-debounce";
 
 
 const ContactProfile = ({ contact, agents, chatHistory, onBack, user, onNoteAdd, onAssign, onStartChat }: { 
@@ -271,6 +272,7 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
   const [isLoading, setIsLoading] = React.useState(true);
   const [isImporting, setIsImporting] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [selectedContact, setSelectedContact] = React.useState<ContactUser | null>(null);
   const [selectedChatHistory, setSelectedChatHistory] = React.useState<Message[] | undefined>(undefined);
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
@@ -399,9 +401,9 @@ export function ContactsView({ onMenuClick, user, onNavigateToChat }: ContactsVi
   }
 
   const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    contact.phone?.toLowerCase().includes(searchTerm.toLowerCase())
+    contact.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    contact.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    contact.phone?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
   );
   
   const handleAssignAgent = (contactId: string, agentId: string) => {

@@ -48,6 +48,7 @@ import { cn } from "@/lib/utils";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar as CalendarComponent } from "../ui/calendar";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const steps = [
   { id: "details", name: "Details", icon: MessageSquare },
@@ -158,10 +159,11 @@ const StepDetails = ({ form }: { form: any }) => (
 
 const StepAudience = ({ form, contacts }: { form: any, contacts: User[] }) => {
     const [searchTerm, setSearchTerm] = React.useState("");
+    const debouncedSearchTerm = useDebounce(searchTerm, 300);
     
     const filteredContacts = contacts.filter(contact => 
-        contact.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contact.email?.toLowerCase().includes(searchTerm.toLowerCase())
+        contact.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        contact.email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
     );
 
     return (
